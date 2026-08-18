@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es-MX" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5"
+    />
+    <title>Estudio · Tablero</title>
+    <meta name="description" content="Herramienta interna de gestión del estudio de tatuajes." />
+
+    <!-- Se pinta antes del primer render para no parpadear en blanco de noche -->
+    <meta name="theme-color" content="#0b0b0e" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/iconos/icono-192.png" />
+    <link rel="apple-touch-icon" href="/iconos/apple-touch-icon.png" />
+
+    <!-- iOS: sin estas dos, Safari abre con barra de navegador -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Estudio" />
+
+    <!-- Herramienta interna: fuera de los buscadores -->
+    <meta name="robots" content="noindex, nofollow" />
+
+    <style>
+      /* Fondo antes de que cargue el CSS, para que no destelle blanco */
+      html { background: #0b0b0e; }
+      html.light { background: #fafafb; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
