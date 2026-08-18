@@ -12,6 +12,7 @@ import { Catalogo } from './pages/Catalogo'
 import { Contenido } from './pages/Contenido'
 import { Config } from './pages/Config'
 import { Skeleton, SkeletonKPIs } from './components/ui/Estados'
+import { Button } from './components/ui/Button'
 
 // Dashboard y Pauta son las únicas que cargan Recharts (~400 kB). Se traen
 // aparte para que la captura diaria no pague por las gráficas.
@@ -27,6 +28,36 @@ function Arrancando() {
         <Skeleton className="mt-8 h-11 w-full" />
         <Skeleton className="h-11 w-full" />
         <Skeleton className="h-12 w-full" />
+        {/* Sin esto, una carga atorada se ve idéntica a una pantalla en negro
+            y no hay forma de saber si la app está viva. */}
+        <p className="pt-2 text-center text-sm text-fg-subtle">Cargando…</p>
+      </div>
+    </div>
+  )
+}
+
+function PerfilNoDisponible({
+  mensaje,
+  onReintentar,
+  onSalir,
+}: {
+  mensaje: string
+  onReintentar: () => void
+  onSalir: () => void
+}) {
+  return (
+    <div className="flex min-h-dvh flex-col justify-center bg-bg px-5 py-10">
+      <div className="mx-auto w-full max-w-sm">
+        <h1 className="text-2xl font-semibold tracking-tight text-fg">Entraste, pero…</h1>
+        <p className="mt-2 text-base text-fg-muted">{mensaje}</p>
+        <div className="mt-6 space-y-2">
+          <Button bloque tamano="lg" onClick={onReintentar}>
+            Reintentar
+          </Button>
+          <Button bloque tamano="lg" variante="secundario" onClick={onSalir}>
+            Cerrar sesión
+          </Button>
+        </div>
       </div>
     </div>
   )
@@ -39,7 +70,8 @@ function SoloAdmin({ children }: { children: React.ReactNode }) {
 }
 
 export function App() {
-  const { session, perfil, cargando } = useAuth()
+  const { session, perfil, cargando, cargandoPerfil, errorPerfil, reintentarPerfil, salir } =
+    useAuth()
 
   // Realtime solo con sesión: sin JWT el canal no pasa RLS.
   useRealtime(Boolean(session))
@@ -47,8 +79,19 @@ export function App() {
   if (cargando) return <Arrancando />
   if (!session) return <Login />
 
-  // Hay sesión pero el perfil todavía no llega (o el trigger no corrió).
-  if (!perfil) return <Arrancando />
+  // Hay sesión pero el perfil no llegó. Antes esto se quedaba en la pantalla
+  // de carga para siempre y se veía como una pantalla negra vacía.
+  if (!perfil) {
+    if (cargandoPerfil) return <Arrancando />
+
+    return (
+      <PerfilNoDisponible
+        mensaje={errorPerfil ?? 'No se pudo cargar tu perfil.'}
+        onReintentar={reintentarPerfil}
+        onSalir={() => void salir()}
+      />
+    )
+  }
 
   return (
     <Routes>
