@@ -25,6 +25,7 @@ import { Sheet } from '../components/ui/Sheet'
 import { Badge } from '../components/ui/Badge'
 import { Card, CardAnimada } from '../components/ui/Card'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
+import { BotonCSV } from '../components/BotonCSV'
 import { PLATAFORMA, VEREDICTO } from '../lib/etiquetas'
 import { dinero, dineroExacto, fechaCorta, hoyISO, numero } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
@@ -138,12 +139,28 @@ export function Ads() {
             )}
           </p>
         </div>
-        {puede && (
-          <Button onClick={() => setAltaAbierta(true)} className="hidden md:inline-flex">
-            <Plus className="h-4 w-4" />
-            Registrar día
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          <BotonCSV
+            nombre="pauta"
+            filas={(ads ?? []).map((a) => ({
+              fecha: a.fecha,
+              plataforma: PLATAFORMA[a.plataforma],
+              creativo: a.creativo,
+              objetivo: a.objetivo,
+              presupuesto: a.presupuesto,
+              gasto_real: a.gasto_real,
+              conversaciones: a.conversaciones,
+              costo_por_conversacion: a.costo_por_conversacion ?? '',
+              veredicto: VEREDICTO[a.veredicto].texto,
+            }))}
+          />
+          {puede && (
+            <Button onClick={() => setAltaAbierta(true)} className="hidden md:inline-flex">
+              <Plus className="h-4 w-4" />
+              Registrar día
+            </Button>
+          )}
+        </div>
       </header>
 
       {/* ── Costo por conversación en el tiempo, por creativo ─────────── */}

@@ -16,6 +16,7 @@ import { Badge } from '../components/ui/Badge'
 import { CardAnimada } from '../components/ui/Card'
 import { Segmentado } from '../components/ui/Segmentado'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
+import { BotonCSV } from '../components/BotonCSV'
 import { FORMATO, PLATAFORMA } from '../lib/etiquetas'
 import { dinero, fechaCorta, hoyISO, numero } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
@@ -122,12 +123,31 @@ export function Contenido() {
             {numero(umbrales.filtro_guardados_4h)} guardados
           </p>
         </div>
-        {puede && (
-          <Button onClick={() => setAltaAbierta(true)} className="hidden md:inline-flex">
-            <Plus className="h-4 w-4" />
-            Nuevo video
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          <BotonCSV
+            nombre="contenido"
+            filas={(contenido ?? []).map((c) => ({
+              fecha: c.fecha,
+              titulo: c.titulo,
+              plataforma: PLATAFORMA[c.plataforma],
+              formato: FORMATO[c.formato],
+              trabajo_id: c.trabajo_id,
+              precio_en_pantalla: c.precio_en_pantalla ? 'Sí' : 'No',
+              vistas_4h: c.vistas_4h,
+              guardados_4h: c.guardados_4h,
+              comentarios: c.comentarios,
+              pasa_filtro: c.pasa_filtro === true ? 'SI' : c.pasa_filtro === false ? 'NO' : '',
+              promocionado: c.promocionado ? 'Sí' : 'No',
+              gasto_promocion: c.gasto_promocion,
+            }))}
+          />
+          {puede && (
+            <Button onClick={() => setAltaAbierta(true)} className="hidden md:inline-flex">
+              <Plus className="h-4 w-4" />
+              Nuevo video
+            </Button>
+          )}
+        </div>
       </header>
 
       <Segmentado

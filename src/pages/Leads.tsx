@@ -15,6 +15,7 @@ import { CardAnimada } from '../components/ui/Card'
 import { Segmentado } from '../components/ui/Segmentado'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
 import { FormTrabajo } from '../components/FormTrabajo'
+import { BotonCSV } from '../components/BotonCSV'
 import { LEAD_ESTATUS, ORIGEN } from '../lib/etiquetas'
 import { diasDesdeHoy, fechaCorta, telFormateado, urlWhatsApp } from '../lib/formato'
 import { mensajeDeError, esReglaDeNegocio } from '../lib/errores'
@@ -130,12 +131,28 @@ export function Leads() {
               : 'Todo el que escribe entra el mismo día'}
           </p>
         </div>
-        {puede && (
-          <Button onClick={() => setAltaAbierta(true)} className="hidden md:inline-flex">
-            <Plus className="h-4 w-4" />
-            Nuevo lead
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          <BotonCSV
+            nombre="leads"
+            filas={(leads ?? []).map((l) => ({
+              fecha: l.fecha,
+              nombre: l.nombre,
+              whatsapp: l.whatsapp,
+              origen: ORIGEN[l.origen],
+              que_pidio: l.que_pidio,
+              nivel_estimado: l.nivel_estimado,
+              estatus: LEAD_ESTATUS[l.estatus].texto,
+              siguiente_accion: l.siguiente_accion,
+              fecha_seguimiento: l.fecha_seguimiento,
+            }))}
+          />
+          {puede && (
+            <Button onClick={() => setAltaAbierta(true)} className="hidden md:inline-flex">
+              <Plus className="h-4 w-4" />
+              Nuevo lead
+            </Button>
+          )}
+        </div>
       </header>
 
       <div className="space-y-2.5">

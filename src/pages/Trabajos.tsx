@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/Badge'
 import { CardAnimada } from '../components/ui/Card'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
 import { FormTrabajo } from '../components/FormTrabajo'
+import { BotonCSV } from '../components/BotonCSV'
 import { COLUMNAS_KANBAN, TRABAJO_ESTATUS } from '../lib/etiquetas'
 import { dinero, dividir, fechaCorta, hora12, minutosAHoras } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
@@ -50,6 +51,30 @@ export function Trabajos() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <BotonCSV
+            nombre="trabajos"
+            filas={(trabajos ?? []).map((t) => ({
+              id: t.id,
+              cliente: t.cliente,
+              whatsapp: t.whatsapp,
+              diseno: t.diseno,
+              catalogo_id: t.catalogo_id,
+              nivel: t.nivel,
+              zona: t.zona,
+              fecha_trazado: t.fecha_trazado,
+              fecha_tatuaje: t.fecha_tatuaje,
+              hora: t.hora,
+              precio_total: t.precio_total,
+              anticipo: t.anticipo,
+              saldo: t.saldo,
+              tiempo_diseno_min: t.tiempo_diseno_min,
+              tiempo_aplicacion_min: t.tiempo_aplicacion_min,
+              minutos_totales: t.minutos_totales,
+              estatus: TRABAJO_ESTATUS[t.estatus].texto,
+              origen: t.origen,
+              retoque_pendiente: t.retoque_pendiente ? 'Sí' : 'No',
+            }))}
+          />
           <div className="flex rounded-xl bg-surface-2 p-1">
             <BotonVista activo={vista === 'kanban'} onClick={() => setVista('kanban')}>
               <Columns3 className="h-4 w-4" />
