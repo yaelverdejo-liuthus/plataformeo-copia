@@ -1,1 +1,11 @@
-/*    /index.html   200
+# Rutas del SPA: Cloudflare debe servir index.html y dejar que el router
+# de React resuelva. NO usar "/*  /index.html  200": Cloudflare normaliza
+# /index.html a /, ese / vuelve a hacer match con /*, y lo rechaza como
+# bucle infinito (error 100324).
+/leads         /index.html   200
+/trabajos      /index.html   200
+/trabajos/*    /index.html   200
+/catalogo      /index.html   200
+/contenido     /index.html   200
+/ads           /index.html   200
+/config        /index.html   200
