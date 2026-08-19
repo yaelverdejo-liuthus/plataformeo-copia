@@ -24,11 +24,30 @@ const PORCONSTRAINT: Record<string, string> = {
   ads_conversaciones_check: 'Las conversaciones no pueden ser negativas.',
 }
 
+/**
+ * Llave foránea violada al BORRAR: el registro tiene hijos que lo apuntan.
+ *
+ * Es el caso contrario al 23503 de siempre (insertar apuntando a algo que no
+ * existe), y el mensaje tiene que decir QUÉ estorba. "Violates foreign key
+ * constraint" no le sirve a nadie parado frente a un cliente.
+ */
+const PORDEPENDENCIA: Record<string, string> = {
+  trabajos_lead_id_fkey:
+    'Este lead ya se convirtió en trabajo. Borra primero el trabajo que salió de él.',
+  trabajos_catalogo_id_fkey:
+    'Este diseño está usado en al menos un trabajo. Cámbiale el diseño a ese trabajo antes de sacarlo del catálogo.',
+  contenido_trabajo_id_fkey:
+    'Este trabajo tiene videos ligados en Contenido. Desligalos o bórralos primero.',
+}
+
 const PORCODIGO: Record<string, string> = {
   '23505': 'Ya existe un registro con ese identificador.',
   '23503': 'Ese registro apunta a algo que no existe (o que ya se borró).',
   PGRST301: 'Tu sesión expiró. Vuelve a entrar.',
 }
+
+/** Postgres antepone esto solo cuando la FK se rompe por un DELETE/UPDATE. */
+const MARCA_DEPENDENCIA = 'update or delete on table'
 
 export function mensajeDeError(error: ErrorLike): string {
   if (!error) return 'Algo salió mal.'
@@ -36,6 +55,15 @@ export function mensajeDeError(error: ErrorLike): string {
 
   for (const [constraint, mensaje] of Object.entries(PORCONSTRAINT)) {
     if (texto.includes(constraint)) return mensaje
+  }
+
+  // Se revisa antes que PORCODIGO: ambos casos son 23503, pero solo este
+  // sabe nombrar lo que está estorbando.
+  if (texto.includes(MARCA_DEPENDENCIA)) {
+    for (const [constraint, mensaje] of Object.entries(PORDEPENDENCIA)) {
+      if (texto.includes(constraint)) return mensaje
+    }
+    return 'No se puede borrar: hay otros registros que dependen de este.'
   }
 
   // RLS rechaza el INSERT/UPDATE sin decir por qué: hay que explicarlo.
@@ -65,4 +93,14 @@ export function esReglaDeNegocio(error: ErrorLike): boolean {
   if (!error) return false
   const texto = `${error.message ?? ''} ${error.details ?? ''}`
   return Object.keys(PORCONSTRAINT).some((c) => texto.includes(c))
+}
+
+/**
+ * true si el borrado se bloqueó porque algo más depende del registro.
+ * No es un error del usuario: es la base cuidando que no queden huérfanos,
+ * así que se avisa con el tono de regla y no con el de fallo.
+ */
+export function esDependencia(error: ErrorLike): boolean {
+  if (!error) return false
+  return `${error.message ?? ''} ${error.details ?? ''}`.includes(MARCA_DEPENDENCIA)
 }

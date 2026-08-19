@@ -18,6 +18,7 @@ export function useDashboard() {
         ingreso_cobrado: n(f.ingreso_cobrado),
         costo_insumos: n(f.costo_insumos),
         gasto_pauta: n(f.gasto_pauta),
+        gasto_promocion_contenido: n(f.gasto_promocion_contenido),
         conversaciones: n(f.conversaciones),
         agendados: n(f.agendados),
         terminados: n(f.terminados),
@@ -45,12 +46,22 @@ export function derivar(d: DashboardFila | undefined) {
   const totalNiveles = d.nivel_1 + d.nivel_2 + d.nivel_3
   const minTotales = d.min_diseno + d.min_aplicacion
 
+  /*
+   * Todo lo que se pagó por distribución: campañas de Pauta + lo que se le
+   * metió a videos concretos desde Contenido. Son botones distintos en la
+   * app pero el mismo dinero saliendo, así que margen, ROAS, CPC y CAC
+   * tienen que medirse contra el total. Contarlo solo a medias hacía ver
+   * el negocio más rentable de lo que es.
+   */
+  const gastoPublicidad = d.gasto_pauta + d.gasto_promocion_contenido
+
   return {
-    margenNeto: d.ingreso_cobrado - d.costo_insumos - d.gasto_pauta,
-    costoPorConversacion: dividir(d.gasto_pauta, d.conversaciones),
-    cac: dividir(d.gasto_pauta, d.terminados),
+    gastoPublicidad,
+    margenNeto: d.ingreso_cobrado - d.costo_insumos - gastoPublicidad,
+    costoPorConversacion: dividir(gastoPublicidad, d.conversaciones),
+    cac: dividir(gastoPublicidad, d.terminados),
     ticketPromedio: dividir(d.ingreso_cobrado, d.terminados),
-    roas: dividir(d.ingreso_cobrado, d.gasto_pauta),
+    roas: dividir(d.ingreso_cobrado, gastoPublicidad),
     tasaCierre: dividir(d.agendados, d.conversaciones),
     tarifaRealHora: dividir(d.ingreso_cobrado, d.horas_invertidas),
     porcentajeNivel23: dividir(d.nivel_2 + d.nivel_3, totalNiveles),

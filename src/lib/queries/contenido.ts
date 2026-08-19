@@ -47,6 +47,22 @@ export function useCrearContenido() {
   })
 }
 
+export function useEliminarContenido() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('contenido').delete().eq('id', id)
+      if (error) throw error
+    },
+    // Sin optimismo al borrar: si RLS lo rechaza, ver la tarjeta desaparecer
+    // y reaparecer es peor que esperar el medio segundo que tarda.
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: llavesContenido.todo })
+      void qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
 export function useActualizarContenido() {
   const qc = useQueryClient()
   return useMutation({

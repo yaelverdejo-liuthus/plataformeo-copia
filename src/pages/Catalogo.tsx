@@ -3,8 +3,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, ImageIcon, Plus } from 'lucide-react'
-import { useCatalogo, useGuardarDiseno, useAlternarPublicado, siguienteIdDiseno } from '../lib/queries/catalogo'
+import { Eye, EyeOff, ImageIcon, Plus, Trash2 } from 'lucide-react'
+import {
+  useCatalogo,
+  useGuardarDiseno,
+  useAlternarPublicado,
+  useEliminarDiseno,
+  siguienteIdDiseno,
+} from '../lib/queries/catalogo'
 import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
 import { Button, BotonFlotante } from '../components/ui/Button'
@@ -12,9 +18,10 @@ import { Input, InputNumero, Select, Textarea, Switch } from '../components/ui/C
 import { Sheet } from '../components/ui/Sheet'
 import { Badge } from '../components/ui/Badge'
 import { Vacio, ErrorCarga, Skeleton } from '../components/ui/Estados'
+import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
 import { AUTORIA, NIVEL, ZONAS } from '../lib/etiquetas'
 import { dinero, minutosAHoras } from '../lib/formato'
-import { mensajeDeError, esReglaDeNegocio } from '../lib/errores'
+import { mensajeDeError, esReglaDeNegocio, esDependencia } from '../lib/errores'
 import { cn } from '../lib/cn'
 import type { Catalogo as Diseno, Nivel } from '../lib/tipos'
 
@@ -48,8 +55,10 @@ export function Catalogo() {
   const { puedeEscribir } = useRol()
   const guardar = useGuardarDiseno()
   const alternar = useAlternarPublicado()
+  const eliminar = useEliminarDiseno()
   const toast = useToast()
   const [editando, setEditando] = useState<Diseno | 'nuevo' | null>(null)
+  const [aBorrar, setABorrar] = useState<Diseno | null>(null)
 
   const puede = puedeEscribir('catalogo')
 
@@ -122,6 +131,23 @@ export function Catalogo() {
       const err = e as { message?: string }
       if (esReglaDeNegocio(err)) toast.regla(mensajeDeError(err))
       else toast.error(mensajeDeError(err))
+    }
+  }
+
+  async function borrar() {
+    if (!aBorrar) return
+    try {
+      await eliminar.mutateAsync(aBorrar.id)
+      toast.exito('Diseño eliminado')
+      setABorrar(null)
+      setEditando(null)
+    } catch (e) {
+      const err = e as { message?: string }
+      // Usado en un trabajo: no es un fallo, y el camino correcto es
+      // despublicarlo, que es justo lo que dice el mensaje.
+      if (esDependencia(err)) toast.regla(mensajeDeError(err))
+      else toast.error(mensajeDeError(err))
+      throw e
     }
   }
 
@@ -381,8 +407,40 @@ export function Catalogo() {
           </div>
 
           <Textarea etiqueta="Notas" {...register('notas')} />
+
+          {editando && editando !== 'nuevo' && (
+            <div className="border-t border-line pt-4">
+              <Button
+                type="button"
+                variante="peligro"
+                bloque
+                onClick={() => setABorrar(editando)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar diseño
+              </Button>
+              <p className="mt-2 text-xs text-fg-subtle">
+                Si ya se tatuó alguna vez, despublícalo en vez de borrarlo: así sale de la
+                cotización sin romper el expediente de ese trabajo.
+              </p>
+            </div>
+          )}
         </form>
       </Sheet>
+
+      <ConfirmarBorrado
+        abierto={Boolean(aBorrar)}
+        onCerrar={() => setABorrar(null)}
+        onConfirmar={borrar}
+        titulo="¿Eliminar este diseño?"
+        descripcion={
+          <>
+            Se borra <span className="text-fg">{aBorrar?.id}</span> ·{' '}
+            <span className="text-fg">{aBorrar?.nombre}</span> del catálogo, con su precio y su
+            zona.
+          </>
+        }
+      />
     </div>
   )
 }

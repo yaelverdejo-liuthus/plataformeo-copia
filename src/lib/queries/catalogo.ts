@@ -36,6 +36,22 @@ export function useGuardarDiseno() {
   })
 }
 
+/**
+ * Un diseño usado en algún trabajo no se puede borrar: lo detiene
+ * trabajos_catalogo_id_fkey. Para sacarlo del line-up sin romper
+ * expedientes, lo correcto es despublicarlo, no borrarlo.
+ */
+export function useEliminarDiseno() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('catalogo').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: llavesCatalogo.todo }),
+  })
+}
+
 export function useAlternarPublicado() {
   const qc = useQueryClient()
   return useMutation({

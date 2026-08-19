@@ -3,8 +3,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AnimatePresence } from 'framer-motion'
-import { ArrowRight, MessageCircle, Plus, UserPlus } from 'lucide-react'
-import { useLeads, useActualizarLead, useCrearLead } from '../lib/queries/leads'
+import { ArrowRight, MessageCircle, Pencil, Plus, Trash2, UserPlus } from 'lucide-react'
+import {
+  useLeads,
+  useActualizarLead,
+  useCrearLead,
+  useEliminarLead,
+} from '../lib/queries/leads'
 import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
 import { Button, BotonFlotante } from '../components/ui/Button'
@@ -16,9 +21,10 @@ import { Segmentado } from '../components/ui/Segmentado'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
 import { FormTrabajo } from '../components/FormTrabajo'
 import { BotonCSV } from '../components/BotonCSV'
+import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
 import { LEAD_ESTATUS, ORIGEN } from '../lib/etiquetas'
 import { diasDesdeHoy, fechaCorta, telFormateado, urlWhatsApp } from '../lib/formato'
-import { mensajeDeError, esReglaDeNegocio } from '../lib/errores'
+import { mensajeDeError, esReglaDeNegocio, esDependencia } from '../lib/errores'
 import type { Lead, LeadEstatus, Origen } from '../lib/tipos'
 
 const esquema = z.object({
@@ -38,18 +44,23 @@ type Formulario = z.infer<typeof esquema>
 
 type FiltroEstatus = LeadEstatus | 'todos' | 'vencidos'
 
+/** null = cerrado, 'nuevo' = alta, un lead = edición. */
+type EnEdicion = Lead | 'nuevo' | null
+
 export function Leads() {
   const { data: leads, isPending, error, refetch } = useLeads()
   const { puedeEscribir } = useRol()
   const crear = useCrearLead()
   const actualizar = useActualizarLead()
+  const eliminar = useEliminarLead()
   const toast = useToast()
 
   const [filtro, setFiltro] = useState<FiltroEstatus>('todos')
   const [origen, setOrigen] = useState<Origen | 'todos'>('todos')
-  const [altaAbierta, setAltaAbierta] = useState(false)
+  const [editando, setEditando] = useState<EnEdicion>(null)
   const [detalle, setDetalle] = useState<Lead | null>(null)
   const [convertir, setConvertir] = useState<Lead | null>(null)
+  const [aBorrar, setABorrar] = useState<Lead | null>(null)
 
   const puede = puedeEscribir('leads')
 
@@ -90,24 +101,75 @@ export function Leads() {
     }
   }, [leads])
 
-  async function alCrear(datos: Formulario) {
-    try {
-      await crear.mutateAsync({
-        nombre: datos.nombre,
-        whatsapp: datos.whatsapp.replace(/\D/g, ''),
-        origen: datos.origen,
-        que_pidio: datos.que_pidio || null,
-        nivel_estimado: datos.nivel_estimado ? datos.nivel_estimado : null,
-        siguiente_accion: datos.siguiente_accion || null,
-        fecha_seguimiento: datos.fecha_seguimiento || null,
+  function abrir(destino: EnEdicion) {
+    setEditando(destino)
+    if (destino === 'nuevo') {
+      reset({
+        nombre: '',
+        whatsapp: '',
+        origen: 'meta',
+        que_pidio: '',
+        nivel_estimado: '',
+        siguiente_accion: '',
+        fecha_seguimiento: '',
       })
-      toast.exito('Lead registrado')
-      reset({ origen: datos.origen })
-      setAltaAbierta(false)
+    } else if (destino) {
+      reset({
+        nombre: destino.nombre,
+        whatsapp: destino.whatsapp,
+        origen: destino.origen,
+        que_pidio: destino.que_pidio ?? '',
+        nivel_estimado: destino.nivel_estimado ?? '',
+        siguiente_accion: destino.siguiente_accion ?? '',
+        fecha_seguimiento: destino.fecha_seguimiento ?? '',
+      })
+    }
+  }
+
+  async function alGuardar(datos: Formulario) {
+    const campos = {
+      nombre: datos.nombre,
+      whatsapp: datos.whatsapp.replace(/\D/g, ''),
+      origen: datos.origen,
+      que_pidio: datos.que_pidio || null,
+      nivel_estimado: datos.nivel_estimado ? datos.nivel_estimado : null,
+      siguiente_accion: datos.siguiente_accion || null,
+      fecha_seguimiento: datos.fecha_seguimiento || null,
+    }
+
+    try {
+      if (editando === 'nuevo') {
+        await crear.mutateAsync(campos)
+        toast.exito('Lead registrado')
+      } else if (editando) {
+        await actualizar.mutateAsync({ id: editando.id, cambios: campos })
+        // El detalle puede estar mostrando la versión vieja detrás.
+        setDetalle((d) => (d && d.id === editando.id ? { ...d, ...campos } : d))
+        toast.exito('Lead actualizado')
+      }
+      setEditando(null)
     } catch (e) {
       toast.error(mensajeDeError(e as { message?: string }))
     }
   }
+
+  async function borrar() {
+    if (!aBorrar) return
+    try {
+      await eliminar.mutateAsync(aBorrar.id)
+      toast.exito('Lead eliminado')
+      setABorrar(null)
+      setDetalle(null)
+    } catch (e) {
+      const err = e as { message?: string }
+      // "Ya es un trabajo" no es un fallo: es la base cuidando el expediente.
+      if (esDependencia(err)) toast.regla(mensajeDeError(err))
+      else toast.error(mensajeDeError(err))
+      throw e
+    }
+  }
+
+  const esAlta = editando === 'nuevo'
 
   async function cambiarEstatus(lead: Lead, estatus: LeadEstatus) {
     try {
@@ -147,7 +209,7 @@ export function Leads() {
             }))}
           />
           {puede && (
-            <Button onClick={() => setAltaAbierta(true)} className="hidden md:inline-flex">
+            <Button onClick={() => abrir('nuevo')} className="hidden md:inline-flex">
               <Plus className="h-4 w-4" />
               Nuevo lead
             </Button>
@@ -199,7 +261,7 @@ export function Leads() {
           }
           accion={
             puede && filtro === 'todos' ? (
-              <Button onClick={() => setAltaAbierta(true)}>Registrar el primero</Button>
+              <Button onClick={() => abrir('nuevo')}>Registrar el primero</Button>
             ) : undefined
           }
         />
@@ -257,7 +319,7 @@ export function Leads() {
       {puede && (
         <BotonFlotante
           data-tour="nuevo-lead"
-          onClick={() => setAltaAbierta(true)}
+          onClick={() => abrir('nuevo')}
           aria-label="Nuevo lead"
         >
           <Plus className="h-6 w-6" />
@@ -266,22 +328,26 @@ export function Leads() {
 
       {/* ── Alta rápida: la meta es menos de 15 segundos ──────────────── */}
       <Sheet
-        abierto={altaAbierta}
-        onCerrar={() => setAltaAbierta(false)}
-        titulo="Nuevo lead"
-        descripcion="Lo mínimo para no perderlo. El resto se llena después."
+        abierto={Boolean(editando)}
+        onCerrar={() => setEditando(null)}
+        titulo={esAlta ? 'Nuevo lead' : 'Editar lead'}
+        descripcion={
+          esAlta
+            ? 'Lo mínimo para no perderlo. El resto se llena después.'
+            : 'El estatus se cambia desde el detalle, no aquí.'
+        }
         pie={
           <Button
             bloque
             tamano="lg"
             cargando={isSubmitting}
-            onClick={handleSubmit(alCrear)}
+            onClick={handleSubmit(alGuardar)}
           >
-            Guardar lead
+            {esAlta ? 'Guardar lead' : 'Guardar cambios'}
           </Button>
         }
       >
-        <form onSubmit={handleSubmit(alCrear)} className="space-y-4">
+        <form onSubmit={handleSubmit(alGuardar)} className="space-y-4">
           <Input
             etiqueta="Nombre"
             autoFocus
@@ -393,6 +459,26 @@ export function Leads() {
                 </div>
               </div>
             )}
+
+            {puede && (
+              <div className="flex gap-2 border-t border-line pt-4">
+                <Button
+                  variante="secundario"
+                  className="flex-1"
+                  onClick={() => {
+                    abrir(detalle)
+                    setDetalle(null)
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </Button>
+                <Button variante="peligro" onClick={() => setABorrar(detalle)}>
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Sheet>
@@ -424,6 +510,19 @@ export function Leads() {
           />
         )}
       </Sheet>
+
+      <ConfirmarBorrado
+        abierto={Boolean(aBorrar)}
+        onCerrar={() => setABorrar(null)}
+        onConfirmar={borrar}
+        titulo="¿Eliminar este lead?"
+        descripcion={
+          <>
+            Se borra <span className="text-fg">{aBorrar?.nombre}</span> con su WhatsApp, su origen y
+            su seguimiento. Deja de contar como conversación en el tablero.
+          </>
+        }
+      />
     </div>
   )
 }

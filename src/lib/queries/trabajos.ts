@@ -87,6 +87,26 @@ export function useCrearTrabajo() {
   })
 }
 
+/**
+ * Un trabajo con videos ligados no se puede borrar: lo detiene
+ * contenido_trabajo_id_fkey. Es a propósito — si el expediente se va,
+ * el video queda apuntando a un fantasma y el filtro deja de cuadrar.
+ */
+export function useEliminarTrabajo() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('trabajos').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSettled: (_d, _e, id) => {
+      void qc.invalidateQueries({ queryKey: llavesTrabajos.todo })
+      qc.removeQueries({ queryKey: llavesTrabajos.uno(id) })
+      void qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
 export function useActualizarTrabajo() {
   const qc = useQueryClient()
   return useMutation({

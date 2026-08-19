@@ -41,6 +41,20 @@ export function useCrearAd() {
   })
 }
 
+export function useEliminarAd() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('ads').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: llavesAds.todo })
+      void qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
 export function useActualizarAd() {
   const qc = useQueryClient()
   return useMutation({

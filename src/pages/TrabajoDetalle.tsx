@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Camera, MessageCircle, Pencil } from 'lucide-react'
-import { useTrabajo, useActualizarTrabajo } from '../lib/queries/trabajos'
+import { ArrowLeft, Camera, MessageCircle, Pencil, Trash2 } from 'lucide-react'
+import { useTrabajo, useActualizarTrabajo, useEliminarTrabajo } from '../lib/queries/trabajos'
 import { useUmbrales } from '../lib/queries/config'
 import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
@@ -12,6 +12,7 @@ import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
 import { Skeleton, ErrorCarga } from '../components/ui/Estados'
 import { FormTrabajo } from '../components/FormTrabajo'
+import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
 import { TRABAJO_ESTATUS } from '../lib/etiquetas'
 import { supabase } from '../lib/supabase'
 import {
@@ -23,7 +24,7 @@ import {
   telFormateado,
   urlWhatsApp,
 } from '../lib/formato'
-import { mensajeDeError, esReglaDeNegocio } from '../lib/errores'
+import { mensajeDeError, esReglaDeNegocio, esDependencia } from '../lib/errores'
 import { cn } from '../lib/cn'
 import type { TrabajoEstatus } from '../lib/tipos'
 
@@ -34,11 +35,13 @@ export function TrabajoDetalle() {
   const { umbrales } = useUmbrales()
   const { puedeEscribir } = useRol()
   const actualizar = useActualizarTrabajo()
+  const eliminar = useEliminarTrabajo()
   const toast = useToast()
   const inputFoto = useRef<HTMLInputElement>(null)
 
   const [editando, setEditando] = useState(false)
   const [subiendo, setSubiendo] = useState(false)
+  const [confirmarBorrado, setConfirmarBorrado] = useState(false)
 
   const puede = puedeEscribir('trabajos')
 
@@ -110,6 +113,21 @@ export function TrabajoDetalle() {
     }
   }
 
+  async function borrar() {
+    if (!t) return
+    try {
+      await eliminar.mutateAsync(t.id)
+      toast.exito(`${t.id} eliminado`)
+      navegar('/trabajos')
+    } catch (e) {
+      const err = e as { message?: string }
+      // Con videos ligados la base lo detiene; hay que decir cuál es la salida.
+      if (esDependencia(err)) toast.regla(mensajeDeError(err))
+      else toast.error(mensajeDeError(err))
+      throw e
+    }
+  }
+
   return (
     <div className="space-y-4">
       <button
@@ -135,10 +153,19 @@ export function TrabajoDetalle() {
           </div>
         </div>
         {puede && (
-          <Button variante="secundario" onClick={() => setEditando(true)}>
-            <Pencil className="h-4 w-4" />
-            <span className="hidden sm:inline">Editar</span>
-          </Button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variante="secundario" onClick={() => setEditando(true)}>
+              <Pencil className="h-4 w-4" />
+              <span className="hidden sm:inline">Editar</span>
+            </Button>
+            <Button
+              variante="peligro"
+              onClick={() => setConfirmarBorrado(true)}
+              aria-label={`Eliminar ${t.id}`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         )}
       </header>
 
@@ -323,6 +350,20 @@ export function TrabajoDetalle() {
       >
         <FormTrabajo trabajoExistente={t} alGuardar={() => setEditando(false)} />
       </Sheet>
+
+      <ConfirmarBorrado
+        abierto={confirmarBorrado}
+        onCerrar={() => setConfirmarBorrado(false)}
+        onConfirmar={borrar}
+        titulo={`¿Eliminar ${t.id}?`}
+        descripcion={
+          <>
+            Se borra el expediente de <span className="text-fg">{t.cliente}</span> con su precio,
+            su anticipo, sus tiempos y su foto de zona. El ingreso cobrado y la tarifa real por
+            hora del tablero se recalculan sin él.
+          </>
+        }
+      />
     </div>
   )
 }

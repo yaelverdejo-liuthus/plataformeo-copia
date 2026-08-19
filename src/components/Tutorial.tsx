@@ -39,14 +39,19 @@ const APERTURA: Paso[] = [
   },
 ]
 
-const CIERRE: Paso[] = [
-  {
-    titulo: 'Eso es todo',
-    texto:
-      'Si la app no te deja hacer algo que crees que sí deberías, dile al admin. Y si quieres volver a ver esto, está en "Ver tutorial", aquí mismo en el menú.',
-    objetivo: 'nav',
-  },
-]
+/** El cierre cambia según quién pregunta: al admin no se le dice "dile al admin". */
+function cierrePara(rol: Rol): Paso[] {
+  return [
+    {
+      titulo: 'Eso es todo',
+      texto:
+        rol === 'admin'
+          ? 'Tú tienes acceso a todo. Si a alguien del equipo le falta algo, no está descompuesto: es su rol. Y si quieres volver a ver esto, está en "Ver tutorial", aquí mismo en el menú.'
+          : 'Si la app no te deja hacer algo que crees que sí deberías, dile al admin. Y si quieres volver a ver esto, está en "Ver tutorial", aquí mismo en el menú.',
+      objetivo: 'nav',
+    },
+  ]
+}
 
 const POR_ROL: Record<Rol, Paso[]> = {
   tatuador: [
@@ -175,7 +180,7 @@ const POR_ROL: Record<Rol, Paso[]> = {
 }
 
 function pasosPara(rol: Rol): Paso[] {
-  return [...APERTURA, ...POR_ROL[rol], ...CIERRE]
+  return [...APERTURA, ...POR_ROL[rol], ...cierrePara(rol)]
 }
 
 interface Caja {
@@ -227,15 +232,26 @@ export function Tutorial({
   const paso = pasos[i]
   const enRecorrido = fase === 'pasos'
 
-  const leToca = rol === 'tatuador' || rol === 'contenido'
-
+  /*
+   * Se ofrece una vez por apertura de la app, a cualquier rol — el admin
+   * incluido, que antes quedaba fuera y nunca llegaba a verlo.
+   *
+   * Se dispara al abrir y no solo al escribir la contraseña: la sesión dura
+   * días, así que casi nadie pasa por el formulario de login. Atarlo a eso
+   * era garantizar que no saliera nunca.
+   *
+   * La única forma de silenciarlo es "No volver a preguntar", que apaga
+   * `mostrar_tutorial` en la base. Un "No" suelto solo lo cierra por hoy.
+   */
   useEffect(() => {
-    if (isPending || !leToca || yaPreguntado.current) return
-    if (prefs?.mostrar_tutorial) {
-      yaPreguntado.current = true
-      setFase('pregunta')
-    }
-  }, [isPending, leToca, prefs?.mostrar_tutorial])
+    if (isPending || yaPreguntado.current) return
+    // La marca se pone solo cuando de verdad se ofrece. Si se pusiera antes
+    // de mirar `prefs`, un render con las preferencias todavía en camino
+    // gastaría el único disparo y el asistente no saldría nunca.
+    if (!prefs?.mostrar_tutorial) return
+    yaPreguntado.current = true
+    setFase('pregunta')
+  }, [isPending, prefs?.mostrar_tutorial])
 
   useEffect(() => {
     if (solicitado) {
@@ -514,8 +530,21 @@ export function Tutorial({
                       >
                         Sí, repetir.
                       </Button>
+                      {/* Cierra por hoy, pero se le vuelve a ofrecer la
+                          próxima vez que entre: el único apagador es el de
+                          abajo, y dice exactamente lo que hace. */}
                       <Button
                         bloque
+                        onClick={() => {
+                          guardar.mutate({ tutorial_visto_en: new Date().toISOString() })
+                          cerrar()
+                        }}
+                      >
+                        No, lo he entendido todo.
+                      </Button>
+                      <Button
+                        bloque
+                        variante="fantasma"
                         onClick={() => {
                           guardar.mutate({
                             mostrar_tutorial: false,
@@ -524,7 +553,7 @@ export function Tutorial({
                           cerrar()
                         }}
                       >
-                        No, lo he entendido todo.
+                        No volver a preguntar
                       </Button>
                     </div>
                   </>

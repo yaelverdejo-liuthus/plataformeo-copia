@@ -65,6 +65,24 @@ export function useCrearLead() {
   })
 }
 
+/**
+ * Un lead ya convertido en trabajo no se puede borrar: lo detiene
+ * trabajos_lead_id_fkey. El mensaje lo traduce `mensajeDeError`.
+ */
+export function useEliminarLead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('leads').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: llavesLeads.todo })
+      void qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
 export function useActualizarLead() {
   const qc = useQueryClient()
   return useMutation({

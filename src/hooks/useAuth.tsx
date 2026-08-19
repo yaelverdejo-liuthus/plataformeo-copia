@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { Perfil, Rol } from '../lib/tipos'
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cargandoPerfil, setCargandoPerfil] = useState(false)
   const [errorPerfil, setErrorPerfil] = useState<string | null>(null)
   const [intento, setIntento] = useState(0)
+  const qc = useQueryClient()
 
   /*
    * Efecto 1 — solo sesión.
@@ -109,6 +111,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
     setPerfil(null)
     setErrorPerfil(null)
+    /*
+     * Sin esto, el siguiente en entrar hereda lo que quedó cacheado del
+     * anterior. Con 3 personas compartiendo el mismo teléfono del estudio
+     * eso se nota primero en las preferencias del tutorial, pero aplica a
+     * todo: la app no recarga entre un logout y el siguiente login.
+     */
+    qc.clear()
   }
 
   return (

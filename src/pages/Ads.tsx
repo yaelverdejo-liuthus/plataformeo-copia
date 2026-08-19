@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -14,8 +14,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { Megaphone, Plus } from 'lucide-react'
-import { useAds, useCrearAd, useActualizarAd } from '../lib/queries/ads'
+import { Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useAds, useCrearAd, useActualizarAd, useEliminarAd } from '../lib/queries/ads'
 import { useUmbrales } from '../lib/queries/config'
 import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
@@ -26,9 +26,11 @@ import { Badge } from '../components/ui/Badge'
 import { Card, CardAnimada } from '../components/ui/Card'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
 import { BotonCSV } from '../components/BotonCSV'
+import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
 import { PLATAFORMA, VEREDICTO } from '../lib/etiquetas'
 import { dinero, dineroExacto, fechaCorta, hoyISO, numero } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
+import type { Ad, AdConVeredicto } from '../lib/tipos'
 
 const esquema = z.object({
   fecha: z.string().min(1),
@@ -55,14 +57,19 @@ type Salida = z.output<typeof esquema>
 /** Colores de serie: propios de la paleta, no los default de Recharts. */
 const SERIES = ['rgb(139 109 255)', 'rgb(224 176 128)', 'rgb(86 168 245)', 'rgb(63 191 127)']
 
+/** null = cerrado, 'nuevo' = alta, una fila = edición. */
+type EnEdicion = AdConVeredicto | 'nuevo' | null
+
 export function Ads() {
   const { data: ads, isPending, error, refetch } = useAds()
   const { umbrales } = useUmbrales()
   const { puedeEscribir } = useRol()
   const crear = useCrearAd()
   const actualizar = useActualizarAd()
+  const eliminar = useEliminarAd()
   const toast = useToast()
-  const [altaAbierta, setAltaAbierta] = useState(false)
+  const [editando, setEditando] = useState<EnEdicion>(null)
+  const [aBorrar, setABorrar] = useState<AdConVeredicto | null>(null)
 
   const puede = puedeEscribir('ads')
 
@@ -107,24 +114,67 @@ export function Ads() {
     }
   }, [ads])
 
-  async function alCrear(datos: Salida) {
-    try {
-      await crear.mutateAsync(datos)
-      toast.exito('Registro de pauta guardado')
+  function abrir(destino: EnEdicion) {
+    setEditando(destino)
+    if (destino === 'nuevo') {
       reset({
-        fecha: datos.fecha,
-        plataforma: datos.plataforma,
-        creativo: datos.creativo,
-        objetivo: datos.objetivo,
-        presupuesto: datos.presupuesto,
+        fecha: hoyISO(),
+        plataforma: 'facebook',
+        creativo: '',
+        objetivo: 'Mensajes a WhatsApp',
+        presupuesto: '' as unknown as number,
         gasto_real: '' as unknown as number,
         conversaciones: '' as unknown as number,
       })
-      setAltaAbierta(false)
+    } else if (destino) {
+      reset({
+        fecha: destino.fecha,
+        plataforma: destino.plataforma,
+        creativo: destino.creativo,
+        objetivo: destino.objetivo,
+        presupuesto: Number(destino.presupuesto),
+        gasto_real: Number(destino.gasto_real),
+        conversaciones: destino.conversaciones,
+      })
+    }
+  }
+
+  async function alGuardar(datos: Salida) {
+    try {
+      if (editando === 'nuevo') {
+        await crear.mutateAsync(datos)
+        toast.exito('Registro de pauta guardado')
+      } else if (editando) {
+        await actualizar.mutateAsync({ id: editando.id, cambios: datos })
+        toast.exito('Registro actualizado')
+      }
+      setEditando(null)
     } catch (e) {
       toast.error(mensajeDeError(e as { message?: string }))
     }
   }
+
+  /** Igual que en Contenido: un rechazo silencioso se ve como app rota. */
+  function guardarCampo(id: string, cambios: Partial<Ad>) {
+    actualizar.mutate(
+      { id, cambios },
+      { onError: (e) => toast.error(mensajeDeError(e as { message?: string })) },
+    )
+  }
+
+  async function borrar() {
+    if (!aBorrar) return
+    try {
+      await eliminar.mutateAsync(aBorrar.id)
+      toast.exito('Registro de pauta eliminado')
+      setABorrar(null)
+    } catch (e) {
+      toast.error(mensajeDeError(e as { message?: string }))
+      throw e
+    }
+  }
+
+  const esAlta = editando === 'nuevo'
 
   return (
     <div className="space-y-4">
@@ -155,7 +205,7 @@ export function Ads() {
             }))}
           />
           {puede && (
-            <Button onClick={() => setAltaAbierta(true)} className="hidden md:inline-flex">
+            <Button onClick={() => abrir('nuevo')} className="hidden md:inline-flex">
               <Plus className="h-4 w-4" />
               Registrar día
             </Button>
@@ -243,7 +293,7 @@ export function Ads() {
           icono={<Megaphone className="h-6 w-6" />}
           titulo="Sin registros de pauta"
           descripcion="Una fila por anuncio por día. Sin esto, en tres semanas cada quien tiene su teoría y ninguna es verificable."
-          accion={puede ? <Button onClick={() => setAltaAbierta(true)}>Registrar el primero</Button> : undefined}
+          accion={puede ? <Button onClick={() => abrir('nuevo')}>Registrar el primero</Button> : undefined}
         />
       ) : (
         <div className="space-y-2.5">
@@ -261,9 +311,28 @@ export function Ads() {
                         <span>{fechaCorta(a.fecha)}</span>
                       </div>
                     </div>
-                    <Badge tono={v.tono} punto>
-                      {v.texto}
-                    </Badge>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Badge tono={v.tono} punto>
+                        {v.texto}
+                      </Badge>
+                      {puede && (
+                        <div className="flex items-center gap-0.5">
+                          <BotonIcono
+                            etiqueta={`Editar ${a.creativo}`}
+                            onClick={() => abrir(a)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </BotonIcono>
+                          <BotonIcono
+                            etiqueta={`Eliminar ${a.creativo}`}
+                            peligro
+                            onClick={() => setABorrar(a)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </BotonIcono>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-3 grid grid-cols-4 gap-2">
@@ -272,18 +341,14 @@ export function Ads() {
                       titulo="Gasto"
                       valor={Number(a.gasto_real)}
                       editable={puede}
-                      onGuardar={(n) =>
-                        actualizar.mutate({ id: a.id, cambios: { gasto_real: n ?? 0 } })
-                      }
+                      onGuardar={(n) => guardarCampo(a.id, { gasto_real: n ?? 0 })}
                     />
                     <MiniEditable
                       titulo="Convs."
                       valor={a.conversaciones}
                       editable={puede}
                       entero
-                      onGuardar={(n) =>
-                        actualizar.mutate({ id: a.id, cambios: { conversaciones: n ?? 0 } })
-                      }
+                      onGuardar={(n) => guardarCampo(a.id, { conversaciones: n ?? 0 })}
                     />
                     <Mini
                       titulo="Costo/conv."
@@ -306,7 +371,7 @@ export function Ads() {
       {puede && (
         <BotonFlotante
           data-tour="nueva-pauta"
-          onClick={() => setAltaAbierta(true)}
+          onClick={() => abrir('nuevo')}
           aria-label="Registrar día de pauta"
         >
           <Plus className="h-6 w-6" />
@@ -314,17 +379,19 @@ export function Ads() {
       )}
 
       <Sheet
-        abierto={altaAbierta}
-        onCerrar={() => setAltaAbierta(false)}
-        titulo="Registrar día de pauta"
-        descripcion="Una fila por anuncio por día."
+        abierto={Boolean(editando)}
+        onCerrar={() => setEditando(null)}
+        titulo={esAlta ? 'Registrar día de pauta' : 'Editar registro'}
+        descripcion={
+          esAlta ? 'Una fila por anuncio por día.' : 'Corrige lo que se capturó mal ese día.'
+        }
         pie={
-          <Button bloque tamano="lg" cargando={isSubmitting} onClick={handleSubmit(alCrear)}>
-            Guardar
+          <Button bloque tamano="lg" cargando={isSubmitting} onClick={handleSubmit(alGuardar)}>
+            {esAlta ? 'Guardar' : 'Guardar cambios'}
           </Button>
         }
       >
-        <form onSubmit={handleSubmit(alCrear)} className="space-y-4">
+        <form onSubmit={handleSubmit(alGuardar)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <Input etiqueta="Fecha" type="date" {...register('fecha')} />
             <Select etiqueta="Plataforma" {...register('plataforma')}>
@@ -373,7 +440,49 @@ export function Ads() {
           />
         </form>
       </Sheet>
+
+      <ConfirmarBorrado
+        abierto={Boolean(aBorrar)}
+        onCerrar={() => setABorrar(null)}
+        onConfirmar={borrar}
+        titulo="¿Eliminar este registro?"
+        descripcion={
+          <>
+            Se borra el día <span className="text-fg">{fechaCorta(aBorrar?.fecha)}</span> de{' '}
+            <span className="text-fg">{aBorrar?.creativo}</span>. El gasto deja de contar en el
+            tablero y la línea del creativo pierde ese punto.
+          </>
+        }
+      />
     </div>
+  )
+}
+
+/** Acción compacta de tarjeta. 44px de área táctil aunque el icono sea de 16. */
+function BotonIcono({
+  children,
+  etiqueta,
+  peligro,
+  onClick,
+}: {
+  children: ReactNode
+  etiqueta: string
+  peligro?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={etiqueta}
+      className={
+        'flex h-11 w-11 items-center justify-center rounded-xl transition-colors ' +
+        (peligro
+          ? 'text-fg-subtle hover:bg-danger/12 hover:text-danger'
+          : 'text-fg-subtle hover:bg-surface-2 hover:text-fg')
+      }
+    >
+      {children}
+    </button>
   )
 }
 

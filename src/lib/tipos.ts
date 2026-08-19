@@ -148,7 +148,10 @@ export type ConfigFila = {
 export type DashboardFila = {
   ingreso_cobrado: number
   costo_insumos: number
+  /** Solo `ads.gasto_real`. Lo de contenido va aparte, para que Pauta cuadre. */
   gasto_pauta: number
+  /** Suma de `contenido.gasto_promocion`: impulsar videos ya publicados. */
+  gasto_promocion_contenido: number
   conversaciones: number
   agendados: number
   terminados: number

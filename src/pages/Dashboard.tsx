@@ -213,7 +213,11 @@ export function Dashboard() {
               luz={dv.margenNeto > 0 ? 'verde' : dv.margenNeto < 0 ? 'rojo' : 'sin_datos'}
             />
             <KPI titulo="Costo de insumos" valor={dinero(d.costo_insumos)} />
-            <KPI titulo="Gasto en pauta" valor={dinero(d.gasto_pauta)} />
+            <KPI
+              titulo="Gasto en publicidad"
+              valor={dinero(dv.gastoPublicidad)}
+              pie={`${dinero(d.gasto_pauta)} pauta · ${dinero(d.gasto_promocion_contenido)} promoción de videos`}
+            />
           </div>
         )}
       </section>
@@ -364,14 +368,17 @@ export function Dashboard() {
         {isPending || !d ? (
           <SkeletonKPIs n={4} />
         ) : (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
             <KPI titulo="Horas invertidas" valor={horas(d.horas_invertidas)} pie="Solo trabajos terminados" />
             <KPI titulo="Tiempo de diseño" valor={minutosAHoras(d.min_diseno)} />
             <KPI titulo="Videos publicados" valor={numero(d.videos_publicados)} />
+            <KPI titulo="Vistas acumuladas" valor={numero(d.vistas_totales)} pie="Medidas a las 4 h" />
             <KPI
               titulo="Videos que pasan filtro"
               valor={numero(d.videos_aptos)}
-              pie={`${numero(d.vistas_totales)} vistas acumuladas`}
+              // El pie explica POR QUÉ hay un 0: con los umbrales a la vista,
+              // un video con vistas pero sin filtro deja de parecer un bug.
+              pie={`Mínimo ${numero(umbrales.filtro_vistas_4h)} vistas y ${numero(umbrales.filtro_guardados_4h)} guardados`}
             />
           </div>
         )}
