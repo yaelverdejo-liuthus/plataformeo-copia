@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Megaphone,
+  HelpCircle,
   MoreHorizontal,
   Moon,
   Settings,
@@ -20,6 +21,7 @@ import { useRol, NOMBRE_ROL } from '../../hooks/useRol'
 import { useTema } from '../../hooks/useTema'
 import { useConexion } from '../../hooks/useConexion'
 import { Sheet } from '../ui/Sheet'
+import { Tutorial } from '../Tutorial'
 import { cn } from '../../lib/cn'
 
 type Icono = typeof LayoutDashboard
@@ -57,6 +59,12 @@ export function AppShell() {
   const ubicacion = useLocation()
   const navegar = useNavigate()
   const [masAbierto, setMasAbierto] = useState(false)
+  const [tutorialSolicitado, setTutorialSolicitado] = useState(false)
+
+  function verTutorial() {
+    setMasAbierto(false)
+    setTutorialSolicitado(true)
+  }
 
   const entradas = ENTRADAS.filter((e) => !e.soloAdmin || esAdmin)
   const barra = entradas.filter((e) => EN_BARRA.includes(e.ruta))
@@ -109,6 +117,14 @@ export function AppShell() {
               <p className="text-xs text-fg-subtle">{rol ? NOMBRE_ROL[rol] : ''}</p>
             </div>
           </div>
+          <button
+            onClick={verTutorial}
+            className="flex h-10 w-full items-center gap-2.5 rounded-xl px-3 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+          >
+            <HelpCircle className="h-4 w-4" />
+            Ver tutorial
+          </button>
+
           <div className="mt-1 flex gap-1">
             <button
               onClick={alternar}
@@ -232,6 +248,14 @@ export function AppShell() {
             </button>
           ))}
 
+          <button
+            onClick={verTutorial}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left text-base text-fg transition-colors active:bg-surface-2"
+          >
+            <HelpCircle className="h-5 w-5 text-fg-muted" />
+            Ver tutorial
+          </button>
+
           <div className="!mt-4 border-t border-line pt-3">
             <div className="flex items-center gap-3 px-3 py-2">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
@@ -252,6 +276,11 @@ export function AppShell() {
           </div>
         </div>
       </Sheet>
+
+      <Tutorial
+        solicitado={tutorialSolicitado}
+        onCerrarSolicitado={() => setTutorialSolicitado(false)}
+      />
     </div>
   )
 }

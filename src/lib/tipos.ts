@@ -132,6 +132,13 @@ export type AdConVeredicto = Ad & {
   veredicto: Veredicto
 }
 
+export type Preferencias = {
+  id: string
+  mostrar_tutorial: boolean
+  tutorial_visto_en: string | null
+  updated_at: string
+}
+
 export type ConfigFila = {
   clave: string
   valor: number
@@ -180,6 +187,7 @@ export type Database = {
       contenido: Tabla<Contenido>
       ads: Tabla<Ad>
       config: Tabla<ConfigFila>
+      preferencias: Tabla<Preferencias>
     }
     Views: {
       v_contenido_filtro: { Row: ContenidoConFiltro; Relationships: [] }
