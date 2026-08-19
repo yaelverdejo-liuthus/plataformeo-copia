@@ -95,7 +95,7 @@ export function LluviaCalaveras() {
 }
 
 /**
- * Calavera de una sola pieza.
+ * Calavera de una sola pieza, sin dentadura: cráneo, cuencas y nariz.
  *
  * Cuencas y nariz son huecos de verdad (fill-rule evenodd) y no formas
  * pintadas del color del fondo: así funciona igual en claro y en oscuro sin
@@ -105,14 +105,18 @@ function Calavera({ tamano, calida }: { tamano: number; calida: boolean }) {
   return (
     <svg
       width={tamano}
-      height={tamano * 1.25}
-      viewBox="0 0 32 40"
+      height={tamano * 1.05}
+      // El trazo ocupa de y=2 a y=31.4. El viewBox lo ciñe dejando el mismo
+      // margen arriba y abajo: con el 0 0 32 40 de cuando había dientes,
+      // cada calavera arrastraba una quinta parte de alto vacío y se veían
+      // más separadas entre sí de lo que en realidad estaban.
+      viewBox="0 0 32 33.4"
       fill="currentColor"
       className={calida ? 'text-accent' : 'text-fg'}
     >
       <path
         fillRule="evenodd"
-        d="M16 2C8.3 2 3 7.6 3 15c0 4.2 1.6 7 3.9 9.1.8.7 1.3 1.5 1.4 2.5l.3 2.9c.1 1.1 1 1.9 2.1 1.9h.9v3c0 .8.7 1.5 1.5 1.5s1.5-.7 1.5-1.5v-3h2.8v3c0 .8.7 1.5 1.5 1.5s1.5-.7 1.5-1.5v-3h.9c1.1 0 2-.8 2.1-1.9l.3-2.9c.1-1 .6-1.8 1.4-2.5C27.4 22 29 19.2 29 15 29 7.6 23.7 2 16 2Zm-9.1 13.5a3.7 4.3 0 1 1 7.4 0 3.7 4.3 0 0 1-7.4 0Zm10.8 0a3.7 4.3 0 1 1 7.4 0 3.7 4.3 0 0 1-7.4 0ZM16 20.4l2.2 4.4h-4.4L16 20.4Z"
+        d="M16 2C8.3 2 3 7.6 3 15c0 4.2 1.6 7 3.9 9.1.8.7 1.3 1.5 1.4 2.5l.3 2.9c.1 1.1 1 1.9 2.1 1.9h10.6c1.1 0 2-.8 2.1-1.9l.3-2.9c.1-1 .6-1.8 1.4-2.5C27.4 22 29 19.2 29 15 29 7.6 23.7 2 16 2Zm-9.1 13.5a3.7 4.3 0 1 1 7.4 0 3.7 4.3 0 0 1-7.4 0Zm10.8 0a3.7 4.3 0 1 1 7.4 0 3.7 4.3 0 0 1-7.4 0ZM16 20.4l2.2 4.4h-4.4L16 20.4Z"
       />
     </svg>
   )
