@@ -105,6 +105,59 @@
     @apply rounded-lg bg-surface-3;
     animation: pulse-soft 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+
+  /* ── Lluvia de calaveras del login ────────────────────────────────
+     Capa decorativa detrás del formulario. `pointer-events: none` para
+     que no robe ni un tap, y `overflow: hidden` porque el vaivén saca
+     las calaveras de los bordes y si no, aparece scroll horizontal.   */
+  .lluvia {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .calavera-carril {
+    position: absolute;
+    top: 0;
+    animation-name: calavera-caer;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  .calavera-vaiven {
+    display: block;
+    animation-name: calavera-vaiven;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+  }
+}
+
+/* Lineal a propósito: una pluma no acelera al caer, y cualquier ease
+   delataría el punto donde el ciclo se reinicia. */
+@keyframes calavera-caer {
+  0% {
+    transform: translate3d(0, -20vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  12%,
+  88% {
+    opacity: var(--brillo);
+  }
+  100% {
+    transform: translate3d(0, 120vh, 0) rotate(var(--giro));
+    opacity: 0;
+  }
+}
+
+@keyframes calavera-vaiven {
+  from {
+    transform: translate3d(calc(var(--deriva) * -1), 0, 0);
+  }
+  to {
+    transform: translate3d(var(--deriva), 0, 0);
+  }
 }
 
 @keyframes pulse-soft {
@@ -117,5 +170,14 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* La regla de arriba dejaría las calaveras congeladas en el último
+     fotograma en vez de quitarlas, y eso solo funciona por accidente
+     (ahí la opacidad ya es 0). Se esconde la capa entera y queda dicho:
+     es decoración, no información, y quien pidió menos movimiento no
+     pierde nada al no verla. */
+  .lluvia {
+    display: none;
   }
 }

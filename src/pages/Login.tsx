@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Campo'
+import { LluviaCalaveras } from '../components/LluviaCalaveras'
 import { mensajeDeError } from '../lib/errores'
 import { DESPLEGAR, DURACION, ENTRADA, transicion } from '../lib/animacion'
 
@@ -36,7 +37,9 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col justify-center bg-bg px-5 py-10">
+    <div className="relative flex min-h-dvh flex-col justify-center overflow-hidden bg-bg px-5 py-10">
+      <LluviaCalaveras />
+
       {/*
         Login vive fuera de AppShell, así que no hereda la transición de
         página: si no se coreografía aquí, es la única pantalla de la app
@@ -46,7 +49,7 @@ export function Login() {
         initial="oculto"
         animate="visible"
         variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
-        className="mx-auto w-full max-w-sm"
+        className="relative z-10 mx-auto w-full max-w-sm"
       >
         <motion.div variants={ENTRADA} transition={transicion()} className="mb-8">
           <h1 className="text-3xl font-semibold tracking-tight text-fg">Estudio</h1>
