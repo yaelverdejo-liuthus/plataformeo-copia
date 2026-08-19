@@ -63,13 +63,21 @@ export const TRABAJO_ESTATUS: Record<TrabajoEstatus, { texto: string; tono: Tono
   cancelado: { texto: 'Cancelado', tono: 'neutro' },
 }
 
-/** Orden de las columnas del kanban. Cancelado no tiene columna: se filtra. */
+/**
+ * Columnas del tablero: solo lo que sigue vivo.
+ *
+ * Terminado y cancelado salieron de aquí a propósito — se amontonaban para
+ * siempre en una columna que nadie vuelve a mirar y empujaban el trabajo
+ * del día fuera de la pantalla. Viven en la vista de Historial.
+ */
 export const COLUMNAS_KANBAN: TrabajoEstatus[] = [
   'trazado_agendado',
   'trazado_hecho',
   'agendado',
-  'terminado',
 ]
+
+/** Lo que ya salió del taller. */
+export const ESTATUS_CERRADOS: TrabajoEstatus[] = ['terminado', 'cancelado']
 
 export const NIVEL: Record<Nivel, { texto: string; descripcion: string }> = {
   '1': { texto: 'Nivel 1', descripcion: 'Limpio con stencil' },

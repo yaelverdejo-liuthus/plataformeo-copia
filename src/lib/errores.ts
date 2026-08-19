@@ -13,6 +13,16 @@ const PORCONSTRAINT: Record<string, string> = {
   anticipo_no_excede: 'El anticipo no puede ser mayor que el precio total.',
   mano_requiere_retoque:
     'Un diseño de mano se guarda siempre con retoque incluido: la zona retiene mal la tinta y el retoque tiene que ir en el precio, declarado por adelantado.',
+  cobrado_no_excede_precio:
+    'Entre anticipo y abonos ya está cobrado todo el precio. No se puede cobrar de más — si el precio subió, actualízalo primero.',
+  lead_cotizado_requiere_monto:
+    'Para dejarlo cotizado hace falta el monto. Es lo que define esa etapa.',
+  lead_agendado_requiere_cita:
+    'Para agendar hacen falta la fecha del tatuaje y el anticipo cobrado. Sin anticipo no se aparta el espacio.',
+  lead_anticipo_no_excede: 'El anticipo no puede ser mayor que lo cotizado.',
+  leads_monto_cotizado_check: 'El monto cotizado tiene que ser mayor que cero.',
+  leads_anticipo_check: 'El anticipo no puede ser negativo.',
+  trabajos_abonos_check: 'Los abonos no pueden ser negativos.',
   catalogo_precio_base_check: 'El precio base tiene que ser mayor que cero.',
   trabajos_precio_total_check: 'El precio total tiene que ser mayor que cero.',
   trabajos_anticipo_check: 'El anticipo no puede ser negativo.',

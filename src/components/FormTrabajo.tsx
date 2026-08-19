@@ -9,6 +9,7 @@ import { useUmbrales } from '../lib/queries/config'
 import { useToast } from './ui/Toast'
 import { Button } from './ui/Button'
 import { Input, InputNumero, Select } from './ui/Campo'
+import { InputDuracion } from './ui/InputDuracion'
 import { ORIGEN, TRABAJO_ESTATUS, ZONAS } from '../lib/etiquetas'
 import { dinero } from '../lib/formato'
 import { mensajeDeError, esReglaDeNegocio } from '../lib/errores'
@@ -250,18 +251,18 @@ export function FormTrabajo({
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <InputNumero
+      <div className="grid gap-3 sm:grid-cols-2">
+        <InputDuracion
           etiqueta="Tiempo de diseño"
-          hint="minutos"
+          valor={numeroDesdeTexto(watch('tiempo_diseno_min'))}
+          onCambio={(m) => setValue('tiempo_diseno_min', m as unknown as never)}
           error={errors.tiempo_diseno_min?.message}
-          {...register('tiempo_diseno_min')}
         />
-        <InputNumero
+        <InputDuracion
           etiqueta="Tiempo de aplicación"
-          hint="minutos"
+          valor={numeroDesdeTexto(watch('tiempo_aplicacion_min'))}
+          onCambio={(m) => setValue('tiempo_aplicacion_min', m as unknown as never)}
           error={errors.tiempo_aplicacion_min?.message}
-          {...register('tiempo_aplicacion_min')}
         />
       </div>
 

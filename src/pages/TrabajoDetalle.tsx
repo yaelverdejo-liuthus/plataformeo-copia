@@ -1,12 +1,18 @@
 import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Camera, MessageCircle, Pencil, Trash2 } from 'lucide-react'
-import { useTrabajo, useActualizarTrabajo, useEliminarTrabajo } from '../lib/queries/trabajos'
+import { ArrowLeft, BadgeCheck, Camera, MessageCircle, Pencil, Trash2 } from 'lucide-react'
+import {
+  useTrabajo,
+  useActualizarTrabajo,
+  useEliminarTrabajo,
+  useRegistrarCobro,
+} from '../lib/queries/trabajos'
 import { useUmbrales } from '../lib/queries/config'
 import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
 import { Button } from '../components/ui/Button'
+import { InputNumero } from '../components/ui/Campo'
 import { Sheet } from '../components/ui/Sheet'
 import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
@@ -36,12 +42,14 @@ export function TrabajoDetalle() {
   const { puedeEscribir } = useRol()
   const actualizar = useActualizarTrabajo()
   const eliminar = useEliminarTrabajo()
+  const cobrar = useRegistrarCobro()
   const toast = useToast()
   const inputFoto = useRef<HTMLInputElement>(null)
 
   const [editando, setEditando] = useState(false)
   const [subiendo, setSubiendo] = useState(false)
   const [confirmarBorrado, setConfirmarBorrado] = useState(false)
+  const [cobro, setCobro] = useState('')
 
   const puede = puedeEscribir('trabajos')
 
@@ -79,6 +87,8 @@ export function TrabajoDetalle() {
     Number(t.minutos_totales || 0),
   )
 
+  const pagado = Number(t.saldo) <= 0 && Number(t.precio_total) > 0
+
   async function cambiarEstatus(estatus: TrabajoEstatus) {
     if (!t) return
     try {
@@ -110,6 +120,29 @@ export function TrabajoDetalle() {
       toast.error(mensajeDeError(e as { message?: string }))
     } finally {
       setSubiendo(false)
+    }
+  }
+
+  async function registrarCobro(monto: number) {
+    if (!t) return
+    if (!Number.isFinite(monto) || monto <= 0) {
+      toast.error('Escribe cuánto se cobró.')
+      return
+    }
+    if (monto > Number(t.saldo)) {
+      toast.error(`El saldo es de ${dinero(Number(t.saldo))}. No se puede cobrar de más.`)
+      return
+    }
+    try {
+      await cobrar.mutateAsync({ trabajo: t, monto })
+      setCobro('')
+      toast.exito(
+        monto >= Number(t.saldo) ? 'Liquidado. Este ya no debe nada.' : `Cobro de ${dinero(monto)} registrado`,
+      )
+    } catch (e) {
+      const err = e as { message?: string }
+      if (esReglaDeNegocio(err)) toast.regla(mensajeDeError(err))
+      else toast.error(mensajeDeError(err))
     }
   }
 
@@ -149,6 +182,7 @@ export function TrabajoDetalle() {
             <Badge tono={TRABAJO_ESTATUS[t.estatus].tono}>{TRABAJO_ESTATUS[t.estatus].texto}</Badge>
             <Badge tono="neutro">Nivel {t.nivel}</Badge>
             <Badge tono="neutro">{t.zona}</Badge>
+            {pagado && <Badge tono="exito" punto>Pagado</Badge>}
             {t.retoque_pendiente && <Badge tono="acento">Retoque pendiente</Badge>}
           </div>
         </div>
@@ -170,14 +204,51 @@ export function TrabajoDetalle() {
       </header>
 
       {/* ── Dinero ───────────────────────────────────────────────────── */}
-      <Card className="grid grid-cols-3 gap-3">
-        <Cifra titulo="Precio" valor={dinero(t.precio_total)} />
-        <Cifra titulo="Anticipo" valor={dinero(t.anticipo)} />
-        <Cifra
-          titulo="Saldo"
-          valor={dinero(Number(t.saldo))}
-          tono={Number(t.saldo) > 0 ? 'text-warn' : 'text-success'}
-        />
+      <Card>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Cifra titulo="Precio" valor={dinero(t.precio_total)} />
+          <Cifra titulo="Anticipo" valor={dinero(t.anticipo)} />
+          <Cifra titulo="Abonos" valor={dinero(Number(t.abonos ?? 0))} />
+          <Cifra
+            titulo="Saldo"
+            valor={dinero(Number(t.saldo))}
+            tono={pagado ? 'text-success' : 'text-warn'}
+          />
+        </div>
+
+        {pagado ? (
+          <p className="mt-3 flex items-center gap-2 rounded-xl border border-success/25 bg-success/10 px-3.5 py-2.5 text-sm text-success">
+            <BadgeCheck className="h-4 w-4 shrink-0" />
+            Pagado por completo.
+          </p>
+        ) : (
+          puede && (
+            <div className="mt-3 flex flex-wrap items-end gap-2">
+              <div className="min-w-[8rem] flex-1">
+                <InputNumero
+                  etiqueta="Registrar cobro"
+                  prefijo="$"
+                  placeholder={String(Number(t.saldo))}
+                  value={cobro}
+                  onChange={(e) => setCobro(e.target.value.replace(/[^\d.]/g, ''))}
+                />
+              </div>
+              <Button
+                variante="secundario"
+                cargando={cobrar.isPending}
+                onClick={() => void registrarCobro(Number(cobro))}
+              >
+                Abonar
+              </Button>
+              <Button
+                cargando={cobrar.isPending}
+                onClick={() => void registrarCobro(Number(t.saldo))}
+              >
+                Liquidar
+              </Button>
+            </div>
+          )
+        )}
       </Card>
 
       {/* ── Las dos citas, separadas ─────────────────────────────────── */}

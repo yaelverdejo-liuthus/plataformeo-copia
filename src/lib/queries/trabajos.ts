@@ -88,6 +88,35 @@ export function useCrearTrabajo() {
 }
 
 /**
+ * Registra un cobro posterior al anticipo.
+ *
+ * Suma sobre `abonos` en vez de fijar el total para que dos cobros seguidos
+ * no se pisen, y sin tocar `anticipo`: ese número tiene que seguir diciendo
+ * qué se cobró por adelantado, que es lo que sostiene la regla de la cita.
+ */
+export function useRegistrarCobro() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ trabajo, monto }: { trabajo: Trabajo; monto: number }) => {
+      const nuevos = Number(trabajo.abonos ?? 0) + monto
+      const { data, error } = await supabase
+        .from('trabajos')
+        .update({ abonos: nuevos })
+        .eq('id', trabajo.id)
+        .select()
+        .single()
+      if (error) throw error
+      return data as Trabajo
+    },
+    onSettled: (_d, _e, v) => {
+      void qc.invalidateQueries({ queryKey: llavesTrabajos.todo })
+      void qc.invalidateQueries({ queryKey: llavesTrabajos.uno(v.trabajo.id) })
+      void qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
+/**
  * Un trabajo con videos ligados no se puede borrar: lo detiene
  * contenido_trabajo_id_fkey. Es a propósito — si el expediente se va,
  * el video queda apuntando a un fantasma y el filtro deja de cuadrar.

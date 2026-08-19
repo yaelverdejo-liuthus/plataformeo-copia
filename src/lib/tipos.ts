@@ -108,14 +108,20 @@ export type Trabajo = {
   fecha_tatuaje: string | null
   hora: string | null
   precio_total: number
+  /** Lo que dejó para reservar. Es lo que sostiene "sin anticipo no hay cita". */
   anticipo: number
+  /** Todo lo cobrado después del anticipo, incluido el pago final. */
+  abonos: number
   tiempo_diseno_min: number | null
   tiempo_aplicacion_min: number | null
   estatus: TrabajoEstatus
   origen: Origen
   retoque_pendiente: boolean
   foto_zona_url: string | null
-  /** columna generada en Postgres — nunca la calcules en el cliente */
+  /**
+   * columna generada en Postgres — nunca la calcules en el cliente.
+   * precio_total - anticipo - abonos. En cero significa pagado.
+   */
   saldo: number
   /** columna generada en Postgres */
   minutos_totales: number

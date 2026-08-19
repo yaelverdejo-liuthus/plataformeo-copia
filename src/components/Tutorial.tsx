@@ -58,7 +58,7 @@ const POR_ROL: Record<Rol, Paso[]> = {
     {
       titulo: 'Trabajos es tu pantalla',
       texto:
-        'Aquí vive el expediente de cada pieza. Con este par de botones cambias entre tablero por estatus y lista con detalle.',
+        'Aquí vive el expediente de cada pieza. Agenda te ordena por urgencia — lo vencido primero, luego hoy y la semana. Tablero los agrupa por estatus, e Historial guarda lo terminado para que no estorbe.',
       ruta: '/trabajos',
       objetivo: 'vistas-trabajos',
     },
@@ -77,7 +77,7 @@ const POR_ROL: Record<Rol, Paso[]> = {
     {
       titulo: 'Captura los tiempos',
       texto:
-        'Anota cuánto tardaste diseñando y cuánto aplicando. De ahí sale la tarifa real por hora, que es lo único que te dice si el nivel 3 de verdad paga mejor. El diseño pasa de noche y se siente gratis, pero no lo es.',
+        'Anota cuánto tardaste diseñando y cuánto aplicando, en horas y minutos tal cual — ya no hay que convertir nada. De ahí sale la tarifa real por hora, que es lo único que te dice si el nivel 3 de verdad paga mejor. El diseño pasa de noche y se siente gratis, pero no lo es.',
       objetivo: 'nuevo-trabajo',
     },
     {
@@ -126,7 +126,7 @@ const POR_ROL: Record<Rol, Paso[]> = {
     {
       titulo: 'Trabajos es tu pantalla',
       texto:
-        'Aquí vive el expediente de cada pieza. Con este par de botones cambias entre tablero por estatus y lista con detalle.',
+        'Aquí vive el expediente de cada pieza. Agenda te ordena por urgencia — lo vencido primero, luego hoy y la semana. Tablero los agrupa por estatus, e Historial guarda lo terminado para que no estorbe.',
       ruta: '/trabajos',
       objetivo: 'vistas-trabajos',
     },
@@ -145,7 +145,7 @@ const POR_ROL: Record<Rol, Paso[]> = {
     {
       titulo: 'Captura los tiempos',
       texto:
-        'Anota cuánto tardaste diseñando y cuánto aplicando. De ahí sale la tarifa real por hora, que es lo único que te dice si el nivel 3 de verdad paga mejor. El diseño pasa de noche y se siente gratis, pero no lo es.',
+        'Anota cuánto tardaste diseñando y cuánto aplicando, en horas y minutos tal cual — ya no hay que convertir nada. De ahí sale la tarifa real por hora, que es lo único que te dice si el nivel 3 de verdad paga mejor. El diseño pasa de noche y se siente gratis, pero no lo es.',
       objetivo: 'nuevo-trabajo',
     },
     {
@@ -158,7 +158,7 @@ const POR_ROL: Record<Rol, Paso[]> = {
     {
       titulo: 'Todo el que escribe, entra aquí',
       texto:
-        'Cada persona que manda WhatsApp se registra el mismo día, con de dónde llegó y qué pidió. Ponle fecha de seguimiento: si llega el día y sigue abierto, te sale en rojo y en el tablero.',
+        'Cada persona que manda WhatsApp se registra el mismo día. Al moverlo de etapa, el asistente te pide justo lo que falta: si lo mandas directo a agendado sin haberlo cotizado, te cobra la cotización ahí mismo. Y cuando queda agendado, su trabajo se crea solo.',
       ruta: '/leads',
       objetivo: 'nuevo-lead',
     },
