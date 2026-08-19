@@ -80,7 +80,7 @@ export function AppShell() {
           <p className="text-sm text-fg-subtle">Tablero de instrumentos</p>
         </div>
 
-        <nav className="flex-1 space-y-0.5 px-3">
+        <nav data-tour="nav" className="flex-1 space-y-0.5 px-3">
           {entradas.map((e) => (
             <NavLink key={e.ruta} to={e.ruta} end={e.ruta === '/'}>
               {({ isActive }) => (
@@ -200,7 +200,10 @@ export function AppShell() {
       </main>
 
       {/* ── Navegación inferior en móvil ────────────────────────────── */}
-      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur-md md:hidden">
+      <nav
+        data-tour="nav"
+        className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur-md md:hidden"
+      >
         <div className="flex">
           {barra.map((e) => (
             <NavLink key={e.ruta} to={e.ruta} end={e.ruta === '/'} className="flex-1">

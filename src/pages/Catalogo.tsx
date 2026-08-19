@@ -166,7 +166,7 @@ export function Catalogo() {
                 <p className="text-sm text-fg-subtle">{NIVEL[nivel].descripcion}</p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div data-tour="catalogo" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {porNivel[nivel].map((d, i) => (
                   <motion.article
                     key={d.id}

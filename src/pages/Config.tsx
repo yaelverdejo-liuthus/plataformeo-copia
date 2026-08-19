@@ -40,7 +40,7 @@ export function Config() {
           ))}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div data-tour="umbrales" className="space-y-3">
           {ordenadas.map((fila, i) => (
             <FilaConfig
               key={fila.clave}

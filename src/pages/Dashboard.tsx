@@ -154,7 +154,7 @@ export function Dashboard() {
       </header>
 
       {/* ── Requiere tu atención ─────────────────────────────────────── */}
-      <section>
+      <section data-tour="atencion">
         <TituloSeccion>Requiere tu atención</TituloSeccion>
         {atencion.length === 0 ? (
           <Card className="flex items-center gap-3">
@@ -219,7 +219,7 @@ export function Dashboard() {
       </section>
 
       {/* ── Reglas de decisión, con semáforo ────────────────────────── */}
-      <section>
+      <section data-tour="semaforos">
         <TituloSeccion>Reglas de decisión</TituloSeccion>
         {isPending || !d || !dv ? (
           <SkeletonKPIs n={6} />

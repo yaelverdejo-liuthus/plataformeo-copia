@@ -150,6 +150,7 @@ export function Contenido() {
         </div>
       </header>
 
+      <div data-tour="filtros-contenido">
       <Segmentado
         idGrupo="contenido"
         valor={filtro}
@@ -161,6 +162,7 @@ export function Contenido() {
           { valor: 'todos', etiqueta: 'Todos', conteo: conteos.todos },
         ]}
       />
+      </div>
 
       {error ? (
         <ErrorCarga mensaje={mensajeDeError(error as { message?: string })} onReintentar={refetch} />
@@ -273,7 +275,11 @@ export function Contenido() {
       )}
 
       {puede && (
-        <BotonFlotante onClick={() => setAltaAbierta(true)} aria-label="Nuevo video">
+        <BotonFlotante
+          data-tour="nuevo-video"
+          onClick={() => setAltaAbierta(true)}
+          aria-label="Nuevo video"
+        >
           <Plus className="h-6 w-6" />
         </BotonFlotante>
       )}

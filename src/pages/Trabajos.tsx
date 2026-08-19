@@ -75,7 +75,7 @@ export function Trabajos() {
               retoque_pendiente: t.retoque_pendiente ? 'Sí' : 'No',
             }))}
           />
-          <div className="flex rounded-xl bg-surface-2 p-1">
+          <div data-tour="vistas-trabajos" className="flex rounded-xl bg-surface-2 p-1">
             <BotonVista activo={vista === 'kanban'} onClick={() => setVista('kanban')}>
               <Columns3 className="h-4 w-4" />
             </BotonVista>
@@ -201,7 +201,11 @@ export function Trabajos() {
       )}
 
       {puede && (
-        <BotonFlotante onClick={() => setAltaAbierta(true)} aria-label="Nuevo trabajo">
+        <BotonFlotante
+          data-tour="nuevo-trabajo"
+          onClick={() => setAltaAbierta(true)}
+          aria-label="Nuevo trabajo"
+        >
           <Plus className="h-6 w-6" />
         </BotonFlotante>
       )}
