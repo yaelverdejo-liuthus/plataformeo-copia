@@ -30,6 +30,32 @@ const extensionDe = (archivo: File) => {
 }
 
 /**
+ * Traduce los fallos de Storage sin confundirlos con los de la base.
+ *
+ * Un RLS de Storage y uno de una tabla dan el mismo error genérico, y el
+ * traductor general lo explicaba como "tu rol no tiene permiso de escribir
+ * aquí" — mandando a revisar roles cuando lo que faltaba era una política
+ * del bucket. Ese diagnóstico equivocado ya costó una vuelta entera.
+ */
+function explicarFalloDeSubida(error: { message?: string; statusCode?: string }): string {
+  const texto = error.message ?? ''
+
+  if (texto.includes('row-level security') || error.statusCode === '403') {
+    return 'El almacén de fotos rechazó la subida. No es tu rol: le faltan permisos al bucket. Avísale a quien administra Supabase.'
+  }
+  if (texto.includes('exceeded the maximum allowed size') || error.statusCode === '413') {
+    return 'La imagen pesa más de 5 MB. Tómala de nuevo con menos resolución.'
+  }
+  if (texto.includes('mime type') || texto.includes('not supported')) {
+    return 'Ese formato de archivo no se acepta. Usa una foto JPG, PNG o WEBP.'
+  }
+  if (texto.includes('Failed to fetch') || texto.includes('NetworkError')) {
+    return 'Se cortó la conexión durante la subida. Vuelve a intentar con mejor señal.'
+  }
+  return texto || 'No se pudo subir la imagen.'
+}
+
+/**
  * Sube y devuelve la URL pública.
  *
  * El nombre lleva timestamp en vez de sobrescribir la ruta anterior: si se
@@ -46,7 +72,7 @@ export async function subirImagen(carpeta: string, nombreBase: string, archivo: 
   const { error: errSubida } = await supabase.storage
     .from(BUCKET)
     .upload(ruta, archivo, { cacheControl: '31536000', upsert: false })
-  if (errSubida) throw errSubida
+  if (errSubida) throw new Error(explicarFalloDeSubida(errSubida))
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(ruta)
   return { url: data.publicUrl, ruta }
