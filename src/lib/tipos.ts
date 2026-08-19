@@ -151,20 +151,75 @@ export type ContenidoConFiltro = Contenido & {
   pasa_filtro: boolean | null
 }
 
+/**
+ * Dónde se compra la pauta. Enum aparte del de contenido: el contenido se
+ * publica en TikTok, Instagram o Facebook, pero la pauta se compra en Meta
+ * —que cubre IG y FB juntos— o en TikTok.
+ */
+export type PlataformaAds = 'meta' | 'tiktok'
+
+export type Campana = {
+  id: string
+  nombre: string
+  plataforma: PlataformaAds
+  objetivo: string
+  presupuesto_total: number
+  fecha_inicio: string
+  fecha_fin: string | null
+  activa: boolean
+  notas: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** Fila de v_campanas: la campaña con lo repartido y lo gastado sumado. */
+export type CampanaConMetricas = Campana & {
+  presupuesto_asignado: number
+  num_creativos: number
+  gasto_real: number
+  conversaciones: number
+  costo_por_conversacion: number | null
+  veredicto: Veredicto
+}
+
+export type Creativo = {
+  id: string
+  campana_id: string
+  nombre: string
+  presupuesto: number
+  activo: boolean
+  created_at: string
+}
+
+/** Fila de v_creativos: el desglose por activo. */
+export type CreativoConMetricas = Creativo & {
+  campana: string
+  plataforma: PlataformaAds
+  gasto_real: number
+  conversaciones: number
+  dias_capturados: number
+  costo_por_conversacion: number | null
+  veredicto: Veredicto
+}
+
+/** Captura diaria de un creativo. */
 export type Ad = {
   id: string
   fecha: string
-  plataforma: Plataforma
-  creativo: string
-  objetivo: string
-  presupuesto: number
+  creativo_id: string
   gasto_real: number
   conversaciones: number
   created_at: string
 }
 
-/** Fila de v_ads_veredicto: ads + costo y veredicto calculados en la base */
+/** Fila de v_ads_veredicto: el día con el contexto de su creativo y campaña. */
 export type AdConVeredicto = Ad & {
+  creativo: string
+  presupuesto: number
+  campana_id: string
+  campana: string
+  plataforma: PlataformaAds
+  objetivo: string
   costo_por_conversacion: number | null
   veredicto: Veredicto
 }
@@ -226,6 +281,8 @@ export type Database = {
       trabajos: Tabla<Trabajo, TrabajoEscritura, TrabajoEscritura>
       contenido: Tabla<Contenido>
       ads: Tabla<Ad>
+      campanas: Tabla<Campana>
+      creativos: Tabla<Creativo>
       config: Tabla<ConfigFila>
       preferencias: Tabla<Preferencias>
       reprogramaciones: Tabla<Reprogramacion>
@@ -233,6 +290,8 @@ export type Database = {
     Views: {
       v_contenido_filtro: { Row: ContenidoConFiltro; Relationships: [] }
       v_ads_veredicto: { Row: AdConVeredicto; Relationships: [] }
+      v_campanas: { Row: CampanaConMetricas; Relationships: [] }
+      v_creativos: { Row: CreativoConMetricas; Relationships: [] }
       v_dashboard: { Row: DashboardFila; Relationships: [] }
     }
     Functions: { mi_rol: { Args: Record<string, never>; Returns: Rol } }
@@ -244,6 +303,7 @@ export type Database = {
       origen_tipo: Origen
       trabajo_estatus: TrabajoEstatus
       plataforma_tipo: Plataforma
+      plataforma_ads: PlataformaAds
     }
   }
 }

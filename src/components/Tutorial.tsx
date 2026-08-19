@@ -165,7 +165,7 @@ const POR_ROL: Record<Rol, Paso[]> = {
     {
       titulo: 'La pauta se mide, no se adivina',
       texto:
-        'Una fila por anuncio por día: gasto real y conversaciones. La app te dice sola si escalar o matar el creativo. Sin esto, en tres semanas cada quien tiene su teoría y ninguna es verificable.',
+        'Cada campaña lleva su presupuesto y sus creativos, y cada creativo el suyo. Capturas gasto y conversaciones por día, y al entrar a la campaña ves el desglose por creativo con el veredicto de cuál escalar y cuál matar. Sin esto, en tres semanas cada quien tiene su teoría y ninguna es verificable.',
       ruta: '/ads',
       objetivo: 'nueva-pauta',
     },

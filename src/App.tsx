@@ -18,6 +18,9 @@ import { Button } from './components/ui/Button'
 // aparte para que la captura diaria no pague por las gráficas.
 const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })))
 const Ads = lazy(() => import('./pages/Ads').then((m) => ({ default: m.Ads })))
+const CampanaDetalle = lazy(() =>
+  import('./pages/CampanaDetalle').then((m) => ({ default: m.CampanaDetalle })),
+)
 
 function Arrancando() {
   return (
@@ -114,6 +117,14 @@ export function App() {
           element={
             <Suspense fallback={<SkeletonKPIs n={4} />}>
               <Ads />
+            </Suspense>
+          }
+        />
+        <Route
+          path="ads/:id"
+          element={
+            <Suspense fallback={<SkeletonKPIs n={4} />}>
+              <CampanaDetalle />
             </Suspense>
           }
         />

@@ -5,6 +5,7 @@ import type {
   Nivel,
   Origen,
   Plataforma,
+  PlataformaAds,
   TrabajoEstatus,
   Veredicto,
 } from './tipos'
@@ -95,10 +96,17 @@ export const AUTORIA: Record<Autoria, { texto: string; tono: Tono; credito?: str
   hibrido: { texto: 'Híbrido', tono: 'info' },
 }
 
+/** Dónde se PUBLICA el contenido orgánico. */
 export const PLATAFORMA: Record<Plataforma, string> = {
   tiktok: 'TikTok',
   instagram: 'Instagram',
   facebook: 'Facebook',
+}
+
+/** Dónde se COMPRA la pauta. Meta cubre Instagram y Facebook juntos. */
+export const PLATAFORMA_ADS: Record<PlataformaAds, string> = {
+  meta: 'Meta',
+  tiktok: 'TikTok',
 }
 
 export const VEREDICTO: Record<Veredicto, { texto: string; tono: Tono; accion: string }> = {

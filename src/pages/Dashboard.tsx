@@ -7,7 +7,7 @@ import { useDashboard, derivar } from '../lib/queries/dashboard'
 import { useLeads } from '../lib/queries/leads'
 import { useTrabajos } from '../lib/queries/trabajos'
 import { useContenido } from '../lib/queries/contenido'
-import { useAds } from '../lib/queries/ads'
+import { useCreativosTodos } from '../lib/queries/ads'
 import { useUmbrales } from '../lib/queries/config'
 import { Card, TituloSeccion } from '../components/ui/Card'
 import { SkeletonKPIs, ErrorCarga } from '../components/ui/Estados'
@@ -53,7 +53,7 @@ export function Dashboard() {
   const { data: leads } = useLeads()
   const { data: trabajos } = useTrabajos()
   const { data: contenido } = useContenido()
-  const { data: ads } = useAds()
+  const { data: creativos } = useCreativosTodos()
   const { umbrales } = useUmbrales()
 
   const dv = derivar(d)
@@ -93,11 +93,13 @@ export function Dashboard() {
       })
     }
 
-    const aMatar = (ads ?? []).filter((a) => a.veredicto === 'matar')
+    // Se mira el veredicto ACUMULADO del creativo, no el de un día suelto:
+    // un mal día no significa nada, un mal creativo sí.
+    const aMatar = (creativos ?? []).filter((c) => c.activo && c.veredicto === 'matar')
     if (aMatar.length) {
       items.push({
         texto: `${aMatar.length} ${aMatar.length === 1 ? 'creativo para matar' : 'creativos para matar'}`,
-        detalle: [...new Set(aMatar.map((a) => a.creativo))].slice(0, 2).join(', '),
+        detalle: aMatar.map((c) => c.nombre).slice(0, 2).join(', '),
         ruta: '/ads',
         tono: 'peligro',
       })
@@ -126,7 +128,7 @@ export function Dashboard() {
     }
 
     return items
-  }, [leads, trabajos, contenido, ads])
+  }, [leads, trabajos, contenido, creativos])
 
   const mezcla = useMemo(
     () =>

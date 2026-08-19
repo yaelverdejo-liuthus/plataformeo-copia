@@ -1,75 +1,59 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AnimatePresence } from 'framer-motion'
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import { Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useAds, useCrearAd, useActualizarAd, useEliminarAd } from '../lib/queries/ads'
-import { useUmbrales } from '../lib/queries/config'
+import { ChevronRight, Megaphone, Plus } from 'lucide-react'
+import { useCampanas, useGuardarCampana } from '../lib/queries/ads'
 import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
 import { Button, BotonFlotante } from '../components/ui/Button'
-import { Input, InputNumero, Select } from '../components/ui/Campo'
+import { Input, InputNumero, Select, Switch, Textarea } from '../components/ui/Campo'
 import { Sheet } from '../components/ui/Sheet'
 import { Badge } from '../components/ui/Badge'
-import { Card, CardAnimada } from '../components/ui/Card'
+import { CardAnimada } from '../components/ui/Card'
+import { Segmentado } from '../components/ui/Segmentado'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
 import { BotonCSV } from '../components/BotonCSV'
-import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
-import { PLATAFORMA, VEREDICTO } from '../lib/etiquetas'
-import { dinero, dineroExacto, fechaCorta, hoyISO, numero } from '../lib/formato'
+import { PLATAFORMA_ADS, VEREDICTO } from '../lib/etiquetas'
+import { dinero, dineroExacto, fechaCorta, hoyISO, numero, porcentaje } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
-import type { Ad, AdConVeredicto } from '../lib/tipos'
+import { cn } from '../lib/cn'
+import type { CampanaConMetricas } from '../lib/tipos'
+
+const aNumero = (v: unknown) => {
+  if (v === '' || v == null) return 0
+  const n = Number(String(v).replace(/[^\d.]/g, ''))
+  return Number.isFinite(n) ? n : 0
+}
 
 const esquema = z.object({
-  fecha: z.string().min(1),
-  plataforma: z.enum(['tiktok', 'instagram', 'facebook']),
-  creativo: z.string().min(1, 'Falta el creativo'),
+  nombre: z.string().min(1, 'Ponle nombre a la campaña'),
+  plataforma: z.enum(['meta', 'tiktok']),
   objetivo: z.string().min(1, 'Falta el objetivo'),
-  presupuesto: z.preprocess(
-    (v) => (v === '' || v == null ? undefined : Number(String(v).replace(/[^\d.]/g, ''))),
-    z.number().min(0, 'No puede ser negativo'),
-  ),
-  gasto_real: z.preprocess(
-    (v) => (v === '' || v == null ? 0 : Number(String(v).replace(/[^\d.]/g, ''))),
-    z.number().min(0, 'No puede ser negativo'),
-  ),
-  conversaciones: z.preprocess(
-    (v) => (v === '' || v == null ? 0 : Number(String(v).replace(/\D/g, ''))),
-    z.number().int().min(0),
-  ),
+  presupuesto_total: z.preprocess(aNumero, z.number().min(0, 'No puede ser negativo')),
+  fecha_inicio: z.string().min(1),
+  fecha_fin: z.string().optional(),
+  activa: z.boolean(),
+  notas: z.string().optional(),
 })
 
 type Formulario = z.input<typeof esquema>
 type Salida = z.output<typeof esquema>
 
-/** Colores de serie: propios de la paleta, no los default de Recharts. */
-const SERIES = ['rgb(139 109 255)', 'rgb(224 176 128)', 'rgb(86 168 245)', 'rgb(63 191 127)']
-
-/** null = cerrado, 'nuevo' = alta, una fila = edición. */
-type EnEdicion = AdConVeredicto | 'nuevo' | null
+type Filtro = 'activas' | 'todas'
+type EnEdicion = CampanaConMetricas | 'nueva' | null
 
 export function Ads() {
-  const { data: ads, isPending, error, refetch } = useAds()
-  const { umbrales } = useUmbrales()
+  const { data: campanas, isPending, error, refetch } = useCampanas()
   const { puedeEscribir } = useRol()
-  const crear = useCrearAd()
-  const actualizar = useActualizarAd()
-  const eliminar = useEliminarAd()
+  const guardar = useGuardarCampana()
   const toast = useToast()
+  const navegar = useNavigate()
+
+  const [filtro, setFiltro] = useState<Filtro>('activas')
   const [editando, setEditando] = useState<EnEdicion>(null)
-  const [aBorrar, setABorrar] = useState<AdConVeredicto | null>(null)
 
   const puede = puedeEscribir('ads')
 
@@ -77,104 +61,77 @@ export function Ads() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
-  } = useForm<Formulario, unknown, Salida>({
-    resolver: zodResolver(esquema),
-    // 'meta' no existe en plataforma_tipo (§3.5 spec): Meta se registra como
-    // facebook o instagram, que es donde realmente corre el creativo.
-    defaultValues: { fecha: hoyISO(), plataforma: 'facebook', objetivo: 'Mensajes a WhatsApp' },
-  })
+  } = useForm<Formulario, unknown, Salida>({ resolver: zodResolver(esquema) })
 
-  /** Serie por creativo, ordenada por fecha, para la gráfica. */
-  const { datos, creativos } = useMemo(() => {
-    const filas = ads ?? []
-    const nombres = [...new Set(filas.map((a) => a.creativo))].slice(0, 4)
-    const fechas = [...new Set(filas.map((a) => a.fecha))].sort()
-
-    const datos = fechas.map((f) => {
-      const punto: Record<string, string | number | null> = { fecha: fechaCorta(f) }
-      for (const c of nombres) {
-        const fila = filas.find((a) => a.fecha === f && a.creativo === c)
-        // null (no 0) cuando no hubo conversaciones: la línea se corta,
-        // no cae a cero fingiendo que costó $0.
-        punto[c] = fila?.costo_por_conversacion != null ? Number(fila.costo_por_conversacion) : null
-      }
-      return punto
-    })
-
-    return { datos, creativos: nombres }
-  }, [ads])
+  const lista = useMemo(() => {
+    const c = campanas ?? []
+    return filtro === 'activas' ? c.filter((x) => x.activa) : c
+  }, [campanas, filtro])
 
   const totales = useMemo(() => {
-    const filas = ads ?? []
+    const c = campanas ?? []
     return {
-      gasto: filas.reduce((s, a) => s + Number(a.gasto_real), 0),
-      conversaciones: filas.reduce((s, a) => s + a.conversaciones, 0),
-      aMatar: filas.filter((a) => a.veredicto === 'matar').length,
+      gasto: c.reduce((s, x) => s + Number(x.gasto_real), 0),
+      conversaciones: c.reduce((s, x) => s + x.conversaciones, 0),
+      activas: c.filter((x) => x.activa).length,
     }
-  }, [ads])
+  }, [campanas])
 
   function abrir(destino: EnEdicion) {
     setEditando(destino)
-    if (destino === 'nuevo') {
+    if (destino === 'nueva') {
       reset({
-        fecha: hoyISO(),
-        plataforma: 'facebook',
-        creativo: '',
+        nombre: '',
+        plataforma: 'meta',
         objetivo: 'Mensajes a WhatsApp',
-        presupuesto: '' as unknown as number,
-        gasto_real: '' as unknown as number,
-        conversaciones: '' as unknown as number,
+        presupuesto_total: '' as unknown as number,
+        fecha_inicio: hoyISO(),
+        fecha_fin: '',
+        activa: true,
+        notas: '',
       })
     } else if (destino) {
       reset({
-        fecha: destino.fecha,
+        nombre: destino.nombre,
         plataforma: destino.plataforma,
-        creativo: destino.creativo,
         objetivo: destino.objetivo,
-        presupuesto: Number(destino.presupuesto),
-        gasto_real: Number(destino.gasto_real),
-        conversaciones: destino.conversaciones,
+        presupuesto_total: Number(destino.presupuesto_total),
+        fecha_inicio: destino.fecha_inicio,
+        fecha_fin: destino.fecha_fin ?? '',
+        activa: destino.activa,
+        notas: destino.notas ?? '',
       })
     }
   }
 
   async function alGuardar(datos: Salida) {
     try {
-      if (editando === 'nuevo') {
-        await crear.mutateAsync(datos)
-        toast.exito('Registro de pauta guardado')
-      } else if (editando) {
-        await actualizar.mutateAsync({ id: editando.id, cambios: datos })
-        toast.exito('Registro actualizado')
-      }
+      const guardada = await guardar.mutateAsync({
+        id: editando !== 'nueva' && editando ? editando.id : undefined,
+        datos: {
+          nombre: datos.nombre,
+          plataforma: datos.plataforma,
+          objetivo: datos.objetivo,
+          presupuesto_total: datos.presupuesto_total,
+          fecha_inicio: datos.fecha_inicio,
+          fecha_fin: datos.fecha_fin || null,
+          activa: datos.activa,
+          notas: datos.notas || null,
+        },
+      })
+      const esNueva = editando === 'nueva'
       setEditando(null)
+      toast.exito(esNueva ? 'Campaña creada. Ahora agrégale creativos.' : 'Campaña actualizada')
+      if (esNueva) navegar(`/ads/${guardada.id}`)
     } catch (e) {
       toast.error(mensajeDeError(e as { message?: string }))
     }
   }
 
-  /** Igual que en Contenido: un rechazo silencioso se ve como app rota. */
-  function guardarCampo(id: string, cambios: Partial<Ad>) {
-    actualizar.mutate(
-      { id, cambios },
-      { onError: (e) => toast.error(mensajeDeError(e as { message?: string })) },
-    )
-  }
-
-  async function borrar() {
-    if (!aBorrar) return
-    try {
-      await eliminar.mutateAsync(aBorrar.id)
-      toast.exito('Registro de pauta eliminado')
-      setABorrar(null)
-    } catch (e) {
-      toast.error(mensajeDeError(e as { message?: string }))
-      throw e
-    }
-  }
-
-  const esAlta = editando === 'nuevo'
+  const esNueva = editando === 'nueva'
 
   return (
     <div className="space-y-4">
@@ -183,184 +140,146 @@ export function Ads() {
           <h1 className="text-2xl font-semibold tracking-tight text-fg">Pauta</h1>
           <p className="text-sm text-fg-muted">
             <span className="tabular">{dinero(totales.gasto)}</span> gastados ·{' '}
-            {numero(totales.conversaciones)} conversaciones
-            {totales.aMatar > 0 && (
-              <span className="text-danger"> · {totales.aMatar} para matar</span>
-            )}
+            {numero(totales.conversaciones)} conversaciones · {totales.activas} campañas activas
           </p>
         </div>
         <div className="flex items-center gap-1">
           <BotonCSV
-            nombre="pauta"
-            filas={(ads ?? []).map((a) => ({
-              fecha: a.fecha,
-              plataforma: PLATAFORMA[a.plataforma],
-              creativo: a.creativo,
-              objetivo: a.objetivo,
-              presupuesto: a.presupuesto,
-              gasto_real: a.gasto_real,
-              conversaciones: a.conversaciones,
-              costo_por_conversacion: a.costo_por_conversacion ?? '',
-              veredicto: VEREDICTO[a.veredicto].texto,
+            nombre="campanas"
+            filas={(campanas ?? []).map((c) => ({
+              nombre: c.nombre,
+              plataforma: PLATAFORMA_ADS[c.plataforma],
+              objetivo: c.objetivo,
+              presupuesto_total: c.presupuesto_total,
+              presupuesto_asignado: c.presupuesto_asignado,
+              creativos: c.num_creativos,
+              gasto_real: c.gasto_real,
+              conversaciones: c.conversaciones,
+              costo_por_conversacion: c.costo_por_conversacion ?? '',
+              veredicto: VEREDICTO[c.veredicto].texto,
+              fecha_inicio: c.fecha_inicio,
+              fecha_fin: c.fecha_fin,
+              activa: c.activa ? 'Sí' : 'No',
             }))}
           />
           {puede && (
-            <Button onClick={() => abrir('nuevo')} className="hidden md:inline-flex">
+            <Button onClick={() => abrir('nueva')} className="hidden md:inline-flex">
               <Plus className="h-4 w-4" />
-              Registrar día
+              Nueva campaña
             </Button>
           )}
         </div>
       </header>
 
-      {/* ── Costo por conversación en el tiempo, por creativo ─────────── */}
-      {creativos.length > 0 && datos.length > 1 && (
-        <Card>
-          <p className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
-            Costo por conversación
-          </p>
-          <div className="mt-3 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={datos} margin={{ top: 4, right: 8, bottom: 0, left: -12 }}>
-                <CartesianGrid stroke="rgb(var(--border))" strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="fecha"
-                  stroke="rgb(var(--fg-subtle))"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="rgb(var(--fg-subtle))"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v) => `$${v}`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: 'rgb(var(--surface))',
-                    border: '1px solid rgb(var(--border))',
-                    borderRadius: 12,
-                    fontSize: 13,
-                    color: 'rgb(var(--fg))',
-                  }}
-                  formatter={(v) => dineroExacto(Number(v))}
-                />
-                <Legend wrapperStyle={{ fontSize: 12, color: 'rgb(var(--fg-muted))' }} />
-
-                {/* Las dos líneas de decisión: debajo escalar, arriba matar */}
-                <ReferenceLine
-                  y={umbrales.umbral_cpc_bueno}
-                  stroke="rgb(var(--success))"
-                  strokeDasharray="4 4"
-                  strokeOpacity={0.7}
-                />
-                <ReferenceLine
-                  y={umbrales.umbral_cpc_malo}
-                  stroke="rgb(var(--danger))"
-                  strokeDasharray="4 4"
-                  strokeOpacity={0.7}
-                />
-
-                {creativos.map((c, i) => (
-                  <Line
-                    key={c}
-                    type="monotone"
-                    dataKey={c}
-                    stroke={SERIES[i % SERIES.length]}
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
-                    connectNulls
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <p className="mt-2 text-xs text-fg-subtle">
-            Línea verde {dinero(umbrales.umbral_cpc_bueno)}: debajo, sube presupuesto. Línea roja{' '}
-            {dinero(umbrales.umbral_cpc_malo)}: arriba, mata el creativo.
-          </p>
-        </Card>
-      )}
+      <Segmentado
+        idGrupo="pauta"
+        valor={filtro}
+        onCambio={setFiltro}
+        opciones={[
+          { valor: 'activas', etiqueta: 'Activas', conteo: totales.activas },
+          { valor: 'todas', etiqueta: 'Todas', conteo: (campanas ?? []).length },
+        ]}
+      />
 
       {error ? (
         <ErrorCarga mensaje={mensajeDeError(error as { message?: string })} onReintentar={refetch} />
       ) : isPending ? (
         <SkeletonLista />
-      ) : (ads ?? []).length === 0 ? (
+      ) : lista.length === 0 ? (
         <Vacio
           icono={<Megaphone className="h-6 w-6" />}
-          titulo="Sin registros de pauta"
-          descripcion="Una fila por anuncio por día. Sin esto, en tres semanas cada quien tiene su teoría y ninguna es verificable."
-          accion={puede ? <Button onClick={() => abrir('nuevo')}>Registrar el primero</Button> : undefined}
+          titulo={filtro === 'activas' ? 'Sin campañas activas' : 'Sin campañas'}
+          descripcion="Una campaña agrupa sus creativos y su presupuesto. El gasto diario se captura por creativo, y de ahí sale si escalar o matar cada uno."
+          accion={puede ? <Button onClick={() => abrir('nueva')}>Crear la primera</Button> : undefined}
         />
       ) : (
         <div className="space-y-2.5">
           <AnimatePresence initial={false}>
-            {(ads ?? []).map((a, i) => {
-              const v = VEREDICTO[a.veredicto]
+            {lista.map((c, i) => {
+              const v = VEREDICTO[c.veredicto]
+              const usado = Number(c.presupuesto_total) > 0
+                ? Number(c.gasto_real) / Number(c.presupuesto_total)
+                : null
+              const sinRepartir = Number(c.presupuesto_total) - Number(c.presupuesto_asignado)
+
               return (
-                <CardAnimada key={a.id} indice={i}>
+                <CardAnimada key={c.id} indice={i} onClick={() => navegar(`/ads/${c.id}`)}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-medium text-fg">{a.creativo}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-base font-medium text-fg">{c.nombre}</p>
+                        {!c.activa && <Badge tono="neutro">Pausada</Badge>}
+                      </div>
                       <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-fg-subtle">
-                        <span>{PLATAFORMA[a.plataforma]}</span>
-                        <span>{a.objetivo}</span>
-                        <span>{fechaCorta(a.fecha)}</span>
+                        <span>{PLATAFORMA_ADS[c.plataforma]}</span>
+                        <span>{c.objetivo}</span>
+                        <span>
+                          {c.num_creativos}{' '}
+                          {c.num_creativos === 1 ? 'creativo' : 'creativos'}
+                        </span>
+                        <span>Desde {fechaCorta(c.fecha_inicio)}</span>
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <Badge tono={v.tono} punto>
                         {v.texto}
                       </Badge>
-                      {puede && (
-                        <div className="flex items-center gap-0.5">
-                          <BotonIcono
-                            etiqueta={`Editar ${a.creativo}`}
-                            onClick={() => abrir(a)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </BotonIcono>
-                          <BotonIcono
-                            etiqueta={`Eliminar ${a.creativo}`}
-                            peligro
-                            onClick={() => setABorrar(a)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </BotonIcono>
-                        </div>
-                      )}
+                      <ChevronRight className="h-4 w-4 text-fg-subtle" />
                     </div>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-4 gap-2">
-                    <Mini titulo="Presup." valor={dinero(a.presupuesto)} />
-                    <MiniEditable
-                      titulo="Gasto"
-                      valor={Number(a.gasto_real)}
-                      editable={puede}
-                      onGuardar={(n) => guardarCampo(a.id, { gasto_real: n ?? 0 })}
-                    />
-                    <MiniEditable
-                      titulo="Convs."
-                      valor={a.conversaciones}
-                      editable={puede}
-                      entero
-                      onGuardar={(n) => guardarCampo(a.id, { conversaciones: n ?? 0 })}
-                    />
+                  {/* Presupuesto: cuánto se lleva gastado del autorizado */}
+                  {Number(c.presupuesto_total) > 0 && (
+                    <div className="mt-3">
+                      <div className="flex items-baseline justify-between text-sm">
+                        <span className="text-fg-muted">
+                          <span className="tabular text-fg">{dinero(c.gasto_real)}</span> de{' '}
+                          <span className="tabular">{dinero(c.presupuesto_total)}</span>
+                        </span>
+                        <span className="tabular text-fg-subtle">{porcentaje(usado)}</span>
+                      </div>
+                      <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-3">
+                        <div
+                          className={cn(
+                            'h-full rounded-full transition-all duration-500',
+                            usado != null && usado > 1 ? 'bg-danger' : 'bg-primary',
+                          )}
+                          style={{ width: `${Math.min((usado ?? 0) * 100, 100)}%` }}
+                        />
+                      </div>
+                      {sinRepartir > 0 && (
+                        <p className="mt-1 text-xs text-fg-subtle">
+                          {dinero(sinRepartir)} sin repartir entre creativos
+                        </p>
+                      )}
+                      {sinRepartir < 0 && (
+                        <p className="mt-1 text-xs text-warn">
+                          Los creativos suman {dinero(-sinRepartir)} más que el presupuesto de la
+                          campaña
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <Mini titulo="Gasto" valor={dinero(c.gasto_real)} />
+                    <Mini titulo="Convs." valor={numero(c.conversaciones)} />
                     <Mini
                       titulo="Costo/conv."
                       valor={
-                        a.costo_por_conversacion == null
+                        c.costo_por_conversacion == null
                           ? '—'
-                          : dineroExacto(Number(a.costo_por_conversacion))
+                          : dineroExacto(Number(c.costo_por_conversacion))
+                      }
+                      tono={
+                        c.veredicto === 'matar'
+                          ? 'text-danger'
+                          : c.veredicto === 'escalar'
+                            ? 'text-success'
+                            : undefined
                       }
                     />
                   </div>
-
-                  <p className="mt-2.5 text-sm text-fg-muted">{v.accion}</p>
                 </CardAnimada>
               )
             })}
@@ -371,8 +290,8 @@ export function Ads() {
       {puede && (
         <BotonFlotante
           data-tour="nueva-pauta"
-          onClick={() => abrir('nuevo')}
-          aria-label="Registrar día de pauta"
+          onClick={() => abrir('nueva')}
+          aria-label="Nueva campaña"
         >
           <Plus className="h-6 w-6" />
         </BotonFlotante>
@@ -381,35 +300,43 @@ export function Ads() {
       <Sheet
         abierto={Boolean(editando)}
         onCerrar={() => setEditando(null)}
-        titulo={esAlta ? 'Registrar día de pauta' : 'Editar registro'}
+        titulo={esNueva ? 'Nueva campaña' : 'Editar campaña'}
         descripcion={
-          esAlta ? 'Una fila por anuncio por día.' : 'Corrige lo que se capturó mal ese día.'
+          esNueva
+            ? 'El presupuesto total se reparte después entre sus creativos.'
+            : undefined
         }
         pie={
           <Button bloque tamano="lg" cargando={isSubmitting} onClick={handleSubmit(alGuardar)}>
-            {esAlta ? 'Guardar' : 'Guardar cambios'}
+            {esNueva ? 'Crear campaña' : 'Guardar cambios'}
           </Button>
         }
       >
         <form onSubmit={handleSubmit(alGuardar)} className="space-y-4">
+          <Input
+            etiqueta="Nombre"
+            autoFocus
+            placeholder="Lettering septiembre"
+            error={errors.nombre?.message}
+            {...register('nombre')}
+          />
+
           <div className="grid grid-cols-2 gap-3">
-            <Input etiqueta="Fecha" type="date" {...register('fecha')} />
             <Select etiqueta="Plataforma" {...register('plataforma')}>
-              {Object.entries(PLATAFORMA).map(([v, t]) => (
+              {Object.entries(PLATAFORMA_ADS).map(([v, t]) => (
                 <option key={v} value={v}>
                   {t}
                 </option>
               ))}
             </Select>
+            <InputNumero
+              etiqueta="Presupuesto total"
+              prefijo="$"
+              error={errors.presupuesto_total?.message}
+              {...register('presupuesto_total')}
+            />
           </div>
 
-          <Input
-            etiqueta="Creativo"
-            autoFocus
-            placeholder="Creativo A - gótico mano"
-            error={errors.creativo?.message}
-            {...register('creativo')}
-          />
           <Input
             etiqueta="Objetivo"
             placeholder="Mensajes a WhatsApp"
@@ -418,122 +345,41 @@ export function Ads() {
           />
 
           <div className="grid grid-cols-2 gap-3">
-            <InputNumero
-              etiqueta="Presupuesto"
-              prefijo="$"
-              error={errors.presupuesto?.message}
-              {...register('presupuesto')}
-            />
-            <InputNumero
-              etiqueta="Gasto real"
-              prefijo="$"
-              error={errors.gasto_real?.message}
-              {...register('gasto_real')}
+            <Input etiqueta="Inicio" type="date" {...register('fecha_inicio')} />
+            <Input
+              etiqueta="Fin"
+              type="date"
+              hint="Opcional"
+              error={errors.fecha_fin?.message}
+              {...register('fecha_fin')}
             />
           </div>
 
-          <InputNumero
-            etiqueta="Conversaciones generadas"
-            hint="Las que sí escribieron por WhatsApp"
-            error={errors.conversaciones?.message}
-            {...register('conversaciones')}
-          />
+          <div className="rounded-2xl border border-line bg-surface-2/50 px-3.5 py-1">
+            <Switch
+              activo={Boolean(watch('activa'))}
+              onCambio={(v) => setValue('activa', v)}
+              etiqueta="Activa"
+              descripcion="Las pausadas se esconden del filtro por defecto"
+            />
+          </div>
+
+          <Textarea etiqueta="Notas" {...register('notas')} />
         </form>
       </Sheet>
-
-      <ConfirmarBorrado
-        abierto={Boolean(aBorrar)}
-        onCerrar={() => setABorrar(null)}
-        onConfirmar={borrar}
-        titulo="¿Eliminar este registro?"
-        descripcion={
-          <>
-            Se borra el día <span className="text-fg">{fechaCorta(aBorrar?.fecha)}</span> de{' '}
-            <span className="text-fg">{aBorrar?.creativo}</span>. El gasto deja de contar en el
-            tablero y la línea del creativo pierde ese punto.
-          </>
-        }
-      />
     </div>
   )
 }
 
-/** Acción compacta de tarjeta. 44px de área táctil aunque el icono sea de 16. */
-function BotonIcono({
-  children,
-  etiqueta,
-  peligro,
-  onClick,
-}: {
-  children: ReactNode
-  etiqueta: string
-  peligro?: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={etiqueta}
-      className={
-        'flex h-11 w-11 items-center justify-center rounded-xl transition-colors ' +
-        (peligro
-          ? 'text-fg-subtle hover:bg-danger/12 hover:text-danger'
-          : 'text-fg-subtle hover:bg-surface-2 hover:text-fg')
-      }
-    >
-      {children}
-    </button>
-  )
-}
-
-function Mini({ titulo, valor }: { titulo: string; valor: string }) {
+function Mini({ titulo, valor, tono }: { titulo: string; valor: string; tono?: string }) {
   return (
     <div className="rounded-xl bg-surface-2 px-2.5 py-2">
       <span className="block text-2xs font-semibold uppercase tracking-wide text-fg-subtle">
         {titulo}
       </span>
-      <span className="tabular block truncate text-base font-semibold text-fg">{valor}</span>
-    </div>
-  )
-}
-
-function MiniEditable({
-  titulo,
-  valor,
-  editable,
-  entero,
-  onGuardar,
-}: {
-  titulo: string
-  valor: number
-  editable: boolean
-  entero?: boolean
-  onGuardar: (v: number | null) => void
-}) {
-  const [texto, setTexto] = useState<string | null>(null)
-  const mostrado = texto ?? String(valor ?? '')
-
-  return (
-    <label className="block rounded-xl bg-surface-2 px-2.5 py-2">
-      <span className="block text-2xs font-semibold uppercase tracking-wide text-fg-subtle">
-        {titulo}
+      <span className={cn('tabular block truncate text-base font-semibold text-fg', tono)}>
+        {valor}
       </span>
-      <input
-        type="text"
-        inputMode={entero ? 'numeric' : 'decimal'}
-        disabled={!editable}
-        value={mostrado}
-        onChange={(e) =>
-          setTexto(e.target.value.replace(entero ? /\D/g : /[^\d.]/g, ''))
-        }
-        onBlur={() => {
-          if (texto == null) return
-          const n = texto === '' ? 0 : Number(texto)
-          if (Number.isFinite(n) && n !== valor) onGuardar(n)
-          setTexto(null)
-        }}
-        className="tabular w-full bg-transparent text-base font-semibold text-fg outline-none disabled:text-fg-muted"
-      />
-    </label>
+    </div>
   )
 }
