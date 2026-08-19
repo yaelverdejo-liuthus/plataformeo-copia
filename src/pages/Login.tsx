@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Campo'
 import { mensajeDeError } from '../lib/errores'
+import { DESPLEGAR, DURACION, ENTRADA, transicion } from '../lib/animacion'
 
 const esquema = z.object({
   email: z.string().email('Escribe un correo válido'),
@@ -36,20 +37,30 @@ export function Login() {
 
   return (
     <div className="flex min-h-dvh flex-col justify-center bg-bg px-5 py-10">
+      {/*
+        Login vive fuera de AppShell, así que no hereda la transición de
+        página: si no se coreografía aquí, es la única pantalla de la app
+        que aparece de golpe — y es la primera que ve cualquiera.
+      */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        initial="oculto"
+        animate="visible"
+        variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
         className="mx-auto w-full max-w-sm"
       >
-        <div className="mb-8">
+        <motion.div variants={ENTRADA} transition={transicion()} className="mb-8">
           <h1 className="text-3xl font-semibold tracking-tight text-fg">Estudio</h1>
           <p className="mt-1.5 text-base text-fg-muted">
             Tablero de instrumentos. Sirve para decidir, no para trabajar.
           </p>
-        </div>
+        </motion.div>
 
-        <form onSubmit={handleSubmit(alEnviar)} className="space-y-4">
+        <motion.form
+          variants={ENTRADA}
+          transition={transicion()}
+          onSubmit={handleSubmit(alEnviar)}
+          className="space-y-4"
+        >
           <Input
             etiqueta="Correo"
             type="email"
@@ -69,24 +80,37 @@ export function Login() {
             {...register('password')}
           />
 
-          {errorGeneral && (
-            <motion.p
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-xl border border-danger/25 bg-danger/10 px-3.5 py-2.5 text-sm text-danger"
-            >
-              {errorGeneral}
-            </motion.p>
-          )}
+          {/* Con salida, no solo entrada: al reintentar y volver a fallar,
+              el mensaje se renueva en vez de quedarse fijo y hacer dudar si
+              el segundo intento llegó a mandarse. */}
+          <AnimatePresence mode="wait">
+            {errorGeneral && (
+              <motion.p
+                key={errorGeneral}
+                variants={DESPLEGAR}
+                initial="oculto"
+                animate="visible"
+                exit="saliendo"
+                transition={transicion(DURACION.rapida)}
+                className="overflow-hidden rounded-xl border border-danger/25 bg-danger/10 px-3.5 py-2.5 text-sm text-danger"
+              >
+                {errorGeneral}
+              </motion.p>
+            )}
+          </AnimatePresence>
 
           <Button type="submit" tamano="lg" bloque cargando={isSubmitting}>
             Entrar
           </Button>
-        </form>
+        </motion.form>
 
-        <p className="mt-6 text-center text-sm text-fg-subtle">
+        <motion.p
+          variants={ENTRADA}
+          transition={transicion()}
+          className="mt-6 text-center text-sm text-fg-subtle"
+        >
           Herramienta interna. El registro está cerrado — las cuentas las crea el admin.
-        </p>
+        </motion.p>
       </motion.div>
     </div>
   )

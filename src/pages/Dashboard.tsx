@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { AlertCircle, ChevronRight, PartyPopper } from 'lucide-react'
 import { useDashboard, derivar } from '../lib/queries/dashboard'
@@ -21,6 +21,7 @@ import {
   porcentaje,
 } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
+import { DURACION, escalonar, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
 
 type Luz = 'verde' | 'ambar' | 'rojo' | 'sin_datos'
@@ -167,12 +168,18 @@ export function Dashboard() {
           </Card>
         ) : (
           <div className="space-y-2">
+            {/* Se resuelven en vivo: al cobrar un anticipo o mover una cita,
+                el aviso correspondiente desaparece. Sin salida, la lista
+                pega un brinco justo cuando acabas de hacer algo bien. */}
+            <AnimatePresence initial={false}>
             {atencion.map((a, i) => (
               <motion.div
                 key={a.texto}
+                layout
                 initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.22, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                exit={{ opacity: 0, x: 6, transition: transicion(DURACION.rapida) }}
+                transition={{ ...transicion(), delay: escalonar(i, 0.04) }}
               >
                 <Link
                   to={a.ruta}
@@ -197,6 +204,7 @@ export function Dashboard() {
                 </Link>
               </motion.div>
             ))}
+            </AnimatePresence>
           </div>
         )}
       </section>

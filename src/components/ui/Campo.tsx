@@ -1,4 +1,6 @@
 import { forwardRef, useId, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ReactNode } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { DESPLEGAR, DURACION, transicion } from '../../lib/animacion'
 import { cn } from '../../lib/cn'
 
 const BASE =
@@ -28,11 +30,31 @@ function Envoltura({
         </label>
       )}
       {children}
-      {error ? (
-        <p className="text-sm text-danger">{error}</p>
-      ) : hint ? (
-        <p className="text-sm text-fg-subtle">{hint}</p>
-      ) : null}
+      {/*
+        El error se despliega en vez de aparecer de golpe: al validar un
+        formulario largo salían tres o cuatro a la vez y todo lo de abajo
+        pegaba un brinco, que es justo cuando se pierde de vista cuál campo
+        falló. Al colapsar la altura, el empujón se vuelve legible.
+      */}
+      <AnimatePresence initial={false} mode="wait">
+        {error ? (
+          <motion.p
+            key="error"
+            variants={DESPLEGAR}
+            initial="oculto"
+            animate="visible"
+            exit="saliendo"
+            transition={transicion(DURACION.rapida)}
+            className="overflow-hidden text-sm text-danger"
+          >
+            {error}
+          </motion.p>
+        ) : hint ? (
+          <p key="hint" className="text-sm text-fg-subtle">
+            {hint}
+          </p>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }

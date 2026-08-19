@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Camera, ImagePlus, Loader2, Trash2 } from 'lucide-react'
 import { subirImagen, borrarImagenPorUrl, revisarImagen } from '../lib/storage'
 import { useToast } from './ui/Toast'
 import { mensajeDeError } from '../lib/errores'
+import { DURACION, FUNDIDO, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
 
 /**
@@ -78,13 +79,33 @@ export function SubidorImagen({
 
       {valor ? (
         <div className="relative overflow-hidden rounded-2xl border border-line bg-surface-2">
-          <img src={valor} alt="" className="aspect-[4/3] w-full object-cover" />
+          {/* key en la URL: al reemplazar la foto, la nueva se funde sobre
+              la anterior en vez de cambiar de golpe, que a media subida se
+              confunde con un parpadeo de error. */}
+          <motion.img
+            key={valor}
+            src={valor}
+            alt=""
+            initial={{ opacity: 0, scale: 1.02 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={transicion()}
+            className="aspect-[4/3] w-full object-cover"
+          />
 
-          {subiendo && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/55">
-              <Loader2 className="h-6 w-6 animate-spin text-white" />
-            </div>
-          )}
+          <AnimatePresence>
+            {subiendo && (
+              <motion.div
+                variants={FUNDIDO}
+                initial="oculto"
+                animate="visible"
+                exit="saliendo"
+                transition={transicion(DURACION.rapida)}
+                className="absolute inset-0 flex items-center justify-center bg-black/55"
+              >
+                <Loader2 className="h-6 w-6 animate-spin text-white" />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {!deshabilitado && (
             <div className="flex border-t border-line">

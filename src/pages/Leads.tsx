@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   Briefcase,
   CalendarClock,
@@ -42,6 +42,7 @@ import {
   urlWhatsApp,
 } from '../lib/formato'
 import { mensajeDeError, esReglaDeNegocio, esDependencia } from '../lib/errores'
+import { ENTRADA, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
 import type { Lead, LeadEstatus, Origen } from '../lib/tipos'
 
@@ -406,24 +407,36 @@ export function Leads() {
         />
       ) : grupos ? (
         <div className="space-y-5">
-          {grupos.map((g) => (
-            <section key={g.titulo}>
-              <h2 className="mb-2 text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
-                {g.titulo} · {g.leads.length}
-              </h2>
-              <div className="space-y-2.5">
-                {g.leads.map((l, i) => (
-                  <TarjetaLead
-                    key={l.id}
-                    lead={l}
-                    indice={i}
-                    vencido={seguimientoVencido(l)}
-                    onAbrir={() => setDetalle(l)}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
+          <AnimatePresence initial={false}>
+            {grupos.map((g) => (
+              <motion.section
+                key={g.titulo}
+                layout
+                variants={ENTRADA}
+                initial="oculto"
+                animate="visible"
+                exit="saliendo"
+                transition={transicion()}
+              >
+                <h2 className="mb-2 text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
+                  {g.titulo} · {g.leads.length}
+                </h2>
+                <div className="space-y-2.5">
+                  <AnimatePresence initial={false}>
+                    {g.leads.map((l, i) => (
+                      <TarjetaLead
+                        key={l.id}
+                        lead={l}
+                        indice={i}
+                        vencido={seguimientoVencido(l)}
+                        onAbrir={() => setDetalle(l)}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </motion.section>
+            ))}
+          </AnimatePresence>
         </div>
       ) : (
         <div className="space-y-2.5">

@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Layers, Pencil, Plus, Trash2 } from 'lucide-react'
 import {
   useCampana,
@@ -29,12 +30,13 @@ import { Button } from '../components/ui/Button'
 import { Input, InputNumero, Select, Switch } from '../components/ui/Campo'
 import { Sheet } from '../components/ui/Sheet'
 import { Badge } from '../components/ui/Badge'
-import { Card } from '../components/ui/Card'
+import { Card, CardAnimada } from '../components/ui/Card'
 import { Skeleton, ErrorCarga, Vacio } from '../components/ui/Estados'
 import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
 import { PLATAFORMA_ADS, VEREDICTO } from '../lib/etiquetas'
 import { dinero, dineroExacto, fechaCorta, hoyISO, numero, porcentaje } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
+import { DURACION, escalonar, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
 import type { AdConVeredicto, CreativoConMetricas } from '../lib/tipos'
 
@@ -253,12 +255,14 @@ export function CampanaDetalle() {
               <span className="tabular text-fg-subtle">{porcentaje(usado)}</span>
             </div>
             <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-3">
-              <div
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min((usado ?? 0) * 100, 100)}%` }}
+                transition={transicion(DURACION.lenta)}
                 className={cn(
-                  'h-full rounded-full transition-all duration-500',
+                  'h-full rounded-full',
                   usado != null && usado > 1 ? 'bg-danger' : 'bg-primary',
                 )}
-                style={{ width: `${Math.min((usado ?? 0) * 100, 100)}%` }}
               />
             </div>
             <p className="mt-1.5 text-sm text-fg-subtle">
@@ -297,12 +301,12 @@ export function CampanaDetalle() {
           />
         ) : (
           <div className="space-y-2.5">
-            {(creativos ?? []).map((c) => {
+            {(creativos ?? []).map((c, i) => {
               const vc = VEREDICTO[c.veredicto]
               const consumo =
                 Number(c.presupuesto) > 0 ? Number(c.gasto_real) / Number(c.presupuesto) : null
               return (
-                <Card key={c.id}>
+                <CardAnimada key={c.id} indice={i}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -361,16 +365,18 @@ export function CampanaDetalle() {
 
                   {consumo != null && (
                     <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-surface-3">
-                      <div
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(consumo * 100, 100)}%` }}
+                        transition={{ ...transicion(DURACION.lenta), delay: escalonar(i) }}
                         className={cn(
                           'h-full rounded-full',
                           consumo > 1 ? 'bg-danger' : 'bg-primary/70',
                         )}
-                        style={{ width: `${Math.min(consumo * 100, 100)}%` }}
                       />
                     </div>
                   )}
-                </Card>
+                </CardAnimada>
               )
             })}
           </div>
@@ -467,9 +473,15 @@ export function CampanaDetalle() {
           </p>
         ) : (
           <div className="space-y-2">
-            {(registros ?? []).map((a) => (
-              <div
+            <AnimatePresence initial={false}>
+              {(registros ?? []).map((a, i) => (
+              <motion.div
                 key={a.id}
+                layout="position"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97, transition: transicion(DURACION.rapida) }}
+                transition={{ ...transicion(), delay: escalonar(i, 0.02) }}
                 className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3.5 py-2.5"
               >
                 <div className="min-w-0 flex-1">
@@ -512,8 +524,9 @@ export function CampanaDetalle() {
                     </button>
                   </div>
                 )}
-              </div>
-            ))}
+              </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </section>

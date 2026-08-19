@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronRight, Megaphone, Plus } from 'lucide-react'
 import { useCampanas, useGuardarCampana } from '../lib/queries/ads'
 import { useRol } from '../hooks/useRol'
@@ -19,6 +19,7 @@ import { BotonCSV } from '../components/BotonCSV'
 import { PLATAFORMA_ADS, VEREDICTO } from '../lib/etiquetas'
 import { dinero, dineroExacto, fechaCorta, hoyISO, numero, porcentaje } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
+import { DURACION, escalonar, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
 import type { CampanaConMetricas } from '../lib/tipos'
 
@@ -239,12 +240,16 @@ export function Ads() {
                         <span className="tabular text-fg-subtle">{porcentaje(usado)}</span>
                       </div>
                       <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-3">
-                        <div
+                        {/* Se llena al entrar en vez de aparecer llena: el
+                            recorrido es lo que comunica cuánto se consumió. */}
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min((usado ?? 0) * 100, 100)}%` }}
+                          transition={{ ...transicion(DURACION.lenta), delay: escalonar(i) }}
                           className={cn(
-                            'h-full rounded-full transition-all duration-500',
+                            'h-full rounded-full',
                             usado != null && usado > 1 ? 'bg-danger' : 'bg-primary',
                           )}
-                          style={{ width: `${Math.min((usado ?? 0) * 100, 100)}%` }}
                         />
                       </div>
                       {sinRepartir > 0 && (

@@ -1,5 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react'
 import { motion } from 'framer-motion'
+import { DURACION, escalonar, transicion } from '../../lib/animacion'
 import { cn } from '../../lib/cn'
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -11,7 +12,18 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   )
 }
 
-/** Card que aparece con entrada escalonada dentro de una lista. */
+/**
+ * Card de lista: entra escalonada, sale encogiéndose y se reacomoda sola.
+ *
+ * Antes solo tenía entrada. Como las listas ya venían envueltas en
+ * <AnimatePresence>, borrar un registro lo hacía desaparecer de golpe y los
+ * de abajo saltaban a ocupar el hueco — se veía como un parpadeo, no como
+ * un borrado. `exit` y `layout` arreglan las dos mitades.
+ *
+ * layout="position" y no layout completo: el segundo interpola también el
+ * tamaño, y con tarjetas de alto distinto el contenido se estira mientras
+ * dura la animación.
+ */
 export function CardAnimada({
   indice = 0,
   className,
@@ -25,14 +37,15 @@ export function CardAnimada({
 }) {
   return (
     <motion.div
+      layout="position"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.22,
-        delay: Math.min(indice, 8) * 0.03,
-        ease: [0.22, 1, 0.36, 1],
-      }}
+      exit={{ opacity: 0, scale: 0.97, transition: transicion(DURACION.rapida) }}
+      transition={{ ...transicion(), delay: escalonar(indice) }}
       onClick={onClick}
+      // Hundirse al tocar es la única confirmación táctil que hay en móvil
+      // de que el tap sí registró sobre la tarjeta.
+      whileTap={onClick ? { scale: 0.985 } : undefined}
       className={cn(
         'rounded-2xl border border-line bg-surface p-4 shadow-card',
         onClick && 'cursor-pointer transition-colors duration-150 hover:border-line-strong hover:bg-surface-2',

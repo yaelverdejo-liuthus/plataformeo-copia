@@ -23,6 +23,7 @@ import {
   minutosAHoras,
 } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
+import { DURACION, ENTRADA, FUNDIDO, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
 import type { Trabajo } from '../lib/tipos'
 
@@ -192,6 +193,21 @@ export function Trabajos() {
         />
       </div>
 
+      {/*
+        Cruce al cambiar de vista. Las tres muestran los mismos trabajos
+        ordenados distinto, y sin transición el salto se lee como si la
+        pantalla se hubiera recargado. mode="wait" para que no se encimen
+        dos listas del mismo alto durante el cruce.
+      */}
+      <AnimatePresence mode="wait">
+      <motion.div
+        key={vista}
+        variants={FUNDIDO}
+        initial="oculto"
+        animate="visible"
+        exit="saliendo"
+        transition={transicion(DURACION.rapida)}
+      >
       {error ? (
         <ErrorCarga mensaje={mensajeDeError(error as { message?: string })} onReintentar={refetch} />
       ) : isPending ? (
@@ -242,14 +258,16 @@ export function Trabajos() {
               </Card>
 
               <div className="space-y-2.5">
-                {historial.map((t, i) => (
-                  <TarjetaTrabajo
-                    key={t.id}
-                    trabajo={t}
-                    indice={i}
-                    onAbrir={() => navegar(`/trabajos/${t.id}`)}
-                  />
-                ))}
+                <AnimatePresence initial={false}>
+                  {historial.map((t, i) => (
+                    <TarjetaTrabajo
+                      key={t.id}
+                      trabajo={t}
+                      indice={i}
+                      onAbrir={() => navegar(`/trabajos/${t.id}`)}
+                    />
+                  ))}
+                </AnimatePresence>
               </div>
             </>
           )}
@@ -263,27 +281,42 @@ export function Trabajos() {
         />
       ) : vista === 'agenda' ? (
         <div className="space-y-5">
-          {grupos.map((g) => (
-            <section key={g.titulo}>
-              <div className="mb-2 flex items-baseline gap-2">
-                <h2 className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
-                  {g.titulo} · {g.trabajos.length}
-                </h2>
-                {g.nota && <span className="text-xs text-fg-subtle">{g.nota}</span>}
-              </div>
-              <div className="space-y-2.5">
-                {g.trabajos.map((t, i) => (
-                  <TarjetaTrabajo
-                    key={t.id}
-                    trabajo={t}
-                    indice={i}
-                    urgente={g.titulo === 'Vencidos'}
-                    onAbrir={() => navegar(`/trabajos/${t.id}`)}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
+          {/* Los grupos aparecen y desaparecen solos según la fecha: al
+              terminar el último trabajo vencido, esa sección entera se va.
+              Con layout, las de abajo suben en vez de saltar. */}
+          <AnimatePresence initial={false}>
+            {grupos.map((g) => (
+              <motion.section
+                key={g.titulo}
+                layout
+                variants={ENTRADA}
+                initial="oculto"
+                animate="visible"
+                exit="saliendo"
+                transition={transicion()}
+              >
+                <div className="mb-2 flex items-baseline gap-2">
+                  <h2 className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
+                    {g.titulo} · {g.trabajos.length}
+                  </h2>
+                  {g.nota && <span className="text-xs text-fg-subtle">{g.nota}</span>}
+                </div>
+                <div className="space-y-2.5">
+                  <AnimatePresence initial={false}>
+                    {g.trabajos.map((t, i) => (
+                      <TarjetaTrabajo
+                        key={t.id}
+                        trabajo={t}
+                        indice={i}
+                        urgente={g.titulo === 'Vencidos'}
+                        onAbrir={() => navegar(`/trabajos/${t.id}`)}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </motion.section>
+            ))}
+          </AnimatePresence>
         </div>
       ) : (
         <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
@@ -339,6 +372,9 @@ export function Trabajos() {
           ))}
         </div>
       )}
+
+      </motion.div>
+      </AnimatePresence>
 
       {puede && (
         <BotonFlotante

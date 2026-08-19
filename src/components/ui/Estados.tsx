@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
+import { ENTRADA, RESORTE_SUAVE, transicion } from '../../lib/animacion'
 import { cn } from '../../lib/cn'
 
 /** Skeleton animado. Nunca spinner de página completa (§7 de la spec). */
@@ -55,14 +56,22 @@ export function Vacio({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      variants={ENTRADA}
+      initial="oculto"
+      animate="visible"
+      transition={transicion()}
       className="flex flex-col items-center rounded-2xl border border-dashed border-line px-6 py-12 text-center"
     >
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+      {/* El icono entra un pelo después y con resorte: da el único punto de
+          vida a una pantalla que por definición está vacía. */}
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ ...RESORTE_SUAVE, delay: 0.06 }}
+        className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"
+      >
         {icono}
-      </div>
+      </motion.div>
       <p className="text-lg font-medium text-fg">{titulo}</p>
       {descripcion && <p className="mt-1 max-w-xs text-sm text-fg-muted">{descripcion}</p>}
       {accion && <div className="mt-5">{accion}</div>}
@@ -73,7 +82,16 @@ export function Vacio({
 /** Error de carga, con reintento. Tampoco se deja en blanco. */
 export function ErrorCarga({ mensaje, onReintentar }: { mensaje: string; onReintentar?: () => void }) {
   return (
-    <div className="rounded-2xl border border-danger/25 bg-danger/8 p-4">
+    // Entra igual que Vacio: son los dos estados que sustituyen al
+    // contenido, y que uno se deslice y el otro aparezca de golpe delata
+    // que se escribieron en momentos distintos.
+    <motion.div
+      variants={ENTRADA}
+      initial="oculto"
+      animate="visible"
+      transition={transicion()}
+      className="rounded-2xl border border-danger/25 bg-danger/8 p-4"
+    >
       <p className="text-base font-medium text-danger">No se pudo cargar</p>
       <p className="mt-1 text-sm text-fg-muted">{mensaje}</p>
       {onReintentar && (
@@ -84,6 +102,6 @@ export function ErrorCarga({ mensaje, onReintentar }: { mensaje: string; onReint
           Reintentar
         </button>
       )}
-    </div>
+    </motion.div>
   )
 }
