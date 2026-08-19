@@ -8,13 +8,11 @@ export type Rol = 'admin' | 'tatuador' | 'contenido'
 export type Nivel = '1' | '2' | '3'
 export type Autoria = 'propio' | 'referencia' | 'hibrido'
 export type Origen = 'tiktok' | 'meta' | 'organico' | 'referido' | 'conocido'
-export type LeadEstatus =
-  | 'nuevo'
-  | 'cotizado'
-  | 'trazado_agendado'
-  | 'anticipo_pagado'
-  | 'agendado'
-  | 'perdido'
+/**
+ * Etapas reales de venta. El trazado es una cita del trabajo y el anticipo
+ * es un dato de la cita: ninguno de los dos era una etapa del embudo.
+ */
+export type LeadEstatus = 'nuevo' | 'cotizado' | 'agendado' | 'perdido'
 export type TrabajoEstatus =
   | 'trazado_agendado'
   | 'trazado_hecho'
@@ -59,9 +57,42 @@ export type Lead = {
   estatus: LeadEstatus
   siguiente_accion: string | null
   fecha_seguimiento: string | null
+
+  // ── Etapa "cotizado" ──
+  monto_cotizado: number | null
+  zona: string | null
+  catalogo_id: string | null
+  cotizado_en: string | null
+
+  // ── Etapa "agendado" ──
+  fecha_trazado: string | null
+  fecha_tatuaje: string | null
+  hora: string | null
+  anticipo: number
+
+  // ── Etapa "perdido" ──
+  motivo_perdida: string | null
+
   created_by: string | null
   created_at: string
   updated_at: string
+}
+
+/**
+ * Un movimiento de cita. Quien reagenda seguido es quien se va a caer, y
+ * eso solo se ve con el historial completo, no con un contador.
+ */
+export type Reprogramacion = {
+  id: string
+  lead_id: string | null
+  trabajo_id: string | null
+  fecha_anterior: string | null
+  hora_anterior: string | null
+  fecha_nueva: string
+  hora_nueva: string | null
+  motivo: string
+  created_by: string | null
+  created_at: string
 }
 
 export type Trabajo = {
@@ -191,6 +222,7 @@ export type Database = {
       ads: Tabla<Ad>
       config: Tabla<ConfigFila>
       preferencias: Tabla<Preferencias>
+      reprogramaciones: Tabla<Reprogramacion>
     }
     Views: {
       v_contenido_filtro: { Row: ContenidoConFiltro; Relationships: [] }

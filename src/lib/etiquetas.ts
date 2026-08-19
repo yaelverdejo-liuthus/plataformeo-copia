@@ -19,14 +19,41 @@ export const ORIGEN: Record<Origen, string> = {
   conocido: 'Conocido',
 }
 
-export const LEAD_ESTATUS: Record<LeadEstatus, { texto: string; tono: Tono }> = {
-  nuevo: { texto: 'Nuevo', tono: 'info' },
-  cotizado: { texto: 'Cotizado', tono: 'primario' },
-  trazado_agendado: { texto: 'Trazado agendado', tono: 'acento' },
-  anticipo_pagado: { texto: 'Anticipo pagado', tono: 'exito' },
-  agendado: { texto: 'Agendado', tono: 'exito' },
-  perdido: { texto: 'Perdido', tono: 'neutro' },
+export const LEAD_ESTATUS: Record<
+  LeadEstatus,
+  { texto: string; tono: Tono; accion: string; descripcion: string }
+> = {
+  nuevo: {
+    texto: 'Nuevo',
+    tono: 'info',
+    accion: 'Regresar a nuevo',
+    descripcion: 'Escribió, todavía no hay precio hablado',
+  },
+  cotizado: {
+    texto: 'Cotizado',
+    tono: 'primario',
+    accion: 'Cotizar',
+    descripcion: 'Ya sabe cuánto cuesta, falta cerrar',
+  },
+  agendado: {
+    texto: 'Agendado',
+    tono: 'exito',
+    accion: 'Agendar',
+    descripcion: 'Anticipo cobrado y fecha puesta',
+  },
+  perdido: {
+    texto: 'Perdido',
+    tono: 'neutro',
+    accion: 'Marcar perdido',
+    descripcion: 'Ya no va a comprar',
+  },
 }
+
+/**
+ * El embudo en orden. `agendado` es el final del recorrido comercial:
+ * de ahí en adelante el expediente vive en Trabajos.
+ */
+export const EMBUDO_LEAD: LeadEstatus[] = ['nuevo', 'cotizado', 'agendado']
 
 export const TRABAJO_ESTATUS: Record<TrabajoEstatus, { texto: string; tono: Tono }> = {
   trazado_agendado: { texto: 'Trazado agendado', tono: 'info' },

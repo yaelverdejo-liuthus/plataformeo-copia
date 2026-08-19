@@ -106,6 +106,20 @@ export function diasDesdeHoy(iso: string | null | undefined) {
   return Math.round((f.getTime() - hoy.getTime()) / 86_400_000)
 }
 
+/**
+ * Distancia en lenguaje de taller: "Hoy", "Mañana", "En 3 días", "Hace 2 días".
+ * Es lo que se lee de reojo entre cliente y cliente; una fecha exacta obliga
+ * a hacer la cuenta mental.
+ */
+export function cuandoTexto(iso: string | null | undefined) {
+  const d = diasDesdeHoy(iso)
+  if (d == null) return 'Sin fecha'
+  if (d === 0) return 'Hoy'
+  if (d === 1) return 'Mañana'
+  if (d === -1) return 'Ayer'
+  return d > 0 ? `En ${d} días` : `Hace ${Math.abs(d)} días`
+}
+
 /** '3141234567' → 'https://wa.me/523141234567' */
 export function urlWhatsApp(numeroTel: string) {
   const limpio = numeroTel.replace(/\D/g, '')

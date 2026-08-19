@@ -1,8 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
-import type { Lead } from '../tipos'
+import type { Lead, Reprogramacion } from '../tipos'
 
 export const llavesLeads = { todo: ['leads'] as const }
+export const llavesReprogramaciones = {
+  deLead: (id: string) => ['reprogramaciones', 'lead', id] as const,
+}
 
 export function useLeads() {
   return useQuery({
@@ -20,7 +23,7 @@ export function useLeads() {
 }
 
 export type NuevoLead = Pick<Lead, 'nombre' | 'whatsapp' | 'origen'> &
-  Partial<Pick<Lead, 'que_pidio' | 'nivel_estimado' | 'estatus' | 'siguiente_accion' | 'fecha_seguimiento' | 'fecha'>>
+  Partial<Omit<Lead, 'id' | 'created_at' | 'updated_at' | 'created_by'>>
 
 export function useCrearLead() {
   const qc = useQueryClient()
@@ -39,28 +42,106 @@ export function useCrearLead() {
     onMutate: async (lead) => {
       await qc.cancelQueries({ queryKey: llavesLeads.todo })
       const previo = qc.getQueryData<Lead[]>(llavesLeads.todo)
-      const provisional = {
+      const provisional: Lead = {
+        que_pidio: null,
+        nivel_estimado: null,
+        siguiente_accion: null,
+        fecha_seguimiento: null,
+        monto_cotizado: null,
+        zona: null,
+        catalogo_id: null,
+        cotizado_en: null,
+        fecha_trazado: null,
+        fecha_tatuaje: null,
+        hora: null,
+        motivo_perdida: null,
         ...lead,
         id: `provisional-${Date.now()}`,
         fecha: lead.fecha ?? new Date().toISOString().slice(0, 10),
         estatus: lead.estatus ?? 'nuevo',
-        que_pidio: lead.que_pidio ?? null,
-        nivel_estimado: lead.nivel_estimado ?? null,
-        siguiente_accion: lead.siguiente_accion ?? null,
-        fecha_seguimiento: lead.fecha_seguimiento ?? null,
+        anticipo: lead.anticipo ?? 0,
         created_by: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      } as Lead
+      }
       qc.setQueryData<Lead[]>(llavesLeads.todo, (v) => [provisional, ...(v ?? [])])
       return { previo }
     },
     onError: (_e, _v, ctx) => {
       if (ctx?.previo) qc.setQueryData(llavesLeads.todo, ctx.previo)
     },
+    // Trabajos entra aquí porque al quedar "agendado" el trigger de la base
+    // crea el expediente: sin refrescar, el tatuador no lo ve aparecer.
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: llavesLeads.todo })
+      void qc.invalidateQueries({ queryKey: ['trabajos'] })
       void qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
+/** Historial de movimientos de cita de un lead, del más reciente al primero. */
+export function useReprogramaciones(leadId: string | undefined) {
+  return useQuery({
+    queryKey: llavesReprogramaciones.deLead(leadId ?? ''),
+    enabled: Boolean(leadId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('reprogramaciones')
+        .select('*')
+        .eq('lead_id', leadId!)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data as Reprogramacion[]
+    },
+  })
+}
+
+/**
+ * Mueve la cita y deja constancia de por qué, en una sola operación.
+ *
+ * El motivo no es opcional: sin él, tres semanas después nadie sabe si el
+ * cliente cambió de opinión o si el estudio tuvo que mover la agenda, y esa
+ * diferencia es la que dice cuáles citas se van a caer.
+ */
+export function useReprogramar() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      lead,
+      fechaNueva,
+      horaNueva,
+      motivo,
+    }: {
+      lead: Lead
+      fechaNueva: string
+      horaNueva: string | null
+      motivo: string
+    }) => {
+      const { data: sesion } = await supabase.auth.getUser()
+
+      const { error: errLead } = await supabase
+        .from('leads')
+        .update({ fecha_tatuaje: fechaNueva, hora: horaNueva })
+        .eq('id', lead.id)
+      if (errLead) throw errLead
+
+      const { error: errHist } = await supabase.from('reprogramaciones').insert({
+        lead_id: lead.id,
+        fecha_anterior: lead.fecha_tatuaje,
+        hora_anterior: lead.hora,
+        fecha_nueva: fechaNueva,
+        hora_nueva: horaNueva,
+        motivo,
+        created_by: sesion.user?.id ?? null,
+      })
+      if (errHist) throw errHist
+    },
+    onSettled: (_d, _e, v) => {
+      void qc.invalidateQueries({ queryKey: llavesLeads.todo })
+      void qc.invalidateQueries({ queryKey: llavesReprogramaciones.deLead(v.lead.id) })
+      // El trabajo ya creado guarda su propia copia de la fecha.
+      void qc.invalidateQueries({ queryKey: ['trabajos'] })
     },
   })
 }
@@ -76,8 +157,11 @@ export function useEliminarLead() {
       const { error } = await supabase.from('leads').delete().eq('id', id)
       if (error) throw error
     },
+    // Trabajos entra aquí porque al quedar "agendado" el trigger de la base
+    // crea el expediente: sin refrescar, el tatuador no lo ve aparecer.
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: llavesLeads.todo })
+      void qc.invalidateQueries({ queryKey: ['trabajos'] })
       void qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
@@ -107,8 +191,11 @@ export function useActualizarLead() {
     onError: (_e, _v, ctx) => {
       if (ctx?.previo) qc.setQueryData(llavesLeads.todo, ctx.previo)
     },
+    // Trabajos entra aquí porque al quedar "agendado" el trigger de la base
+    // crea el expediente: sin refrescar, el tatuador no lo ve aparecer.
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: llavesLeads.todo })
+      void qc.invalidateQueries({ queryKey: ['trabajos'] })
       void qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })

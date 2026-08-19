@@ -19,6 +19,8 @@ import { Sheet } from '../components/ui/Sheet'
 import { Badge } from '../components/ui/Badge'
 import { Vacio, ErrorCarga, Skeleton } from '../components/ui/Estados'
 import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
+import { SubidorImagen } from '../components/SubidorImagen'
+import { borrarImagenPorUrl } from '../lib/storage'
 import { AUTORIA, NIVEL, ZONAS } from '../lib/etiquetas'
 import { dinero, minutosAHoras } from '../lib/formato'
 import { mensajeDeError, esReglaDeNegocio, esDependencia } from '../lib/errores'
@@ -138,6 +140,8 @@ export function Catalogo() {
     if (!aBorrar) return
     try {
       await eliminar.mutateAsync(aBorrar.id)
+      // La fila ya no existe: su foto en el bucket solo ocuparía espacio.
+      void borrarImagenPorUrl(aBorrar.imagen_url)
       toast.exito('Diseño eliminado')
       setABorrar(null)
       setEditando(null)
@@ -368,12 +372,13 @@ export function Catalogo() {
             ))}
           </Select>
 
-          <Input
-            etiqueta="Imagen (URL)"
-            placeholder="https://…"
+          <SubidorImagen
+            valor={watch('imagen_url') || null}
+            onCambio={(url) => setValue('imagen_url', url ?? '')}
+            carpeta="catalogo"
+            nombreBase={watch('id') || 'diseno'}
+            etiqueta="Foto del diseño"
             hint="La foto real de la pieza, no una ilustración genérica"
-            error={errors.imagen_url?.message}
-            {...register('imagen_url')}
           />
 
           <div className="rounded-2xl border border-line bg-surface-2/50 px-3.5 py-1">
