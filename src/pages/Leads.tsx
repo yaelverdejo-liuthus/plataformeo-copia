@@ -255,7 +255,11 @@ export function Leads() {
       )}
 
       {puede && (
-        <BotonFlotante onClick={() => setAltaAbierta(true)} aria-label="Nuevo lead">
+        <BotonFlotante
+          data-tour="nuevo-lead"
+          onClick={() => setAltaAbierta(true)}
+          aria-label="Nuevo lead"
+        >
           <Plus className="h-6 w-6" />
         </BotonFlotante>
       )}

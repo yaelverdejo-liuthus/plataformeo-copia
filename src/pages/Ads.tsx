@@ -304,7 +304,11 @@ export function Ads() {
       )}
 
       {puede && (
-        <BotonFlotante onClick={() => setAltaAbierta(true)} aria-label="Registrar día de pauta">
+        <BotonFlotante
+          data-tour="nueva-pauta"
+          onClick={() => setAltaAbierta(true)}
+          aria-label="Registrar día de pauta"
+        >
           <Plus className="h-6 w-6" />
         </BotonFlotante>
       )}

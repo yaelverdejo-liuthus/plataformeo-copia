@@ -112,17 +112,62 @@ const POR_ROL: Record<Rol, Paso[]> = {
     },
   ],
 
+  /*
+   * El admin ve el recorrido completo, no un resumen: es el rol de quien
+   * más usa la plataforma, así que necesita tanto lo del taller (trabajos,
+   * catálogo) como lo que solo él puede tocar (leads, pauta, umbrales).
+   */
   admin: [
     {
-      titulo: 'Ves y editas todo',
+      titulo: 'Trabajos es tu pantalla',
       texto:
-        'Eres el único que escribe en Leads, Pauta y Ajustes. Jesús lleva trabajos y catálogo; Jair, los videos.',
-      objetivo: 'semaforos',
+        'Aquí vive el expediente de cada pieza. Con este par de botones cambias entre tablero por estatus y lista con detalle.',
+      ruta: '/trabajos',
+      objetivo: 'vistas-trabajos',
+    },
+    {
+      titulo: 'Desde aquí das de alta',
+      texto:
+        'Este botón abre el formulario. Ahí adentro vas a ver las dos citas por separado: la de trazado, que son 20 minutos con marcador sobre el cuerpo, y la de tatuaje, que es la sesión.',
+      objetivo: 'nuevo-trabajo',
+    },
+    {
+      titulo: 'Sin anticipo no hay cita',
+      texto:
+        'No vas a poder marcar "agendado" ni "terminado" si no hay anticipo cobrado. Y ojo: ser admin no te salta esta regla. No es un permiso, es un candado de la base de datos — aplica igual para todos, incluido tú. Justo por eso sirve.',
+      objetivo: 'nuevo-trabajo',
+    },
+    {
+      titulo: 'Captura los tiempos',
+      texto:
+        'Anota cuánto tardaste diseñando y cuánto aplicando. De ahí sale la tarifa real por hora, que es lo único que te dice si el nivel 3 de verdad paga mejor. El diseño pasa de noche y se siente gratis, pero no lo es.',
+      objetivo: 'nuevo-trabajo',
+    },
+    {
+      titulo: 'De aquí sale la cotización',
+      texto:
+        'Los diseños con su nivel, precio y zona. Si la zona es mano, el retoque va incluido a fuerza: esa piel retiene mal la tinta y si no está en el precio desde el principio, se termina regalando.',
+      ruta: '/catalogo',
+      objetivo: 'catalogo',
+    },
+    {
+      titulo: 'Todo el que escribe, entra aquí',
+      texto:
+        'Cada persona que manda WhatsApp se registra el mismo día, con de dónde llegó y qué pidió. Ponle fecha de seguimiento: si llega el día y sigue abierto, te sale en rojo y en el tablero.',
+      ruta: '/leads',
+      objetivo: 'nuevo-lead',
+    },
+    {
+      titulo: 'La pauta se mide, no se adivina',
+      texto:
+        'Una fila por anuncio por día: gasto real y conversaciones. La app te dice sola si escalar o matar el creativo. Sin esto, en tres semanas cada quien tiene su teoría y ninguna es verificable.',
+      ruta: '/ads',
+      objetivo: 'nueva-pauta',
     },
     {
       titulo: 'Los 7 umbrales',
       texto:
-        'Estos números mueven todo lo demás: el filtro de contenido, los umbrales de costo por conversación y la tarifa objetivo. Cambiarlos recalcula los semáforos y los veredictos al instante.',
+        'Estos números mueven todo lo demás: el filtro de contenido, los umbrales de costo por conversación y la tarifa objetivo. Cambiarlos recalcula los semáforos y los veredictos al instante. Son supuestos de arranque — ajústalos cuando tengas datos reales.',
       ruta: '/config',
       objetivo: 'umbrales',
     },

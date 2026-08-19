@@ -219,7 +219,7 @@ export function Dashboard() {
       </section>
 
       {/* ── Reglas de decisión, con semáforo ────────────────────────── */}
-      <section data-tour="semaforos">
+      <section>
         <TituloSeccion>Reglas de decisión</TituloSeccion>
         {isPending || !d || !dv ? (
           <SkeletonKPIs n={6} />
