@@ -9,7 +9,9 @@ import type { Rol } from '../lib/tipos'
  * — esconder un botón no protege nada.
  */
 const ESCRITURA: Record<string, Rol[]> = {
-  catalogo: ['admin', 'tatuador'],
+  // Material compartido del estudio: quien hace el contenido es quien tiene
+  // las fotos buenas a la mano, así que también lo edita.
+  catalogo: ['admin', 'tatuador', 'contenido'],
   leads: ['admin'],
   trabajos: ['admin', 'tatuador'],
   contenido: ['admin', 'contenido'],

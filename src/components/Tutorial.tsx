@@ -110,6 +110,13 @@ const POR_ROL: Record<Rol, Paso[]> = {
       objetivo: 'filtros-contenido',
     },
     {
+      titulo: 'El catálogo también es tuyo',
+      texto:
+        'Puedes editar los diseños y subirles foto desde el celular. Eres quien tiene las fotos buenas a la mano, así que no hace falta pedirle a nadie que las suba por ti.',
+      ruta: '/catalogo',
+      objetivo: 'catalogo',
+    },
+    {
       titulo: 'Lo que no vas a poder tocar',
       texto:
         'Leads y Pauta los puedes ver, pero no escribir: son del admin. Si intentas guardar aquí, la base te lo va a rechazar. No está descompuesto, es a propósito.',
