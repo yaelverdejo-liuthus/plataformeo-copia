@@ -235,6 +235,24 @@
   .anim-repicar {
     animation: repicar 3s ease-in-out infinite;
   }
+
+  /* ── Barras de la mezcla de niveles ───────────────────────────────
+     La altura real de cada barra va en un `style` inline, siempre
+     correcta. Esto solo la hace CRECER desde la base al entrar, y con
+     `backwards` para que durante su retraso ya esté encogida en vez de
+     dar un salto. Si la animación no corriera, la barra se ve completa
+     desde el primer fotograma: la gráfica nunca depende de ella. */
+  .anim-crecer {
+    animation: crecer 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    transform-origin: bottom;
+  }
+
+  /* El destello que sube por dentro de la barra. Nace en opacidad 0 y
+     ahí se queda si nadie lo anima: es un adorno, no un dato. */
+  .anim-brillo {
+    opacity: 0;
+    animation: brillo 4.5s ease-in-out infinite;
+  }
 }
 
 /* Tablero: un latido corto y se calla. */
@@ -288,6 +306,22 @@
 @keyframes engranar {
   0%, 32% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* La barra sube desde su base. */
+@keyframes crecer {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* Un reflejo que recorre la barra de abajo a arriba y descansa. Abre y
+   cierra en opacidad 0, así que con "reducir movimiento" no queda una
+   banda de luz clavada a media barra. */
+@keyframes brillo {
+  0%, 58% { transform: translateY(140%); opacity: 0; }
+  66% { opacity: 0.9; }
+  88% { opacity: 0.9; }
+  96%, 100% { transform: translateY(-140%); opacity: 0; }
 }
 
 /* WhatsApp: el brinco de un mensaje que acaba de entrar. Da el respingo y

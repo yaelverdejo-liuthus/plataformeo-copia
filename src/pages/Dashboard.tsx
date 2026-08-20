@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { AlertCircle, ChevronRight, PartyPopper } from 'lucide-react'
 import { useDashboard, derivar } from '../lib/queries/dashboard'
 import { useLeads } from '../lib/queries/leads'
@@ -135,9 +134,12 @@ export function Dashboard() {
     () =>
       d
         ? [
-            { nivel: 'Nivel 1', valor: d.nivel_1, color: 'rgb(var(--fg-subtle))' },
-            { nivel: 'Nivel 2', valor: d.nivel_2, color: 'rgb(var(--primary))' },
-            { nivel: 'Nivel 3', valor: d.nivel_3, color: 'rgb(var(--accent))' },
+            // Se guarda el NOMBRE de la variable, no el color ya armado: la
+            // gráfica necesita el mismo tono a varias opacidades y con el
+            // string `rgb(...)` hecho no se puede sin recortarlo a mano.
+            { nivel: 'Nivel 1', valor: d.nivel_1, tono: '--fg-subtle' },
+            { nivel: 'Nivel 2', valor: d.nivel_2, tono: '--primary' },
+            { nivel: 'Nivel 3', valor: d.nivel_3, tono: '--accent' },
           ]
         : [],
     [d],
@@ -339,34 +341,7 @@ export function Dashboard() {
               Sin trabajos todavía. Aquí se ve si el negocio vive del nivel 1 barato.
             </p>
           ) : (
-            <div className="mt-2 h-40">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mezcla} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
-                  <XAxis
-                    dataKey="nivel"
-                    stroke="rgb(var(--fg-subtle))"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip
-                    cursor={{ fill: 'rgb(var(--surface-2))' }}
-                    contentStyle={{
-                      background: 'rgb(var(--surface))',
-                      border: '1px solid rgb(var(--border))',
-                      borderRadius: 12,
-                      fontSize: 13,
-                      color: 'rgb(var(--fg))',
-                    }}
-                  />
-                  <Bar dataKey="valor" name="Trabajos" radius={[8, 8, 0, 0]}>
-                    {mezcla.map((m) => (
-                      <Cell key={m.nivel} fill={m.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <MezclaNiveles datos={mezcla} />
           )}
         </Card>
       </section>
@@ -392,6 +367,105 @@ export function Dashboard() {
           </div>
         )}
       </section>
+    </div>
+  )
+}
+
+/**
+ * Mezcla de niveles, dibujada a mano.
+ *
+ * Antes era un BarChart de Recharts con un color plano por barra, y era el
+ * ÚNICO gráfico de esta pantalla: por tres barras se cargaban 327 KB de
+ * librería en el Tablero, que es la primera pantalla que abre todo mundo.
+ * Hecho a mano son unos divs, y además se puede diseñar de verdad.
+ *
+ * Lo que gana además del aspecto: el número de cada nivel y su porcentaje
+ * quedan escritos. En el gráfico anterior había que pasar el cursor por
+ * encima para saber cuántos eran — en el teléfono, donde no hay cursor, ese
+ * dato simplemente no existía.
+ *
+ * Cada barra lleva su altura real en un `style` inline. Las animaciones son
+ * decoración encima: si no corrieran, la gráfica se ve completa y correcta.
+ */
+function MezclaNiveles({ datos }: { datos: { nivel: string; valor: number; tono: string }[] }) {
+  const total = datos.reduce((s, x) => s + x.valor, 0)
+  const tope = Math.max(...datos.map((x) => x.valor), 1)
+
+  return (
+    <div className="mt-3">
+      <div className="flex h-36 items-end gap-3">
+        {datos.map((m, i) => {
+          const color = (alfa: number) => `rgb(var(${m.tono}) / ${alfa})`
+          // Un nivel con trabajos nunca queda en cero visual: aunque le toque
+          // una rebanada mínima frente al tope, se le deja un tocón visible.
+          const alto = Math.max((m.valor / tope) * 100, m.valor > 0 ? 6 : 1.5)
+          return (
+            <div key={m.nivel} className="flex h-full min-w-0 flex-1 flex-col items-center gap-1.5">
+              <span
+                className="tabular font-display text-base font-semibold leading-none"
+                style={{ color: color(1) }}
+              >
+                {m.valor}
+              </span>
+
+              {/* Carril: la barra se apoya en su base */}
+              <div className="flex w-full flex-1 items-end">
+                <div
+                  className="anim-crecer relative w-full overflow-hidden rounded-t-lg"
+                  style={{ height: `${alto}%`, animationDelay: `${i * 0.09}s` }}
+                >
+                  {/* Degradado: fuerte arriba y desvanecido hacia la base,
+                      que sobre el fondo oscuro se lee como luz saliendo. */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: `linear-gradient(to top, ${color(0.18)}, ${color(0.85)})`,
+                    }}
+                  />
+
+                  {/* Rayado diagonal: le da textura de sombreado en vez de
+                      una mancha lisa. Va con el color del fondo, así que
+                      funciona igual en tema claro y oscuro. */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage:
+                        'repeating-linear-gradient(45deg, transparent 0 5px, rgb(var(--bg) / 0.22) 5px 7px)',
+                    }}
+                  />
+
+                  {/* Filo superior, para que la barra tenga un remate nítido */}
+                  <div
+                    className="absolute inset-x-0 top-0 h-[2px]"
+                    style={{ background: color(1) }}
+                  />
+
+                  {/* Reflejo que sube cada tanto */}
+                  <div
+                    className="anim-brillo pointer-events-none absolute inset-x-0 h-1/2"
+                    style={{
+                      animationDelay: `${i * 0.5}s`,
+                      background:
+                        'linear-gradient(to top, transparent, rgb(255 255 255 / 0.22), transparent)',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <span className="truncate text-2xs font-medium text-fg-subtle">{m.nivel}</span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Línea de base: sin ella las barras flotan */}
+      <div className="h-px w-full bg-line" />
+
+      <p className="mt-2 text-xs text-fg-subtle">
+        {datos
+          .map((m) => `${m.nivel.replace('Nivel ', 'N')} ${porcentaje(total ? m.valor / total : 0)}`)
+          .join(' · ')}
+      </p>
     </div>
   )
 }
