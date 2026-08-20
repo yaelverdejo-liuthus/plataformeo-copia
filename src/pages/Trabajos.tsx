@@ -198,8 +198,17 @@ export function Trabajos() {
         ordenados distinto, y sin transición el salto se lee como si la
         pantalla se hubiera recargado. mode="wait" para que no se encimen
         dos listas del mismo alto durante el cruce.
+
+        initial={false} NO es cosmético: sin él la pantalla nace en opacity 0
+        y depende de que la animación de entrada corra para verse. Anidada
+        dentro del AnimatePresence de AppShell —que retiene la página nueva
+        mientras la anterior sale— en teléfono esa entrada llegaba a no
+        dispararse nunca, y Trabajos se quedaba en blanco hasta que algo
+        forzaba un re-render (cambiar el tema, por ejemplo). Así el contenido
+        nace visible y el cruce solo ocurre al cambiar de vista, que es
+        cuando de verdad aporta. La entrada de la página ya la hace AppShell.
       */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={vista}
         variants={FUNDIDO}

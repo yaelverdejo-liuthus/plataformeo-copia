@@ -8,7 +8,7 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Campo'
 import { LluviaCalaveras } from '../components/LluviaCalaveras'
 import { mensajeDeError } from '../lib/errores'
-import { DESPLEGAR, DURACION, ENTRADA, transicion } from '../lib/animacion'
+import { DESPLEGAR, DURACION, transicion } from '../lib/animacion'
 
 const esquema = z.object({
   email: z.string().email('Escribe un correo válido'),
@@ -44,14 +44,20 @@ export function Login() {
         Login vive fuera de AppShell, así que no hereda la transición de
         página: si no se coreografía aquí, es la única pantalla de la app
         que aparece de golpe — y es la primera que ve cualquiera.
+
+        El escalonado va con delays explícitos y no con staggerChildren:
+        cada hijo se anima por su cuenta, sin depender de que el padre
+        propague la variante. Es la misma forma que ya usan Config y el
+        panel de atención del tablero, y se comporta igual sin tener que
+        razonar sobre cómo se heredan las variantes.
       */}
-      <motion.div
-        initial="oculto"
-        animate="visible"
-        variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
-        className="relative z-10 mx-auto w-full max-w-sm"
-      >
-        <motion.div variants={ENTRADA} transition={transicion()} className="mb-8">
+      <div className="relative z-10 mx-auto w-full max-w-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={transicion()}
+          className="mb-8"
+        >
           <h1 className="text-3xl font-semibold tracking-tight text-fg">Estudio</h1>
           <p className="mt-1.5 text-base text-fg-muted">
             Tablero de instrumentos. Sirve para decidir, no para trabajar.
@@ -59,8 +65,9 @@ export function Login() {
         </motion.div>
 
         <motion.form
-          variants={ENTRADA}
-          transition={transicion()}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...transicion(), delay: 0.07 }}
           onSubmit={handleSubmit(alEnviar)}
           className="space-y-4"
         >
@@ -108,13 +115,14 @@ export function Login() {
         </motion.form>
 
         <motion.p
-          variants={ENTRADA}
-          transition={transicion()}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...transicion(), delay: 0.14 }}
           className="mt-6 text-center text-sm text-fg-subtle"
         >
           Herramienta interna. El registro está cerrado — las cuentas las crea el admin.
         </motion.p>
-      </motion.div>
+      </div>
     </div>
   )
 }
