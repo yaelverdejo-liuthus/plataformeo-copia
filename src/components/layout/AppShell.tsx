@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ComponentType } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -13,7 +13,6 @@ import {
   Settings,
   Sun,
   Users,
-  Video,
   WifiOff,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -22,9 +21,15 @@ import { useTema } from '../../hooks/useTema'
 import { useConexion } from '../../hooks/useConexion'
 import { Sheet } from '../ui/Sheet'
 import { Tutorial } from '../Tutorial'
+import { IconoContenido } from '../IconoContenido'
 import { cn } from '../../lib/cn'
 
-type Icono = typeof LayoutDashboard
+/**
+ * Lo único que el menú le pide a un icono. Se describe por lo que recibe y no
+ * como `typeof LayoutDashboard` para que quepan tanto los de lucide como los
+ * propios — Contenido usa uno que rota entre TikTok, Instagram y Facebook.
+ */
+type Icono = ComponentType<{ className?: string; strokeWidth?: number }>
 
 interface Entrada {
   ruta: string
@@ -38,7 +43,7 @@ const ENTRADAS: Entrada[] = [
   { ruta: '/', etiqueta: 'Tablero', icono: LayoutDashboard },
   { ruta: '/leads', etiqueta: 'Leads', icono: Users },
   { ruta: '/trabajos', etiqueta: 'Trabajos', icono: BarChart3 },
-  { ruta: '/contenido', etiqueta: 'Contenido', icono: Video },
+  { ruta: '/contenido', etiqueta: 'Contenido', icono: IconoContenido },
   { ruta: '/ads', etiqueta: 'Pauta', icono: Megaphone },
   { ruta: '/catalogo', etiqueta: 'Catálogo', icono: Images },
   { ruta: '/config', etiqueta: 'Ajustes', icono: Settings, soloAdmin: true },
