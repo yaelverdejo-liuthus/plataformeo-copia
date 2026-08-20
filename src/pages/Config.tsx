@@ -1,13 +1,21 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Check } from 'lucide-react'
+import { Check, MessageCircle } from 'lucide-react'
 import { useConfig, useGuardarConfig } from '../lib/queries/config'
 import { useToast } from '../components/ui/Toast'
 import { Card } from '../components/ui/Card'
 import { Skeleton, ErrorCarga } from '../components/ui/Estados'
 import { CLAVES_CONFIG_ORDEN, ETIQUETA_CONFIG } from '../lib/etiquetas'
+import { telFormateado, urlWhatsApp } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
 import type { ConfigFila } from '../lib/tipos'
+
+/** A dónde llegan los comentarios sobre la plataforma. */
+const WHATSAPP_SOPORTE = '2291628709'
+
+/* El mensaje va precargado para que nadie tenga que pensar cómo empezar:
+   quien toca el botón ya tiene la primera línea escrita y solo continúa. */
+const SALUDO_SOPORTE = 'Hola, quiero contarte mi experiencia usando la plataforma: '
 
 export function Config() {
   const { data: config, isPending, error, refetch } = useConfig()
@@ -63,6 +71,31 @@ export function Config() {
         Estos valores son supuestos de arranque acordados en la planeación, no datos de mercado
         medidos. Reemplázalos con datos reales después de la primera semana de operación.
       </p>
+
+      {/* ── Comentarios sobre la plataforma ──────────────────────────────
+          Hasta el fondo de Ajustes a propósito: no es una tarea del día,
+          es el lugar al que se llega cuando ya se anduvo por todo lo
+          demás. Ajustes además es la única pantalla que no cambia con el
+          trabajo diario, así que aquí no le quita el sitio a nada. */}
+      <Card className="mt-2 border-primary/25 bg-primary/[0.06]">
+        <p className="font-display text-lg font-semibold tracking-tight text-fg">
+          ¡Cuéntanos tu experiencia en la plataforma!
+        </p>
+        <p className="mt-1 text-sm text-fg-muted">
+          ¿Deseas agregar algo? Lo que te estorbe, lo que te falte o lo que no se entienda — todo
+          sirve.
+        </p>
+
+        <a
+          href={`${urlWhatsApp(WHATSAPP_SOPORTE)}?text=${encodeURIComponent(SALUDO_SOPORTE)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 flex h-12 items-center justify-center gap-2 rounded-xl bg-success/12 text-base font-medium text-success transition-colors hover:bg-success/20"
+        >
+          <MessageCircle className="anim-repicar h-5 w-5" />
+          WhatsApp · {telFormateado(WHATSAPP_SOPORTE)}
+        </a>
+      </Card>
     </div>
   )
 }
