@@ -16,6 +16,7 @@ import { CardAnimada } from '../components/ui/Card'
 import { Segmentado } from '../components/ui/Segmentado'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
 import { BotonCSV } from '../components/BotonCSV'
+import { ExplicacionCostoConv } from '../components/ExplicacionCostoConv'
 import { PLATAFORMA_ADS, VEREDICTO } from '../lib/etiquetas'
 import { dinero, dineroExacto, fechaCorta, hoyISO, numero, porcentaje } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
@@ -172,15 +173,21 @@ export function Ads() {
         </div>
       </header>
 
-      <Segmentado
-        idGrupo="pauta"
-        valor={filtro}
-        onCambio={setFiltro}
-        opciones={[
-          { valor: 'activas', etiqueta: 'Activas', conteo: totales.activas },
-          { valor: 'todas', etiqueta: 'Todas', conteo: (campanas ?? []).length },
-        ]}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <Segmentado
+          idGrupo="pauta"
+          valor={filtro}
+          onCambio={setFiltro}
+          opciones={[
+            { valor: 'activas', etiqueta: 'Activas', conteo: totales.activas },
+            { valor: 'todas', etiqueta: 'Todas', conteo: (campanas ?? []).length },
+          ]}
+        />
+        {/* Junto a los filtros y no dentro de cada tarjeta: la duda es sobre
+            la columna, no sobre una campaña en particular, y repetir el
+            enlace en cada fila sería ruido. */}
+        <ExplicacionCostoConv />
+      </div>
 
       {error ? (
         <ErrorCarga mensaje={mensajeDeError(error as { message?: string })} onReintentar={refetch} />

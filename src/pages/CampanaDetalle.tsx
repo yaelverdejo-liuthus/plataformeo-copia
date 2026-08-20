@@ -33,6 +33,7 @@ import { Badge } from '../components/ui/Badge'
 import { Card, CardAnimada } from '../components/ui/Card'
 import { Skeleton, ErrorCarga, Vacio } from '../components/ui/Estados'
 import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
+import { ExplicacionCostoConv } from '../components/ExplicacionCostoConv'
 import { PLATAFORMA_ADS, VEREDICTO } from '../lib/etiquetas'
 import { dinero, dineroExacto, fechaCorta, hoyISO, numero, porcentaje } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
@@ -275,7 +276,12 @@ export function CampanaDetalle() {
           </div>
         )}
 
-        <p className="mt-3 text-sm text-fg-muted">{v.accion}</p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <p className="text-sm text-fg-muted">{v.accion}</p>
+          {/* Aquí es donde de verdad se mira el número, así que la
+              explicación también vive aquí y no solo en la lista. */}
+          <ExplicacionCostoConv />
+        </div>
       </Card>
 
       {/* ── Desglose por creativo ────────────────────────────────────── */}
