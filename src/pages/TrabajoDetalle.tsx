@@ -383,7 +383,7 @@ export function TrabajoDetalle() {
         rel="noreferrer"
         className="flex h-12 items-center justify-center gap-2 rounded-xl bg-success/12 text-base font-medium text-success"
       >
-        <MessageCircle className="h-5 w-5" />
+        <MessageCircle className="anim-repicar h-5 w-5" />
         WhatsApp · {telFormateado(t.whatsapp)}
       </a>
 

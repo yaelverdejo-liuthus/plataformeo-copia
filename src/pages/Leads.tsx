@@ -630,7 +630,7 @@ export function Leads() {
               rel="noreferrer"
               className="flex h-12 items-center justify-center gap-2 rounded-xl bg-success/12 text-base font-medium text-success"
             >
-              <MessageCircle className="h-5 w-5" />
+              <MessageCircle className="anim-repicar h-5 w-5" />
               Abrir WhatsApp
             </a>
 
@@ -859,7 +859,13 @@ function TarjetaLead({
             aria-label={`Abrir WhatsApp de ${lead.nombre}`}
             className="flex h-11 w-11 items-center justify-center rounded-xl bg-success/12 text-success transition-colors hover:bg-success/20"
           >
-            <MessageCircle className="h-5 w-5" />
+            {/* El desfase por posición evita que toda la lista repique a la
+                vez, que se vería como un parpadeo de la pantalla entera. Se
+                topa a los 5 para que el último no tarde una eternidad. */}
+            <MessageCircle
+              className="anim-repicar h-5 w-5"
+              style={{ animationDelay: `${(indice % 5) * 0.45}s` }}
+            />
           </a>
         </div>
       </div>
