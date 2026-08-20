@@ -9,6 +9,7 @@ import { useContenido } from '../lib/queries/contenido'
 import { useCreativosTodos } from '../lib/queries/ads'
 import { useUmbrales } from '../lib/queries/config'
 import { Card, TituloSeccion } from '../components/ui/Card'
+import { LluviaBilletes } from '../components/LluviaBilletes'
 import { SkeletonKPIs, ErrorCarga } from '../components/ui/Estados'
 import {
   dinero,
@@ -473,38 +474,57 @@ function MezclaNiveles({ datos }: { datos: { nivel: string; valor: number; tono:
 function KPI({
   titulo,
   valor,
-  luz = 'sin_datos',
+  luz,
   pie,
 }: {
   titulo: string
   valor: string
+  /**
+   * Solo lo mandan los KPI que juzgan una situación: margen, ROAS, tarifa,
+   * porcentajes. Los que nada más cuentan cosas —horas, videos, vistas— no
+   * tienen bien ni mal que señalar, y por eso tampoco les llueve.
+   */
   luz?: Luz
   pie?: string
 }) {
+  const estado: Luz = luz ?? 'sin_datos'
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-2xl border border-line bg-surface p-4 shadow-card"
+      className="relative overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-card"
     >
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">{titulo}</p>
-        {luz !== 'sin_datos' && (
-          <span
-            className={cn(
-              'h-2 w-2 shrink-0 rounded-full',
-              luz === 'verde' && 'bg-success',
-              luz === 'ambar' && 'bg-warn',
-              luz === 'rojo' && 'bg-danger',
-            )}
-          />
-        )}
+      {luz !== undefined && <LluviaBilletes luz={estado} />}
+
+      {/* `relative` para quedar por encima de la lluvia. Sin esto el número
+          compite con el fondo en vez de estar sobre él. */}
+      <div className="relative">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">{titulo}</p>
+          {estado !== 'sin_datos' && (
+            <span
+              className={cn(
+                'h-2 w-2 shrink-0 rounded-full',
+                estado === 'verde' && 'bg-success',
+                estado === 'ambar' && 'bg-warn',
+                estado === 'rojo' && 'bg-danger',
+              )}
+            />
+          )}
+        </div>
+        <p
+          className={cn(
+            'tabular font-display mt-1.5 text-2xl font-semibold',
+            CLASE_LUZ[estado],
+            estado === 'sin_datos' && 'text-fg',
+          )}
+        >
+          {valor}
+        </p>
+        {pie && <p className="mt-1 text-xs leading-snug text-fg-subtle">{pie}</p>}
       </div>
-      <p className={cn('tabular font-display mt-1.5 text-2xl font-semibold', CLASE_LUZ[luz], luz === 'sin_datos' && 'text-fg')}>
-        {valor}
-      </p>
-      {pie && <p className="mt-1 text-xs leading-snug text-fg-subtle">{pie}</p>}
     </motion.div>
   )
 }

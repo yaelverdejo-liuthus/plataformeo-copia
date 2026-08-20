@@ -280,6 +280,38 @@
     opacity: 0;
     animation: pulso 2.6s ease-out infinite;
   }
+
+  /* ── Lluvia de billetes de los KPI ────────────────────────────────
+     Misma mecánica que la lluvia del login: dos capas anidadas, la de
+     fuera cae y gira, la de dentro se mece. El desfase entre los dos
+     ritmos es lo que hace que el billete se vea planeando y no bajando
+     en línea recta.
+
+     Va detrás del contenido y con `pointer-events: none`: es fondo, no
+     debe robar un tap ni estorbar la lectura del número. */
+  .lluvia-billetes {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  .billete-carril {
+    position: absolute;
+    top: 0;
+    animation-name: billete-caer;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  .billete-vaiven {
+    display: block;
+    animation-name: billete-vaiven;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+  }
 }
 
 /* Tablero: un latido corto y se calla. */
@@ -333,6 +365,37 @@
 @keyframes engranar {
   0%, 32% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Lineal, igual que las calaveras: un billete que cae no acelera a ojo, y
+   cualquier ease delataría dónde se reinicia el ciclo.
+
+   Abre y cierra en opacidad 0 para que la entrada y la salida se fundan
+   contra el borde de la tarjeta en vez de aparecer y desaparecer de golpe.
+   El recorrido va en px y no en %: la tarjeta mide distinto según lleve pie
+   o no, y con % cada KPI tendría una lluvia de velocidad diferente. */
+@keyframes billete-caer {
+  0% {
+    transform: translate3d(0, -34px, 0) rotate(0deg);
+    opacity: 0;
+  }
+  16%,
+  84% {
+    opacity: var(--brillo);
+  }
+  100% {
+    transform: translate3d(0, 172px, 0) rotate(var(--giro));
+    opacity: 0;
+  }
+}
+
+@keyframes billete-vaiven {
+  from {
+    transform: translate3d(calc(var(--deriva) * -1), 0, 0);
+  }
+  to {
+    transform: translate3d(var(--deriva), 0, 0);
+  }
 }
 
 /* La línea se traza de un extremo al otro. Cierra en 0: línea completa. */
@@ -422,8 +485,12 @@
      fotograma en vez de quitarlas, y eso solo funciona por accidente
      (ahí la opacidad ya es 0). Se esconde la capa entera y queda dicho:
      es decoración, no información, y quien pidió menos movimiento no
-     pierde nada al no verla. */
-  .lluvia {
+     pierde nada al no verla.
+
+     Los billetes de los KPI van por lo mismo: el semáforo lo dice el
+     color del número y el punto de la esquina, que siguen ahí. */
+  .lluvia,
+  .lluvia-billetes {
     display: none;
   }
 }
