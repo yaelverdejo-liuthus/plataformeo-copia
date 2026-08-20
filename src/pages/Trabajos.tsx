@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { History, Plus, Wrench } from 'lucide-react'
+import { ChevronRight, History, Plus, Wrench } from 'lucide-react'
 import { useTrabajos } from '../lib/queries/trabajos'
 import { useRol } from '../hooks/useRol'
 import { Button, BotonFlotante } from '../components/ui/Button'
@@ -347,7 +347,7 @@ export function Trabajos() {
                         ease: [0.22, 1, 0.36, 1],
                       }}
                       onClick={() => navegar(`/trabajos/${t.id}`)}
-                      className="cursor-pointer rounded-xl border border-line bg-surface p-3 transition-colors hover:border-line-strong"
+                      className="group cursor-pointer rounded-xl border border-line bg-surface p-3 transition-colors hover:border-line-strong"
                     >
                       <div className="flex items-baseline justify-between gap-2">
                         <p className="truncate text-base font-medium text-fg">{t.cliente}</p>
@@ -362,6 +362,13 @@ export function Trabajos() {
                           <span className="text-success">Pagado</span>
                         )}
                         {fechaClave(t) && <span>{cuandoTexto(fechaClave(t))}</span>}
+                      </div>
+
+                      {/* Mismo aviso que en la agenda: estas tarjetas también
+                          abren el expediente y tampoco lo decían. */}
+                      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-line pt-2">
+                        <span className="text-2xs font-medium text-primary">Ver expediente</span>
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5" />
                       </div>
                     </motion.div>
                   ))}
@@ -415,7 +422,11 @@ function TarjetaTrabajo({
   const esTatuaje = Boolean(t.fecha_tatuaje)
 
   return (
-    <CardAnimada indice={indice} onClick={onAbrir} className={cn(urgente && 'border-danger/30')}>
+    <CardAnimada
+      indice={indice}
+      onClick={onAbrir}
+      className={cn('group', urgente && 'border-danger/30')}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
@@ -457,6 +468,19 @@ function TarjetaTrabajo({
           )}
           {t.retoque_pendiente && <Badge tono="acento">Retoque</Badge>}
         </div>
+      </div>
+
+      {/*
+        La tarjeta entera abre el expediente, pero eso no se ve por ningún
+        lado: en el teléfono no hay cursor que cambie de forma al pasar
+        encima, así que quien no lo supiera de antemano no lo descubría.
+        Este pie lo dice con todas sus letras y además lo señala — la
+        flecha es la misma que ya usa Leads para "Ver su trabajo", así el
+        gesto se aprende una vez y sirve en las dos pantallas.
+      */}
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-2.5">
+        <span className="text-xs font-medium text-primary">Ver expediente completo</span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5" />
       </div>
     </CardAnimada>
   )
