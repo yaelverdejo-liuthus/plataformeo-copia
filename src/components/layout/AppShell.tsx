@@ -185,12 +185,30 @@ export function AppShell() {
 
       {/* ── Contenido ───────────────────────────────────────────────── */}
       <main className="md:ml-60">
+        {/*
+          La transición de página es SOLO opacidad, sin desplazamiento.
+          En móvil esta caja queda entre dos capas con backdrop-blur —la
+          barra superior sticky y la navegación inferior fija, ambas
+          md:hidden— y `backdrop-filter` obliga al navegador a componer todo
+          lo que tiene debajo. Al animar además un transform aquí, en
+          teléfono la composición se quedaba sin repintar: el contenido
+          existía y hasta recibía los toques, pero no se dibujaba hasta que
+          algo forzaba un repintado (recargar, cambiar de tema, o tocar la
+          pantalla). En escritorio no pasa porque ahí esas dos barras no se
+          renderizan. Un fundido sin transform se ve casi igual y no crea
+          esa capa que entra en conflicto.
+        */}
         <AnimatePresence mode="wait">
           <motion.div
             key={ubicacion.pathname}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
+            /* Sin `initial`: framer pinta la página directamente en su
+               estado final, así que el contenido nunca depende de que una
+               animación llegue a correr para verse. Solo se anima la SALIDA,
+               que con mode="wait" termina antes de que monte la siguiente —
+               se sigue percibiendo como una transición, pero si algo falla
+               el peor caso es que no haya fundido, no una pantalla vacía. */
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto max-w-6xl px-4 pb-24 pt-4 md:px-8 md:pb-10 md:pt-8"
           >
