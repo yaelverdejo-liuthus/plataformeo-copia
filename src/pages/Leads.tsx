@@ -794,7 +794,7 @@ function TarjetaLead({
   const dias = diasDesdeHoy(lead.fecha_tatuaje)
 
   return (
-    <CardAnimada indice={indice} onClick={onAbrir}>
+    <CardAnimada indice={indice} onClick={onAbrir} className="group">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -862,6 +862,18 @@ function TarjetaLead({
             <MessageCircle className="h-5 w-5" />
           </a>
         </div>
+      </div>
+
+      {/*
+        Mismo aviso que en la tarjeta de Trabajos, y por lo mismo: la tarjeta
+        entera abre la ficha del lead, pero nada lo anunciaba y en el teléfono
+        no hay cursor que cambie de forma al pasar encima. El botón de
+        WhatsApp de arriba tampoco ayudaba — al ser lo único que se veía
+        pulsable, hacía pensar que era la única acción de la tarjeta.
+      */}
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-2.5">
+        <span className="text-xs font-medium text-primary">Ver más detalles</span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5" />
       </div>
     </CardAnimada>
   )
