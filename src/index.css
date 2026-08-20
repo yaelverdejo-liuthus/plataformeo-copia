@@ -132,6 +132,102 @@
     animation-iteration-count: infinite;
     animation-direction: alternate;
   }
+
+  /* ── Iconos vivos del menú ────────────────────────────────────────
+     Cada sección mueve su icono en bucle, sin esperar a que le pasen
+     el cursor encima — en el celular no hay cursor que pasar.
+
+     Van en CSS y no en framer a propósito. Tres razones: el bloque de
+     "reducir movimiento" del final de este archivo ya las apaga solas;
+     el navegador las compone sin despertar JavaScript, que con siete
+     iconos animándose siempre sí se nota; y ninguna toca `opacity` ni
+     `visibility`, solo `transform`. Eso último es la regla que más
+     caro costó en esta app: si las animaciones no llegaran a correr,
+     el peor caso es un menú quieto, jamás un menú sin iconos.
+
+     Cada una descansa la mayor parte de su ciclo y dura distinto, así
+     los seis no laten al unísono como un letrero.                    */
+  .anim-latir {
+    animation: latir 3.4s ease-in-out infinite;
+  }
+
+  .anim-asomarse {
+    animation: asomarse 3.8s ease-in-out infinite;
+  }
+
+  /* El pivote va en el puño: en el martillo de lucide la cabeza queda
+     arriba a la derecha y el mango termina abajo a la izquierda, así
+     que girando desde ahí la cabeza baja de verdad al golpear. */
+  .anim-martillar {
+    animation: martillar 2.4s ease-in-out infinite;
+    transform-origin: 12% 88%;
+  }
+
+  .anim-vocear {
+    animation: vocear 4.2s ease-in-out infinite;
+    transform-origin: 25% 66%;
+  }
+
+  .anim-hojear {
+    animation: hojear 4.6s ease-in-out infinite;
+  }
+
+  .anim-engranar {
+    animation: engranar 5.2s ease-in-out infinite;
+  }
+}
+
+/* Tablero: un latido corto y se calla. */
+@keyframes latir {
+  0%, 55%, 100% { transform: scale(1); }
+  63% { transform: scale(1.13); }
+  71% { transform: scale(0.98); }
+  79% { transform: scale(1.05); }
+}
+
+/* Leads: se asoman y vuelven, como quien saluda. */
+@keyframes asomarse {
+  0%, 58%, 100% { transform: translateY(0); }
+  66% { transform: translateY(-16%); }
+  74% { transform: translateY(0); }
+  82% { transform: translateY(-7%); }
+}
+
+/* Trabajos: levanta, golpea, rebota y da un segundo golpe más flojo.
+   El descanso del final es lo que lo vuelve un martillazo y no un
+   temblor. */
+@keyframes martillar {
+  0%, 8% { transform: rotate(0deg); }
+  16% { transform: rotate(-22deg); }
+  26% { transform: rotate(16deg); }
+  31% { transform: rotate(9deg); }
+  38% { transform: rotate(15deg); }
+  44% { transform: rotate(11deg); }
+  52%, 100% { transform: rotate(0deg); }
+}
+
+/* Pauta: el megáfono vocea y se va apagando. */
+@keyframes vocear {
+  0%, 52%, 100% { transform: rotate(0deg); }
+  58% { transform: rotate(-10deg); }
+  64% { transform: rotate(8deg); }
+  70% { transform: rotate(-7deg); }
+  76% { transform: rotate(5deg); }
+  82% { transform: rotate(-3deg); }
+}
+
+/* Catálogo: el gesto de pasar una lámina y acomodarla. */
+@keyframes hojear {
+  0%, 60%, 100% { transform: translateX(0) rotate(0deg); }
+  70% { transform: translateX(-9%) rotate(-7deg); }
+  85% { transform: translateX(5%) rotate(4deg); }
+}
+
+/* Ajustes: la vuelta entera del engrane. Cierra en 360 y no en 90 para
+   que el reinicio caiga exactamente donde empezó, sin salto. */
+@keyframes engranar {
+  0%, 32% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Lineal a propósito: una pluma no acelera al caer, y cualquier ease

@@ -2,7 +2,7 @@ import { useState, type ComponentType } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  BarChart3,
+  Hammer,
   Images,
   LayoutDashboard,
   LogOut,
@@ -35,18 +35,30 @@ interface Entrada {
   ruta: string
   etiqueta: string
   icono: Icono
+  /**
+   * Clase de la animación en bucle del icono, definida en index.css. Cada
+   * una imita lo que hace la sección. Contenido no lleva: su icono ya se
+   * mueve solo, turnándose entre TikTok, Instagram y Facebook.
+   */
+  anim?: string
   soloAdmin?: boolean
 }
 
 /** Todo el menú, en orden. El sidebar de desktop los muestra todos. */
 const ENTRADAS: Entrada[] = [
-  { ruta: '/', etiqueta: 'Tablero', icono: LayoutDashboard },
-  { ruta: '/leads', etiqueta: 'Leads', icono: Users },
-  { ruta: '/trabajos', etiqueta: 'Trabajos', icono: BarChart3 },
+  { ruta: '/', etiqueta: 'Tablero', icono: LayoutDashboard, anim: 'anim-latir' },
+  { ruta: '/leads', etiqueta: 'Leads', icono: Users, anim: 'anim-asomarse' },
+  { ruta: '/trabajos', etiqueta: 'Trabajos', icono: Hammer, anim: 'anim-martillar' },
   { ruta: '/contenido', etiqueta: 'Contenido', icono: IconoContenido },
-  { ruta: '/ads', etiqueta: 'Pauta', icono: Megaphone },
-  { ruta: '/catalogo', etiqueta: 'Catálogo', icono: Images },
-  { ruta: '/config', etiqueta: 'Ajustes', icono: Settings, soloAdmin: true },
+  { ruta: '/ads', etiqueta: 'Pauta', icono: Megaphone, anim: 'anim-vocear' },
+  { ruta: '/catalogo', etiqueta: 'Catálogo', icono: Images, anim: 'anim-hojear' },
+  {
+    ruta: '/config',
+    etiqueta: 'Ajustes',
+    icono: Settings,
+    anim: 'anim-engranar',
+    soloAdmin: true,
+  },
 ]
 
 /**
@@ -103,7 +115,11 @@ export function AppShell() {
                     />
                   )}
                   <e.icono
-                    className={cn('relative h-[18px] w-[18px]', isActive && 'text-primary')}
+                    className={cn(
+                      'relative h-[18px] w-[18px]',
+                      e.anim,
+                      isActive && 'text-primary',
+                    )}
                   />
                   <span className="relative">{e.etiqueta}</span>
                 </span>
@@ -242,7 +258,10 @@ export function AppShell() {
                     isActive ? 'text-primary' : 'text-fg-subtle',
                   )}
                 >
-                  <e.icono className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.4 : 1.8} />
+                  <e.icono
+                    className={cn('h-[22px] w-[22px]', e.anim)}
+                    strokeWidth={isActive ? 2.4 : 1.8}
+                  />
                   <span className="text-2xs font-medium">{e.etiqueta}</span>
                 </span>
               )}
@@ -274,7 +293,7 @@ export function AppShell() {
               }}
               className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left text-base text-fg transition-colors active:bg-surface-2"
             >
-              <e.icono className="h-5 w-5 text-fg-muted" />
+              <e.icono className={cn('h-5 w-5 text-fg-muted', e.anim)} />
               {e.etiqueta}
             </button>
           ))}
