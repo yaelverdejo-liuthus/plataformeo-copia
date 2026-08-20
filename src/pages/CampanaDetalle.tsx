@@ -1,16 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Layers, Pencil, Plus, Trash2 } from 'lucide-react'
 import {
@@ -33,6 +22,7 @@ import { Badge } from '../components/ui/Badge'
 import { Card, CardAnimada } from '../components/ui/Card'
 import { Skeleton, ErrorCarga, Vacio } from '../components/ui/Estados'
 import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
+import { GraficaCostoConversacion } from '../components/GraficaCostoConversacion'
 import { ExplicacionCostoConv } from '../components/ExplicacionCostoConv'
 import { PLATAFORMA_ADS, VEREDICTO } from '../lib/etiquetas'
 import { dinero, dineroExacto, fechaCorta, hoyISO, numero, porcentaje } from '../lib/formato'
@@ -40,8 +30,6 @@ import { mensajeDeError } from '../lib/errores'
 import { DURACION, escalonar, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
 import type { AdConVeredicto, CreativoConMetricas } from '../lib/tipos'
-
-const SERIES = ['rgb(139 109 255)', 'rgb(224 176 128)', 'rgb(86 168 245)', 'rgb(63 191 127)']
 
 const aNumero = (v: string) => {
   const n = Number(v.replace(/[^\d.]/g, ''))
@@ -395,64 +383,18 @@ export function CampanaDetalle() {
           <p className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
             Costo por conversación
           </p>
-          <div className="mt-3 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={datos} margin={{ top: 4, right: 8, bottom: 0, left: -12 }}>
-                <CartesianGrid stroke="rgb(var(--border))" strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="fecha"
-                  stroke="rgb(var(--fg-subtle))"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="rgb(var(--fg-subtle))"
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(x) => `$${x}`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: 'rgb(var(--surface))',
-                    border: '1px solid rgb(var(--border))',
-                    borderRadius: 12,
-                    fontSize: 13,
-                    color: 'rgb(var(--fg))',
-                  }}
-                  formatter={(x) => dineroExacto(Number(x))}
-                />
-                <Legend wrapperStyle={{ fontSize: 12, color: 'rgb(var(--fg-muted))' }} />
-                <ReferenceLine
-                  y={umbrales.umbral_cpc_bueno}
-                  stroke="rgb(var(--success))"
-                  strokeDasharray="4 4"
-                  strokeOpacity={0.7}
-                />
-                <ReferenceLine
-                  y={umbrales.umbral_cpc_malo}
-                  stroke="rgb(var(--danger))"
-                  strokeDasharray="4 4"
-                  strokeOpacity={0.7}
-                />
-                {nombres.map((n, i) => (
-                  <Line
-                    key={n}
-                    type="monotone"
-                    dataKey={n}
-                    stroke={SERIES[i % SERIES.length]}
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
-                    connectNulls
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="mt-3">
+            <GraficaCostoConversacion
+              datos={datos}
+              nombres={nombres}
+              bueno={umbrales.umbral_cpc_bueno}
+              malo={umbrales.umbral_cpc_malo}
+            />
           </div>
-          <p className="mt-2 text-xs text-fg-subtle">
-            Línea verde {dinero(umbrales.umbral_cpc_bueno)}: debajo, sube presupuesto. Línea roja{' '}
-            {dinero(umbrales.umbral_cpc_malo)}: arriba, mátalo.
+          <p className="mt-2.5 text-xs leading-relaxed text-fg-subtle">
+            Franja verde, por debajo de {dinero(umbrales.umbral_cpc_bueno)}: súbele presupuesto.
+            Franja roja, por encima de {dinero(umbrales.umbral_cpc_malo)}: mátalo. En medio,
+            déjalo correr un día más.
           </p>
         </Card>
       )}
