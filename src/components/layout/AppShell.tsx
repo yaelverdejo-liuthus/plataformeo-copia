@@ -145,7 +145,12 @@ export function AppShell() {
       </aside>
 
       {/* ── Barra superior en móvil ─────────────────────────────────── */}
-      <header className="safe-top sticky top-0 z-20 border-b border-line bg-bg/85 backdrop-blur-md md:hidden">
+      {/* Opaca y sin desenfoque. Ver la nota larga de <main>: esta barra y la
+          navegación de abajo eran las dos capas de `backdrop-filter` que
+          dejaban el contenido sin repintar en el teléfono. El desenfoque solo
+          se nota sobre un fondo translúcido, así que quitarlo y dejar el color
+          sólido es el mismo cambio dicho dos veces. */}
+      <header className="safe-top sticky top-0 z-20 border-b border-line bg-bg md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <span className="text-base font-semibold tracking-tight text-fg">Estudio</span>
@@ -186,41 +191,41 @@ export function AppShell() {
       {/* ── Contenido ───────────────────────────────────────────────── */}
       <main className="md:ml-60">
         {/*
-          La transición de página es SOLO opacidad, sin desplazamiento.
-          En móvil esta caja queda entre dos capas con backdrop-blur —la
-          barra superior sticky y la navegación inferior fija, ambas
-          md:hidden— y `backdrop-filter` obliga al navegador a componer todo
-          lo que tiene debajo. Al animar además un transform aquí, en
-          teléfono la composición se quedaba sin repintar: el contenido
-          existía y hasta recibía los toques, pero no se dibujaba hasta que
-          algo forzaba un repintado (recargar, cambiar de tema, o tocar la
-          pantalla). En escritorio no pasa porque ahí esas dos barras no se
-          renderizan. Un fundido sin transform se ve casi igual y no crea
-          esa capa que entra en conflicto.
+          Sin transición de página, y esta vez hasta el final.
+
+          Era un problema de PINTADO, no de lógica: el contenido siempre
+          estuvo ahí, con su tamaño y recibiendo los toques, pero el teléfono
+          no llegaba a dibujarlo. Por eso cualquier cosa que forzara un
+          repintado —cambiar de tema, abrir "Más", o rozar un botón y
+          disparar su `hover`— lo hacía aparecer de golpe y completo.
+
+          Se juntaban dos cosas, y las dos solo existen en móvil. Esta caja
+          quedaba entre las dos barras con `backdrop-filter` (arriba sticky,
+          abajo fija, ambas md:hidden), que obligan al navegador a componer
+          todo lo que tienen debajo; y encima se animaba su opacidad en cada
+          cambio de ruta, lo que la promueve a capa de composición propia.
+          Entre las dos, la capa se quedaba con los píxeles viejos.
+
+          Se notaba solo donde nada se anima al montar. Una lista con
+          tarjetas se salva sola: sus entradas escalonadas repintan durante
+          200 ms y de paso arrastran la capa. Trabajos sin trabajos activos
+          pinta una vez y ya, y ese único pintado era el que se perdía. En
+          escritorio no pasa porque ahí esas barras ni se renderizan.
+
+          Ya no hay desenfoque en las barras, así que el conflicto está roto
+          por los dos lados. El fundido tampoco vuelve: cambiar de sección
+          queda instantáneo, que en el teléfono se siente mejor que 180 ms de
+          espera, y ninguna pantalla depende de que algo se anime para verse.
         */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={ubicacion.pathname}
-            /* Sin `initial`: framer pinta la página directamente en su
-               estado final, así que el contenido nunca depende de que una
-               animación llegue a correr para verse. Solo se anima la SALIDA,
-               que con mode="wait" termina antes de que monte la siguiente —
-               se sigue percibiendo como una transición, pero si algo falla
-               el peor caso es que no haya fundido, no una pantalla vacía. */
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto max-w-6xl px-4 pb-24 pt-4 md:px-8 md:pb-10 md:pt-8"
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        <div className="mx-auto max-w-6xl px-4 pb-24 pt-4 md:px-8 md:pb-10 md:pt-8">
+          <Outlet />
+        </div>
       </main>
 
       {/* ── Navegación inferior en móvil ────────────────────────────── */}
       <nav
         data-tour="nav"
-        className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur-md md:hidden"
+        className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface md:hidden"
       >
         <div className="flex">
           {barra.map((e) => (
