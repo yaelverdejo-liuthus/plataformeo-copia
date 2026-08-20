@@ -51,7 +51,7 @@ function PerfilNoDisponible({
   return (
     <div className="flex min-h-dvh flex-col justify-center bg-bg px-5 py-10">
       <div className="mx-auto w-full max-w-sm">
-        <h1 className="text-2xl font-semibold tracking-tight text-fg">Entraste, pero…</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Entraste, pero…</h1>
         <p className="mt-2 text-base text-fg-muted">{mensaje}</p>
         <div className="mt-6 space-y-2">
           <Button bloque tamano="lg" onClick={onReintentar}>

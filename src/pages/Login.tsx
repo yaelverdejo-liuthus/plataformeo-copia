@@ -58,7 +58,7 @@ export function Login() {
           transition={transicion()}
           className="mb-8"
         >
-          <h1 className="text-3xl font-semibold tracking-tight text-fg">Estudio</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-fg">Estudio</h1>
           <p className="mt-1.5 text-base text-fg-muted">
             Tablero de instrumentos. Sirve para decidir, no para trabajar.
           </p>

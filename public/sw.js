@@ -7,12 +7,24 @@
  * mensajeDeError), nunca en silencio.
  */
 
-const VERSION = 'v1'
+// Sube cuando cambie el contenido del shell. Al subir, `activate` tira los
+// caches viejos y se reconstruye limpio — aquí cambió por las fuentes.
+const VERSION = 'v2'
 const CACHE_SHELL = `shell-${VERSION}`
 const CACHE_DATOS = `datos-${VERSION}`
 
-// El shell mínimo para que la app arranque sin red.
-const PRECARGA = ['/', '/index.html', '/manifest.webmanifest', '/iconos/icono-192.png']
+// El shell mínimo para que la app arranque sin red. Las fuentes entran
+// aquí y no en el cache de paso: son parte de cómo se ve la app desde el
+// primer fotograma, y esperar a que alguien las pida una vez con señal
+// deja la primera visita sin señal con la letra del sistema.
+const PRECARGA = [
+  '/',
+  '/index.html',
+  '/manifest.webmanifest',
+  '/iconos/icono-192.png',
+  '/fuentes/inter-latin.woff2',
+  '/fuentes/space-grotesk-latin.woff2',
+]
 
 self.addEventListener('install', (evento) => {
   evento.waitUntil(

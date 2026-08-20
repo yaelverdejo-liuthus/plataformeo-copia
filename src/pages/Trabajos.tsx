@@ -137,7 +137,7 @@ export function Trabajos() {
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-fg">Trabajos</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Trabajos</h1>
           <p className="text-sm text-fg-muted">
             {activos.length} activos · <span className="tabular">{dinero(porCobrar)}</span> por
             cobrar
@@ -351,7 +351,7 @@ export function Trabajos() {
                     >
                       <div className="flex items-baseline justify-between gap-2">
                         <p className="truncate text-base font-medium text-fg">{t.cliente}</p>
-                        <span className="tabular shrink-0 text-2xs text-fg-subtle">{t.id}</span>
+                        <span className="font-mono shrink-0 text-2xs text-fg-subtle">{t.id}</span>
                       </div>
                       <p className="mt-0.5 truncate text-sm text-fg-muted">{t.diseno}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-fg-subtle">
@@ -431,7 +431,7 @@ function TarjetaTrabajo({
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
             <p className="truncate text-base font-medium text-fg">{t.cliente}</p>
-            <span className="tabular shrink-0 text-2xs text-fg-subtle">{t.id}</span>
+            <span className="font-mono shrink-0 text-2xs text-fg-subtle">{t.id}</span>
           </div>
           <p className="mt-0.5 truncate text-sm text-fg-muted">{t.diseno}</p>
 
@@ -490,7 +490,7 @@ function Resumen({ titulo, valor, tono }: { titulo: string; valor: string; tono?
   return (
     <div>
       <p className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">{titulo}</p>
-      <p className={cn('tabular mt-1 text-xl font-semibold text-fg', tono)}>{valor}</p>
+      <p className={cn('tabular font-display mt-1 text-xl font-semibold text-fg', tono)}>{valor}</p>
     </div>
   )
 }

@@ -26,7 +26,7 @@ export class ErrorBoundary extends Component<
     return (
       <div className="min-h-dvh bg-bg px-5 py-10 text-fg">
         <div className="mx-auto w-full max-w-lg">
-          <h1 className="text-2xl font-semibold tracking-tight">Se rompió algo</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Se rompió algo</h1>
           <p className="mt-2 text-base text-fg-muted">
             La pantalla no se pudo dibujar. Esto es un error de la app, no algo que hayas
             hecho mal.

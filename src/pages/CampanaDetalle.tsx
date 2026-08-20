@@ -203,7 +203,7 @@ export function CampanaDetalle() {
 
       <header className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-fg">{campana.nombre}</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">{campana.nombre}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-fg-muted">
             <span>{PLATAFORMA_ADS[campana.plataforma]}</span>
             <span>{campana.objetivo}</span>
@@ -710,7 +710,7 @@ function Cifra({ titulo, valor, tono }: { titulo: string; valor: string; tono?: 
   return (
     <div>
       <p className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">{titulo}</p>
-      <p className={cn('tabular mt-1 text-xl font-semibold text-fg', tono)}>{valor}</p>
+      <p className={cn('tabular font-display mt-1 text-xl font-semibold text-fg', tono)}>{valor}</p>
     </div>
   )
 }

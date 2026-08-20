@@ -432,7 +432,7 @@ export function Tutorial({
                     <p className="text-2xs font-semibold uppercase tracking-wider text-primary">
                       {perfil?.nombre ? `Hola, ${perfil.nombre.split(' ')[0]}` : 'Bienvenido'}
                     </p>
-                    <h2 className="mt-1 text-xl font-semibold tracking-tight text-fg">
+                    <h2 className="font-display mt-1 text-xl font-semibold tracking-tight text-fg">
                       ¿Deseas tener un tutorial?
                     </h2>
                     <p className="mt-1.5 text-sm text-fg-muted">
@@ -519,7 +519,7 @@ export function Tutorial({
 
                 {fase === 'fin' && (
                   <>
-                    <h2 className="text-xl font-semibold tracking-tight text-fg">
+                    <h2 className="font-display text-xl font-semibold tracking-tight text-fg">
                       ¿Deseas repetir el tutorial?
                     </h2>
                     <p className="mt-1.5 text-sm text-fg-muted">

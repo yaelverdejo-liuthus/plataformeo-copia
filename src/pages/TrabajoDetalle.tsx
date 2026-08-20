@@ -174,8 +174,8 @@ export function TrabajoDetalle() {
       <header className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-fg">{t.cliente}</h1>
-            <span className="tabular text-sm text-fg-subtle">{t.id}</span>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">{t.cliente}</h1>
+            <span className="font-mono text-sm text-fg-subtle">{t.id}</span>
           </div>
           <p className="mt-0.5 text-base text-fg-muted">{t.diseno}</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -284,7 +284,7 @@ export function TrabajoDetalle() {
             </p>
             <p
               className={cn(
-                'tabular mt-1 text-3xl font-semibold',
+                'tabular font-display mt-1 text-3xl font-semibold',
                 tonoTarifa === 'exito' && 'text-success',
                 tonoTarifa === 'aviso' && 'text-warn',
                 tonoTarifa === 'peligro' && 'text-danger',
@@ -443,7 +443,7 @@ function Cifra({ titulo, valor, tono }: { titulo: string; valor: string; tono?: 
   return (
     <div>
       <p className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">{titulo}</p>
-      <p className={cn('tabular mt-1 text-xl font-semibold text-fg', tono)}>{valor}</p>
+      <p className={cn('tabular font-display mt-1 text-xl font-semibold text-fg', tono)}>{valor}</p>
     </div>
   )
 }

@@ -25,9 +25,20 @@ export default {
         danger: color('--danger'),
         info: color('--info'),
       },
+      /*
+       * Las tres voces. Ver la nota larga de src/index.css: `sans` e
+       * `display` son fuentes propias auto-hospedadas, `mono` es la del
+       * sistema. Detrás de cada una va la pila de siempre, que es lo que se
+       * ve mientras la descarga llega — y lo único que se ve si nunca llega.
+       *
+       * Antes esto ya declaraba tres familias, pero las dos primeras solo se
+       * distinguían en Windows: en el teléfono ambas caían en `system-ui` y
+       * eran la misma letra. La jerarquía existía en la config y en ningún
+       * lado más.
+       */
       fontFamily: {
-        sans: ['"Segoe UI Variable Text"', '"Segoe UI"', 'system-ui', '-apple-system', 'Roboto', 'sans-serif'],
-        display: ['"Segoe UI Variable Display"', '"Segoe UI"', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Inter', '"Segoe UI Variable Text"', '"Segoe UI"', 'system-ui', '-apple-system', 'Roboto', 'sans-serif'],
+        display: ['"Space Grotesk"', '"Segoe UI Variable Display"', '"Segoe UI"', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['ui-monospace', '"Cascadia Mono"', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       fontSize: {

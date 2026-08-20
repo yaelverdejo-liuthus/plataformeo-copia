@@ -81,7 +81,7 @@ export function ConfirmarBorrado({
               <TriangleAlert className="h-5 w-5" />
             </div>
 
-            <h2 className="mt-3.5 text-xl font-semibold tracking-tight text-fg">{titulo}</h2>
+            <h2 className="font-display mt-3.5 text-xl font-semibold tracking-tight text-fg">{titulo}</h2>
             <div className="mt-1.5 text-sm leading-relaxed text-fg-muted">{descripcion}</div>
             <p className="mt-2.5 text-sm text-fg-subtle">Esto no se puede deshacer.</p>
 

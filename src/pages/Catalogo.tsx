@@ -159,7 +159,7 @@ export function Catalogo() {
     <div className="space-y-5">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-fg">Catálogo</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Catálogo</h1>
           <p className="text-sm text-fg-muted">
             {(catalogo ?? []).length} diseños · de aquí sale la cotización
           </p>

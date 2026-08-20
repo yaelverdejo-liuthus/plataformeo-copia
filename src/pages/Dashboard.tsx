@@ -150,7 +150,7 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-fg">Tablero</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Tablero</h1>
         <p className="text-sm text-fg-muted">
           Todo sale de Leads, Trabajos, Contenido y Pauta. Aquí no se captura nada.
         </p>
@@ -427,7 +427,7 @@ function KPI({
           />
         )}
       </div>
-      <p className={cn('tabular mt-1.5 text-2xl font-semibold', CLASE_LUZ[luz], luz === 'sin_datos' && 'text-fg')}>
+      <p className={cn('tabular font-display mt-1.5 text-2xl font-semibold', CLASE_LUZ[luz], luz === 'sin_datos' && 'text-fg')}>
         {valor}
       </p>
       {pie && <p className="mt-1 text-xs leading-snug text-fg-subtle">{pie}</p>}

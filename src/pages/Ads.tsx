@@ -139,7 +139,7 @@ export function Ads() {
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-fg">Pauta</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Pauta</h1>
           <p className="text-sm text-fg-muted">
             <span className="tabular">{dinero(totales.gasto)}</span> gastados ·{' '}
             {numero(totales.conversaciones)} conversaciones · {totales.activas} campañas activas
@@ -389,7 +389,7 @@ function Mini({ titulo, valor, tono }: { titulo: string; valor: string; tono?: s
       <span className="block text-2xs font-semibold uppercase tracking-wide text-fg-subtle">
         {titulo}
       </span>
-      <span className={cn('tabular block truncate text-base font-semibold text-fg', tono)}>
+      <span className={cn('tabular font-display block truncate text-base font-semibold text-fg', tono)}>
         {valor}
       </span>
     </div>

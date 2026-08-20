@@ -318,7 +318,7 @@ export function Leads() {
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-fg">Leads</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Leads</h1>
           <p className="text-sm text-fg-muted">
             {conteos.cotizado > 0
               ? `${conteos.cotizado} cotizados esperando cierre`

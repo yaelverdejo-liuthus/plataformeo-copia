@@ -232,7 +232,7 @@ export function Contenido() {
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-fg">Contenido</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Contenido</h1>
           <p className="text-sm text-fg-muted">
             Métricas a las 4 h · filtro: {numero(umbrales.filtro_vistas_4h)} vistas y{' '}
             {numero(umbrales.filtro_guardados_4h)} guardados
@@ -668,7 +668,7 @@ function MetricaInline({
           if (n !== valor) onGuardar(n)
           setTexto(null)
         }}
-        className="tabular w-full bg-transparent text-lg font-semibold text-fg outline-none placeholder:text-fg-subtle disabled:text-fg-muted"
+        className="tabular font-display w-full bg-transparent text-lg font-semibold text-fg outline-none placeholder:text-fg-subtle disabled:text-fg-muted"
       />
     </label>
   )

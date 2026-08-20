@@ -78,7 +78,7 @@ export function Sheet({
 
             <header className="flex items-start justify-between gap-4 px-5 pb-3 pt-3 md:pt-5">
               <div className="min-w-0">
-                <h2 className="text-xl font-semibold text-fg">{titulo}</h2>
+                <h2 className="font-display text-xl font-semibold text-fg">{titulo}</h2>
                 {descripcion && (
                   <p className="mt-0.5 text-sm text-fg-muted">{descripcion}</p>
                 )}

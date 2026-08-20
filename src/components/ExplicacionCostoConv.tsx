@@ -132,7 +132,7 @@ function Termino({
       </span>
       <span
         className={cn(
-          'tabular block truncate text-base font-semibold',
+          'tabular font-display block truncate text-base font-semibold',
           destacado ? 'text-primary' : 'text-fg',
         )}
       >

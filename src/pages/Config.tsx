@@ -26,7 +26,7 @@ export function Config() {
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-fg">Ajustes</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Ajustes</h1>
         <p className="text-sm text-fg-muted">
           Los 7 umbrales que usa todo el sistema. Cambiarlos recalcula el filtro de contenido, el
           veredicto de pauta y los semáforos del tablero.
