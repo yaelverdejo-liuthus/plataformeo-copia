@@ -407,11 +407,13 @@ export function Leads() {
         />
       ) : grupos ? (
         <div className="space-y-5">
+          {/* Sin `layout`, por lo mismo que en Trabajos: medir la posición
+              mientras un ancestro se está animando dejaba las secciones
+              desplazadas fuera de la pantalla. */}
           <AnimatePresence initial={false}>
             {grupos.map((g) => (
               <motion.section
                 key={g.titulo}
-                layout
                 variants={ENTRADA}
                 initial="oculto"
                 animate="visible"

@@ -13,16 +13,18 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 }
 
 /**
- * Card de lista: entra escalonada, sale encogiéndose y se reacomoda sola.
+ * Card de lista: entra escalonada y sale encogiéndose.
  *
  * Antes solo tenía entrada. Como las listas ya venían envueltas en
- * <AnimatePresence>, borrar un registro lo hacía desaparecer de golpe y los
- * de abajo saltaban a ocupar el hueco — se veía como un parpadeo, no como
- * un borrado. `exit` y `layout` arreglan las dos mitades.
+ * <AnimatePresence>, borrar un registro lo hacía desaparecer de golpe —
+ * se veía como un parpadeo, no como un borrado. `exit` arregla esa mitad.
  *
- * layout="position" y no layout completo: el segundo interpola también el
- * tamaño, y con tarjetas de alto distinto el contenido se estira mientras
- * dura la animación.
+ * La otra mitad (que las de abajo suban con suavidad al hueco) pedía
+ * `layout`, y eso se quitó: obliga a framer a medir la posición real de
+ * cada tarjeta y aplicarle un transform. Dentro de una página que a su vez
+ * está animándose, la medición salía contra un ancestro en movimiento y
+ * dejaba tarjetas desplazadas fuera de la pantalla. Que las filas den un
+ * salto seco al reacomodarse es mucho menos grave que no verlas.
  */
 export function CardAnimada({
   indice = 0,
@@ -37,7 +39,6 @@ export function CardAnimada({
 }) {
   return (
     <motion.div
-      layout="position"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97, transition: transicion(DURACION.rapida) }}

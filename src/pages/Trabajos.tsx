@@ -23,7 +23,7 @@ import {
   minutosAHoras,
 } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
-import { DURACION, ENTRADA, FUNDIDO, transicion } from '../lib/animacion'
+import { ENTRADA, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
 import type { Trabajo } from '../lib/tipos'
 
@@ -194,29 +194,14 @@ export function Trabajos() {
       </div>
 
       {/*
-        Cruce al cambiar de vista. Las tres muestran los mismos trabajos
-        ordenados distinto, y sin transición el salto se lee como si la
-        pantalla se hubiera recargado. mode="wait" para que no se encimen
-        dos listas del mismo alto durante el cruce.
-
-        initial={false} NO es cosmético: sin él la pantalla nace en opacity 0
-        y depende de que la animación de entrada corra para verse. Anidada
-        dentro del AnimatePresence de AppShell —que retiene la página nueva
-        mientras la anterior sale— en teléfono esa entrada llegaba a no
-        dispararse nunca, y Trabajos se quedaba en blanco hasta que algo
-        forzaba un re-render (cambiar el tema, por ejemplo). Así el contenido
-        nace visible y el cruce solo ocurre al cambiar de vista, que es
-        cuando de verdad aporta. La entrada de la página ya la hace AppShell.
+        Aquí hubo un cruce al cambiar de vista, y se quitó.
+        Metía un AnimatePresence más entre AppShell y el contenido, o sea
+        otro ancestro animándose por encima de las tarjetas justo cuando
+        framer mide para posicionarlas. Trabajos entraba en blanco en el
+        teléfono y solo aparecía al forzar un re-render. La transición entre
+        Agenda, Tablero e Historial no vale que la pantalla no se vea; las
+        tarjetas ya entran con su propia animación, que no mide nada.
       */}
-      <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={vista}
-        variants={FUNDIDO}
-        initial="oculto"
-        animate="visible"
-        exit="saliendo"
-        transition={transicion(DURACION.rapida)}
-      >
       {error ? (
         <ErrorCarga mensaje={mensajeDeError(error as { message?: string })} onReintentar={refetch} />
       ) : isPending ? (
@@ -292,12 +277,21 @@ export function Trabajos() {
         <div className="space-y-5">
           {/* Los grupos aparecen y desaparecen solos según la fecha: al
               terminar el último trabajo vencido, esa sección entera se va.
-              Con layout, las de abajo suben en vez de saltar. */}
+
+              SIN `layout` a propósito. Una animación de layout obliga a
+              framer a medir la posición real del elemento y aplicarle un
+              transform para interpolarla. Aquí eso ocurría mientras el
+              motion.div de AppShell todavía estaba animando su propio `y`:
+              la medición salía contra un ancestro en movimiento y el
+              transform resultante mandaba las secciones fuera de la
+              pantalla. Quedaba en blanco hasta que algo forzaba un
+              re-render —cambiar el tema, por ejemplo— y framer volvía a
+              medir con todo ya quieto. Reacomodar los grupos con suavidad
+              no vale que la pantalla no se vea. */}
           <AnimatePresence initial={false}>
             {grupos.map((g) => (
               <motion.section
                 key={g.titulo}
-                layout
                 variants={ENTRADA}
                 initial="oculto"
                 animate="visible"
@@ -381,9 +375,6 @@ export function Trabajos() {
           ))}
         </div>
       )}
-
-      </motion.div>
-      </AnimatePresence>
 
       {puede && (
         <BotonFlotante
