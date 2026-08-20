@@ -2,6 +2,7 @@ import { useState, type ComponentType } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
+  ChevronRight,
   Hammer,
   Images,
   LayoutDashboard,
@@ -21,8 +22,10 @@ import { useTema } from '../../hooks/useTema'
 import { useConexion } from '../../hooks/useConexion'
 import { Sheet } from '../ui/Sheet'
 import { Tutorial } from '../Tutorial'
+import { EditarPerfil } from '../EditarPerfil'
 import { IconoContenido } from '../IconoContenido'
 import { cn } from '../../lib/cn'
+import type { Perfil } from '../../lib/tipos'
 
 /**
  * Lo único que el menú le pide a un icono. Se describe por lo que recibe y no
@@ -77,6 +80,7 @@ export function AppShell() {
   const navegar = useNavigate()
   const [masAbierto, setMasAbierto] = useState(false)
   const [tutorialSolicitado, setTutorialSolicitado] = useState(false)
+  const [editandoPerfil, setEditandoPerfil] = useState(false)
 
   function verTutorial() {
     setMasAbierto(false)
@@ -129,15 +133,22 @@ export function AppShell() {
         </nav>
 
         <div className="border-t border-line p-3">
-          <div className="flex items-center gap-3 rounded-xl px-3 py-2">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
-              {(perfil?.nombre ?? '?').slice(0, 1).toUpperCase()}
-            </div>
+          {/* Era un bloque muerto: mostraba quién eres y no llevaba a nada.
+              Ahora es la puerta a editar el perfil, que es lo que uno espera
+              al tocar su propia foto. */}
+          <button
+            onClick={() => setEditandoPerfil(true)}
+            className="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-surface-2"
+          >
+            <Avatar perfil={perfil} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-fg">{perfil?.nombre ?? '—'}</p>
-              <p className="text-xs text-fg-subtle">{rol ? NOMBRE_ROL[rol] : ''}</p>
+              <p className="text-xs text-fg-subtle">
+                <span className="group-hover:hidden">{rol ? NOMBRE_ROL[rol] : ''}</span>
+                <span className="hidden text-primary group-hover:inline">Editar perfil</span>
+              </p>
             </div>
-          </div>
+          </button>
           <button
             onClick={verTutorial}
             className="flex h-10 w-full items-center gap-2.5 rounded-xl px-3 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
@@ -307,15 +318,22 @@ export function AppShell() {
           </button>
 
           <div className="!mt-4 border-t border-line pt-3">
-            <div className="flex items-center gap-3 px-3 py-2">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
-                {(perfil?.nombre ?? '?').slice(0, 1).toUpperCase()}
-              </div>
+            <button
+              onClick={() => {
+                setMasAbierto(false)
+                setEditandoPerfil(true)
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors active:bg-surface-2"
+            >
+              <Avatar perfil={perfil} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-fg">{perfil?.nombre ?? '—'}</p>
-                <p className="text-xs text-fg-subtle">{rol ? NOMBRE_ROL[rol] : ''}</p>
+                <p className="truncate text-base font-medium text-fg">{perfil?.nombre ?? '—'}</p>
+                <p className="text-sm text-fg-subtle">
+                  {rol ? NOMBRE_ROL[rol] : ''} · <span className="text-primary">Editar perfil</span>
+                </p>
               </div>
-            </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-fg-subtle" />
+            </button>
             <button
               onClick={() => void salir()}
               className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left text-base text-danger transition-colors active:bg-surface-2"
@@ -327,10 +345,36 @@ export function AppShell() {
         </div>
       </Sheet>
 
+      <EditarPerfil abierto={editandoPerfil} onCerrar={() => setEditandoPerfil(false)} />
+
       <Tutorial
         solicitado={tutorialSolicitado}
         onCerrarSolicitado={() => setTutorialSolicitado(false)}
       />
+    </div>
+  )
+}
+
+/**
+ * La foto del perfil, o la inicial del nombre si todavía no hay ninguna.
+ *
+ * La inicial no es un relleno provisional: con tres personas es lo que
+ * distingue una cuenta de otra de un vistazo, y funciona desde el primer
+ * día sin pedirle a nadie que suba nada.
+ */
+function Avatar({ perfil }: { perfil: Perfil | null }) {
+  if (perfil?.avatar_url) {
+    return (
+      <img
+        src={perfil.avatar_url}
+        alt=""
+        className="h-9 w-9 shrink-0 rounded-full object-cover"
+      />
+    )
+  }
+  return (
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+      {(perfil?.nombre ?? '?').slice(0, 1).toUpperCase()}
     </div>
   )
 }

@@ -26,6 +26,7 @@ export type Perfil = {
   id: string
   nombre: string
   rol: Rol
+  avatar_url: string | null
   created_at: string
 }
 
@@ -297,7 +298,10 @@ export type Database = {
       v_creativos: { Row: CreativoConMetricas; Relationships: [] }
       v_dashboard: { Row: DashboardFila; Relationships: [] }
     }
-    Functions: { mi_rol: { Args: Record<string, never>; Returns: Rol } }
+    Functions: {
+      mi_rol: { Args: Record<string, never>; Returns: Rol }
+      vaciar_datos_operativos: { Args: Record<string, never>; Returns: void }
+    }
     Enums: {
       user_role: Rol
       nivel_diseno: Nivel
