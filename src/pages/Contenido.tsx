@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Pencil, Plus, Sparkles, Trash2, Video } from 'lucide-react'
+import { Pencil, Plus, Sparkles, Tags, Trash2, Video } from 'lucide-react'
 import {
   useContenido,
   useCrearContenido,
@@ -23,16 +23,22 @@ import { Segmentado } from '../components/ui/Segmentado'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
 import { BotonCSV } from '../components/BotonCSV'
 import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
-import { FORMATO, PLATAFORMA } from '../lib/etiquetas'
+import { SubidorImagen } from '../components/SubidorImagen'
+import { EditorTags } from '../components/EditorTags'
+import { borrarImagenPorUrl } from '../lib/storage'
+import { FORMATO, PLATAFORMA, PLATAFORMA_TONO } from '../lib/etiquetas'
 import { dinero, fechaCorta, hoyISO, numero } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
-import type { Contenido as Video_, ContenidoConFiltro } from '../lib/tipos'
+import { cn } from '../lib/cn'
+import type { Contenido as Video_, ContenidoConFiltro, Plataforma } from '../lib/tipos'
 
 const esquema = z.object({
   titulo: z.string().min(1, 'Falta el gancho'),
   plataforma: z.enum(['tiktok', 'instagram', 'facebook']),
   formato: z.preprocess((v) => Number(v), z.number().int().min(1).max(7)),
   trabajo_id: z.string().optional(),
+  imagen_url: z.string().url('Debe ser una URL').or(z.literal('')).optional(),
+  tags: z.array(z.string()).default([]),
   precio_en_pantalla: z.boolean(),
   fecha: z.string().min(1),
   promocionado: z.boolean(),
@@ -45,7 +51,10 @@ const esquema = z.object({
 type Formulario = z.input<typeof esquema>
 type Salida = z.output<typeof esquema>
 
-type Filtro = 'todos' | 'hoy' | 'aptos' | 'pendientes'
+/** Pestaña primaria: por dónde se publicó. Cada video vive en una sola. */
+type PlataformaTab = Plataforma | 'todo'
+/** Filtro secundario: lo que antes eran las únicas pestañas del embudo. */
+type FiltroEstado = 'todos' | 'hoy' | 'aptos' | 'pendientes'
 
 /** null = cerrado, 'nuevo' = alta, un video = edición. */
 type EnEdicion = ContenidoConFiltro | 'nuevo' | null
@@ -60,7 +69,9 @@ export function Contenido() {
   const eliminar = useEliminarContenido()
   const toast = useToast()
 
-  const [filtro, setFiltro] = useState<Filtro>('hoy')
+  const [plataformaTab, setPlataformaTab] = useState<PlataformaTab>('todo')
+  const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('hoy')
+  const [tagsSeleccionados, setTagsSeleccionados] = useState<string[]>([])
   const [editando, setEditando] = useState<EnEdicion>(null)
   const [aBorrar, setABorrar] = useState<ContenidoConFiltro | null>(null)
 
@@ -78,6 +89,8 @@ export function Contenido() {
     defaultValues: {
       plataforma: 'tiktok',
       formato: 1,
+      imagen_url: '',
+      tags: [],
       precio_en_pantalla: false,
       fecha: hoyISO(),
       promocionado: false,
@@ -88,7 +101,18 @@ export function Contenido() {
   /** Apto para promoción: pasa el filtro y todavía no se promociona. */
   const esPendiente = (c: ContenidoConFiltro) => c.pasa_filtro === true && !c.promocionado
 
-  const conteos = useMemo(() => {
+  /** Un solo lugar por plataforma, cuenten lo que cuenten los otros filtros. */
+  const conteosPlataforma = useMemo(() => {
+    const l = contenido ?? []
+    return {
+      tiktok: l.filter((c) => c.plataforma === 'tiktok').length,
+      instagram: l.filter((c) => c.plataforma === 'instagram').length,
+      facebook: l.filter((c) => c.plataforma === 'facebook').length,
+      todo: l.length,
+    }
+  }, [contenido])
+
+  const conteosEstado = useMemo(() => {
     const l = contenido ?? []
     return {
       todos: l.length,
@@ -98,22 +122,35 @@ export function Contenido() {
     }
   }, [contenido])
 
+  /** Todos los tags que ya existen, para el filtro y como sugerencias del alta. */
+  const tagsDisponibles = useMemo(() => {
+    const set = new Set<string>()
+    for (const c of contenido ?? []) for (const t of c.tags ?? []) set.add(t)
+    return [...set].sort((a, b) => a.localeCompare(b, 'es'))
+  }, [contenido])
+
   const filtrados = useMemo(() => {
-    const l = contenido ?? []
-    if (filtro === 'hoy') return l.filter((c) => c.fecha === hoyISO())
-    if (filtro === 'aptos') return l.filter((c) => c.pasa_filtro === true)
-    if (filtro === 'pendientes') return l.filter(esPendiente)
+    let l = contenido ?? []
+    if (plataformaTab !== 'todo') l = l.filter((c) => c.plataforma === plataformaTab)
+    if (filtroEstado === 'hoy') l = l.filter((c) => c.fecha === hoyISO())
+    else if (filtroEstado === 'aptos') l = l.filter((c) => c.pasa_filtro === true)
+    else if (filtroEstado === 'pendientes') l = l.filter(esPendiente)
+    if (tagsSeleccionados.length > 0) {
+      l = l.filter((c) => c.tags?.some((t) => tagsSeleccionados.includes(t)))
+    }
     return l
-  }, [contenido, filtro])
+  }, [contenido, plataformaTab, filtroEstado, tagsSeleccionados])
 
   function abrir(destino: EnEdicion) {
     setEditando(destino)
     if (destino === 'nuevo') {
       reset({
         titulo: '',
-        plataforma: 'tiktok',
+        plataforma: plataformaTab === 'todo' ? 'tiktok' : plataformaTab,
         formato: 1,
         trabajo_id: '',
+        imagen_url: '',
+        tags: [],
         precio_en_pantalla: false,
         fecha: hoyISO(),
         promocionado: false,
@@ -125,6 +162,8 @@ export function Contenido() {
         plataforma: destino.plataforma,
         formato: destino.formato,
         trabajo_id: destino.trabajo_id ?? '',
+        imagen_url: destino.imagen_url ?? '',
+        tags: destino.tags ?? [],
         precio_en_pantalla: destino.precio_en_pantalla,
         fecha: destino.fecha,
         promocionado: destino.promocionado,
@@ -139,6 +178,8 @@ export function Contenido() {
       plataforma: datos.plataforma,
       formato: datos.formato,
       trabajo_id: datos.trabajo_id || null,
+      imagen_url: datos.imagen_url || null,
+      tags: datos.tags ?? [],
       precio_en_pantalla: datos.precio_en_pantalla,
       fecha: datos.fecha,
       promocionado: datos.promocionado,
@@ -175,6 +216,8 @@ export function Contenido() {
     if (!aBorrar) return
     try {
       await eliminar.mutateAsync(aBorrar.id)
+      // La fila ya no existe: su foto en el bucket solo ocuparía espacio.
+      void borrarImagenPorUrl(aBorrar.imagen_url)
       toast.exito('Video eliminado')
       setABorrar(null)
     } catch (e) {
@@ -203,6 +246,7 @@ export function Contenido() {
               titulo: c.titulo,
               plataforma: PLATAFORMA[c.plataforma],
               formato: FORMATO[c.formato],
+              tags: (c.tags ?? []).join(' | '),
               trabajo_id: c.trabajo_id,
               precio_en_pantalla: c.precio_en_pantalla ? 'Sí' : 'No',
               vistas_4h: c.vistas_4h,
@@ -222,18 +266,65 @@ export function Contenido() {
         </div>
       </header>
 
-      <div data-tour="filtros-contenido">
+      {/* Pestaña primaria: la plataforma. Cada video vive en una sola, y
+          "Todo" las junta diferenciadas por el badge de cada tarjeta. */}
       <Segmentado
-        idGrupo="contenido"
-        valor={filtro}
-        onCambio={setFiltro}
+        idGrupo="contenido-plataforma"
+        valor={plataformaTab}
+        onCambio={setPlataformaTab}
         opciones={[
-          { valor: 'hoy', etiqueta: 'Hoy', conteo: conteos.hoy },
-          { valor: 'pendientes', etiqueta: 'Por promocionar', conteo: conteos.pendientes },
-          { valor: 'aptos', etiqueta: 'Pasan filtro', conteo: conteos.aptos },
-          { valor: 'todos', etiqueta: 'Todos', conteo: conteos.todos },
+          { valor: 'tiktok', etiqueta: 'TikTok', conteo: conteosPlataforma.tiktok },
+          { valor: 'instagram', etiqueta: 'Instagram', conteo: conteosPlataforma.instagram },
+          { valor: 'facebook', etiqueta: 'Facebook', conteo: conteosPlataforma.facebook },
+          { valor: 'todo', etiqueta: 'Todo', conteo: conteosPlataforma.todo },
         ]}
       />
+
+      {/* Controles secundarios: lo que antes eran las únicas pestañas
+          (Hoy / Por promocionar / Pasan filtro / Todos) más el filtro por
+          tags. Siguen decidiendo qué se ve, ya no compiten con la plataforma
+          por el primer nivel de navegación. */}
+      <div data-tour="filtros-contenido" className="space-y-2.5">
+        <Segmentado
+          idGrupo="contenido-estado"
+          valor={filtroEstado}
+          onCambio={setFiltroEstado}
+          opciones={[
+            { valor: 'hoy', etiqueta: 'Hoy', conteo: conteosEstado.hoy },
+            { valor: 'pendientes', etiqueta: 'Por promocionar', conteo: conteosEstado.pendientes },
+            { valor: 'aptos', etiqueta: 'Pasan filtro', conteo: conteosEstado.aptos },
+            { valor: 'todos', etiqueta: 'Todos', conteo: conteosEstado.todos },
+          ]}
+        />
+
+        {tagsDisponibles.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Tags className="h-4 w-4 shrink-0 text-fg-subtle" aria-hidden />
+            {tagsDisponibles.map((t) => {
+              const activo = tagsSeleccionados.includes(t)
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={activo}
+                  onClick={() =>
+                    setTagsSeleccionados((prev) =>
+                      activo ? prev.filter((x) => x !== t) : [...prev, t],
+                    )
+                  }
+                  className={cn(
+                    'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                    activo
+                      ? 'border-primary/50 bg-primary/15 text-primary'
+                      : 'border-line text-fg-muted hover:border-line-strong hover:text-fg',
+                  )}
+                >
+                  {t}
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {error ? (
@@ -243,14 +334,14 @@ export function Contenido() {
       ) : filtrados.length === 0 ? (
         <Vacio
           icono={<Video className="h-6 w-6" />}
-          titulo={filtro === 'hoy' ? 'Sin videos hoy' : 'Nada con este filtro'}
+          titulo={filtroEstado === 'hoy' ? 'Sin videos hoy' : 'Nada con este filtro'}
           descripcion={
-            filtro === 'hoy'
+            filtroEstado === 'hoy'
               ? 'Cada video se registra al publicarlo, y sus métricas a las 4 horas.'
-              : 'Prueba con otro filtro.'
+              : 'Prueba con otra plataforma, otro filtro o quita algún tag.'
           }
           accion={
-            puede && filtro === 'hoy' ? (
+            puede && filtroEstado === 'hoy' ? (
               <Button onClick={() => abrir('nuevo')}>Registrar el primero</Button>
             ) : undefined
           }
@@ -261,10 +352,27 @@ export function Contenido() {
             {filtrados.map((c, i) => (
               <CardAnimada key={c.id} indice={i}>
                 <div className="flex items-start justify-between gap-3">
+                  {c.imagen_url && (
+                    <img
+                      src={c.imagen_url}
+                      alt=""
+                      className="h-16 w-16 shrink-0 rounded-xl object-cover"
+                    />
+                  )}
+
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-base font-medium text-fg">{c.titulo}</p>
+
+                    {c.tags && c.tags.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {c.tags.map((t) => (
+                          <TagPill key={t}>{t}</TagPill>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-fg-subtle">
-                      <span>{PLATAFORMA[c.plataforma]}</span>
+                      <Badge tono={PLATAFORMA_TONO[c.plataforma]}>{PLATAFORMA[c.plataforma]}</Badge>
                       <span>{FORMATO[c.formato]}</span>
                       <span>{fechaCorta(c.fecha)}</span>
                       {c.precio_en_pantalla && <span>Con precio</span>}
@@ -420,6 +528,23 @@ export function Contenido() {
             ))}
           </Select>
 
+          <SubidorImagen
+            valor={watch('imagen_url') || null}
+            onCambio={(url) => setValue('imagen_url', url ?? '')}
+            carpeta="contenido"
+            nombreBase={watch('titulo') || 'video'}
+            etiqueta="Foto de portada"
+            hint="Se usa como miniatura de la tarjeta. Sin ella, la tarjeta se ve como antes."
+          />
+
+          <EditorTags
+            etiqueta="Tags"
+            valor={watch('tags') ?? []}
+            onCambio={(tags) => setValue('tags', tags)}
+            sugerencias={tagsDisponibles}
+            hint="Para clasificar y filtrar. Enter o coma para agregar cada uno."
+          />
+
           <div className="rounded-2xl border border-line bg-surface-2/50 px-3.5 py-1">
             <Switch
               activo={Boolean(watch('precio_en_pantalla'))}
@@ -470,6 +595,16 @@ export function Contenido() {
         }
       />
     </div>
+  )
+}
+
+/** Pastilla de tag: sin mayúsculas forzadas, a diferencia de Badge — el
+    texto es libre y forzarlo a uppercase le quita legibilidad. */
+function TagPill({ children }: { children: ReactNode }) {
+  return (
+    <span className="rounded-full bg-surface-3 px-2.5 py-1 text-xs font-medium text-fg-muted">
+      {children}
+    </span>
   )
 }
 

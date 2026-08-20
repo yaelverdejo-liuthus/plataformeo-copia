@@ -103,6 +103,13 @@ export const PLATAFORMA: Record<Plataforma, string> = {
   facebook: 'Facebook',
 }
 
+/** Un tono por plataforma, para diferenciarlas de un vistazo en la pestaña "Todo". */
+export const PLATAFORMA_TONO: Record<Plataforma, Tono> = {
+  tiktok: 'neutro',
+  instagram: 'acento',
+  facebook: 'info',
+}
+
 /** Dónde se COMPRA la pauta. Meta cubre Instagram y Facebook juntos. */
 export const PLATAFORMA_ADS: Record<PlataformaAds, string> = {
   meta: 'Meta',

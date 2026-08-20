@@ -142,6 +142,9 @@ export type Contenido = {
   comentarios: number | null
   promocionado: boolean
   gasto_promocion: number
+  imagen_url: string | null
+  /** Clasificación libre del video. Filtra en el cliente, sin tabla aparte. */
+  tags: string[]
   created_by: string | null
   created_at: string
 }
