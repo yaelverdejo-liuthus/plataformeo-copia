@@ -44,7 +44,7 @@ import {
 import { mensajeDeError, esReglaDeNegocio, esDependencia } from '../lib/errores'
 import { ENTRADA, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
-import type { Lead, LeadEstatus, Origen } from '../lib/tipos'
+import type { Lead, LeadEstatus, Origen, Trabajo } from '../lib/tipos'
 
 const aNumero = (v: unknown) => {
   if (v === '' || v == null) return null
@@ -314,6 +314,17 @@ export function Leads() {
   const pideCotizacion = estatusAlta !== 'nuevo'
   const pideAgenda = estatusAlta === 'agendado'
 
+  /*
+   * Un lead que ya generó expediente deja de ser el dueño del precio.
+   *
+   * Editar aquí la cotización guardaba un número que el trabajo nunca veía,
+   * y quedaban dos cifras distintas diciendo ser la misma. El precio de una
+   * pieza cambia cuando cambia el diseño, y esa conversación pasa en el
+   * expediente — que además ya lleva los cobros encima.
+   */
+  const expedienteDelEditado =
+    editando && editando !== 'nuevo' ? trabajoDe(editando) : null
+
   return (
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-4">
@@ -429,6 +440,7 @@ export function Leads() {
                       <TarjetaLead
                         key={l.id}
                         lead={l}
+                        trabajo={trabajoDe(l)}
                         indice={i}
                         vencido={seguimientoVencido(l)}
                         onAbrir={() => setDetalle(l)}
@@ -447,6 +459,7 @@ export function Leads() {
               <TarjetaLead
                 key={l.id}
                 lead={l}
+                trabajo={trabajoDe(l)}
                 indice={i}
                 vencido={seguimientoVencido(l)}
                 onAbrir={() => setDetalle(l)}
@@ -522,8 +535,32 @@ export function Leads() {
             {...register('que_pidio')}
           />
 
+          {/* Con expediente abierto, la cotización se mira pero no se toca:
+              el precio vive en el trabajo y ahí es donde se corrige. */}
+          {expedienteDelEditado && (
+            <button
+              type="button"
+              onClick={() => {
+                setEditando(null)
+                navegar(`/trabajos/${expedienteDelEditado.id}`)
+              }}
+              className="flex w-full items-center gap-3 rounded-2xl border border-line bg-surface-2/50 px-3.5 py-3 text-left transition-colors hover:border-line-strong"
+            >
+              <Briefcase className="h-5 w-5 shrink-0 text-primary" />
+              <div className="min-w-0 flex-1">
+                <p className="text-base text-fg">
+                  El precio y la cita se editan en {expedienteDelEditado.id}
+                </p>
+                <p className="text-sm text-fg-subtle">
+                  Este lead ya tiene expediente. Cambiarlos aquí no llegaría allá.
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-fg-subtle" />
+            </button>
+          )}
+
           {/* Cotización: aparece sola en cuanto la etapa la requiere */}
-          {(pideCotizacion || !esAlta) && (
+          {!expedienteDelEditado && (pideCotizacion || !esAlta) && (
             <fieldset className="space-y-3 rounded-2xl border border-line bg-surface-2/50 p-3.5">
               <legend className="px-1 text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
                 Cotización
@@ -643,24 +680,53 @@ export function Leads() {
                 titulo="Nivel"
                 valor={detalle.nivel_estimado ? `Nivel ${detalle.nivel_estimado}` : null}
               />
-              {detalle.estatus === 'agendado' && (
-                <>
-                  <Dato
-                    titulo="Cita"
-                    valor={`${fechaCorta(detalle.fecha_tatuaje)}${detalle.hora ? ` · ${hora12(detalle.hora)}` : ''}`}
-                  />
-                  <Dato titulo="Trazado" valor={fechaCorta(detalle.fecha_trazado)} />
-                  <Dato titulo="Anticipo" valor={dinero(detalle.anticipo)} />
-                  <Dato
-                    titulo="Saldo"
-                    valor={
-                      detalle.monto_cotizado
-                        ? dinero(detalle.monto_cotizado - detalle.anticipo)
-                        : null
-                    }
-                  />
-                </>
-              )}
+              {/*
+                Con expediente abierto, el dinero y la cita se leen del
+                TRABAJO, no de la copia que el lead guardó al cerrarse.
+
+                El lead congela lo que se pactó ese día; el trabajo es lo que
+                está pasando. En cuanto entra un abono o se mueve la fecha, la
+                copia del lead queda vieja — y decía "Debe $4,200" de un
+                cliente que ya había liquidado. Un número viejo presentado como
+                actual es peor que no mostrarlo.
+
+                El saldo sale de la columna generada del trabajo, que además
+                sí descuenta los abonos: la resta de aquí nunca los vio.
+              */}
+              {detalle.estatus === 'agendado' &&
+                (() => {
+                  const t = trabajoDe(detalle)
+                  if (!t) {
+                    return (
+                      <>
+                        <Dato
+                          titulo="Cita"
+                          valor={`${fechaCorta(detalle.fecha_tatuaje)}${detalle.hora ? ` · ${hora12(detalle.hora)}` : ''}`}
+                        />
+                        <Dato titulo="Trazado" valor={fechaCorta(detalle.fecha_trazado)} />
+                        <Dato titulo="Anticipo" valor={dinero(detalle.anticipo)} />
+                      </>
+                    )
+                  }
+                  return (
+                    <>
+                      <Dato
+                        titulo="Cita"
+                        valor={`${fechaCorta(t.fecha_tatuaje)}${t.hora ? ` · ${hora12(t.hora)}` : ''}`}
+                      />
+                      <Dato titulo="Trazado" valor={fechaCorta(t.fecha_trazado)} />
+                      <Dato titulo="Precio" valor={dinero(t.precio_total)} />
+                      <Dato titulo="Cobrado" valor={dinero(Number(t.anticipo) + Number(t.abonos))} />
+                      <Dato
+                        titulo="Saldo"
+                        valor={Number(t.saldo) <= 0 ? 'Pagado' : dinero(Number(t.saldo))}
+                      />
+                      <p className="pt-1 text-xs text-fg-subtle">
+                        Estos números viven en el expediente {t.id}. Se cambian ahí.
+                      </p>
+                    </>
+                  )
+                })()}
               {detalle.estatus !== 'agendado' && (
                 <>
                   <Dato titulo="Siguiente acción" valor={detalle.siguiente_accion} />
@@ -781,17 +847,22 @@ export function Leads() {
 
 function TarjetaLead({
   lead,
+  trabajo,
   indice,
   vencido,
   onAbrir,
 }: {
   lead: Lead
+  /** Su expediente, si ya se agendó. Manda sobre la copia del lead. */
+  trabajo: Trabajo | null
   indice: number
   vencido: boolean
   onAbrir: () => void
 }) {
   const agendado = lead.estatus === 'agendado'
-  const dias = diasDesdeHoy(lead.fecha_tatuaje)
+  // La fecha también sale del trabajo: reprogramar mueve el expediente, y la
+  // del lead se queda en la que se pactó el primer día.
+  const dias = diasDesdeHoy(trabajo?.fecha_tatuaje ?? lead.fecha_tatuaje)
 
   return (
     <CardAnimada indice={indice} onClick={onAbrir} className="group">
@@ -831,11 +902,13 @@ function TarjetaLead({
                       : 'text-fg',
                 )}
               >
-                {cuandoTexto(lead.fecha_tatuaje)}
+                {cuandoTexto(trabajo?.fecha_tatuaje ?? lead.fecha_tatuaje)}
               </span>
               <span className="text-fg-subtle">
-                {fechaCorta(lead.fecha_tatuaje)}
-                {lead.hora ? ` · ${hora12(lead.hora)}` : ''}
+                {fechaCorta(trabajo?.fecha_tatuaje ?? lead.fecha_tatuaje)}
+                {(trabajo?.hora ?? lead.hora)
+                  ? ` · ${hora12((trabajo?.hora ?? lead.hora) as string)}`
+                  : ''}
               </span>
             </div>
           )}
@@ -843,13 +916,26 @@ function TarjetaLead({
 
         <div className="flex shrink-0 flex-col items-end gap-2">
           <Badge tono={LEAD_ESTATUS[lead.estatus].tono}>{LEAD_ESTATUS[lead.estatus].texto}</Badge>
-          {lead.monto_cotizado != null && (
-            <span className="tabular text-sm text-fg">{dinero(lead.monto_cotizado)}</span>
-          )}
-          {agendado && lead.monto_cotizado != null && lead.monto_cotizado - lead.anticipo > 0 && (
-            <span className="tabular text-xs text-warn">
-              Debe {dinero(lead.monto_cotizado - lead.anticipo)}
-            </span>
+          {/* Con expediente, el precio y el saldo son los suyos. La resta
+              `monto_cotizado - anticipo` del lead nunca vio los abonos, así
+              que seguía diciendo "Debe" de gente que ya había liquidado. */}
+          {trabajo ? (
+            <>
+              <span className="tabular text-sm text-fg">{dinero(trabajo.precio_total)}</span>
+              {Number(trabajo.saldo) > 0 ? (
+                <span className="tabular text-xs text-warn">
+                  Debe {dinero(Number(trabajo.saldo))}
+                </span>
+              ) : (
+                <Badge tono="exito" punto>
+                  Pagado
+                </Badge>
+              )}
+            </>
+          ) : (
+            lead.monto_cotizado != null && (
+              <span className="tabular text-sm text-fg">{dinero(lead.monto_cotizado)}</span>
+            )
           )}
           <a
             href={urlWhatsApp(lead.whatsapp)}
