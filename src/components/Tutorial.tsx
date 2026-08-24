@@ -2,10 +2,12 @@ import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } f
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
+import { X } from 'lucide-react'
 import { useMisPreferencias, useGuardarPreferencias } from '../lib/queries/preferencias'
 import { useRol } from '../hooks/useRol'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from './ui/Button'
+import { CalaveraHablando } from './ui/Calavera'
 import { cn } from '../lib/cn'
 import type { Rol } from '../lib/tipos'
 
@@ -215,6 +217,17 @@ function buscarVisible(objetivo: string): HTMLElement | null {
 const MARGEN = 12
 const SEPARACION = 14
 
+/**
+ * Lo que hay que dejar libre abajo en móvil: la barra de navegación (4rem)
+ * y el botón flotante que se apoya encima (3.5rem), más aire.
+ *
+ * Sin esto la invitación se sentaba justo sobre los dos y tapaba la
+ * navegación de la app — que es exactamente lo que se buscaba evitar al
+ * quitarle el velo. Un cuadro que no bloquea pero se para encima del menú
+ * bloquea igual.
+ */
+const GUARNICION_MOVIL = 132
+
 export function Tutorial({
   solicitado,
   onCerrarSolicitado,
@@ -334,9 +347,24 @@ export function Tutorial({
   const vh = typeof window !== 'undefined' ? window.innerHeight : 768
   const ancho = Math.min(vw - MARGEN * 2, 430)
 
-  let x = (vw - ancho) / 2
-  let y = (vh - alto) / 2
+  /*
+   * La invitación se para abajo a la derecha, no en el centro. Un cuadro
+   * en medio de la pantalla es una barrera aunque no tenga velo: tapa
+   * justo lo que la persona vino a leer. Desde la esquina se ve, se puede
+   * ignorar, y se sigue trabajando con la app entera visible.
+   *
+   * En pantallas angostas se pega al fondo ocupando el ancho disponible:
+   * ahí una esquina flotante taparía media vista igual.
+   */
+  const angosta = vw < 640
+  let x = angosta ? MARGEN : vw - ancho - MARGEN
+  let y = vh - alto - MARGEN - (angosta ? GUARNICION_MOVIL : 0)
   let flecha: 'arriba' | 'abajo' | null = null
+
+  if (enRecorrido && !caja) {
+    x = (vw - ancho) / 2
+    y = (vh - alto) / 2
+  }
 
   if (enRecorrido && caja) {
     const centro = caja.left + caja.width / 2
@@ -357,15 +385,26 @@ export function Tutorial({
       {visible && (
         <Fragment key="tutorial">
           {/* Bloquea la app de abajo. Cuando hay reflector, el oscurecido lo
-              pone la sombra del reflector, no esta capa. */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[70]"
-            style={{ background: caja ? 'transparent' : 'rgb(0 0 0 / 0.72)' }}
-          />
+              pone la sombra del reflector, no esta capa.
+
+              SOLO durante el recorrido. La pregunta de si quieres el
+              tutorial no bloquea nada: es una oferta, no una tarea, y
+              llegaba con velo negro al 72% cada vez que se abría la app.
+              Quien solo venía a ver cuánto debe un cliente tenía que
+              contestar un cuestionario primero, y la única salida
+              definitiva era el tercer botón. El recorrido sí se queda con
+              velo: ahí el foco protegido es el punto, y además lo pediste
+              tú. */}
+          {enRecorrido && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[70]"
+              style={{ background: caja ? 'transparent' : 'rgb(0 0 0 / 0.72)' }}
+            />
+          )}
 
           {/* Reflector: el "hueco" lo hace una sombra enorme alrededor. */}
           {caja && (
@@ -404,8 +443,11 @@ export function Tutorial({
             }}
             className="z-[72]"
             role="dialog"
-            aria-modal="true"
-            aria-label="Tutorial"
+            /* Modal solo en el recorrido. Anunciar la invitación como modal
+               sería mentirle a quien usa lector de pantalla: le diría que
+               el resto de la app está inerte cuando sigue disponible. */
+            aria-modal={enRecorrido ? true : undefined}
+            aria-label={enRecorrido ? 'Tutorial' : 'Tutorial disponible'}
           >
             <div className="flex items-end gap-1.5">
               <div className="relative min-w-0 flex-1 rounded-2xl border border-line bg-surface p-4 shadow-raised">
@@ -429,35 +471,48 @@ export function Tutorial({
 
                 {fase === 'pregunta' && (
                   <>
-                    <p className="text-2xs font-semibold uppercase tracking-wider text-primary">
-                      {perfil?.nombre ? `Hola, ${perfil.nombre.split(' ')[0]}` : 'Bienvenido'}
-                    </p>
-                    <h2 className="font-display mt-1 text-xl font-semibold tracking-tight text-fg">
-                      ¿Deseas tener un tutorial?
+                    {/* Cerrar explícito. Ya no hay velo que tocar por fuera
+                        para quitárselo de encima, así que la salida tiene
+                        que estar dentro y a la vista. */}
+                    <button
+                      type="button"
+                      onClick={cerrar}
+                      aria-label="Cerrar"
+                      className="absolute right-2 top-2 rounded-lg p-1.5 text-fg-subtle transition-colors hover:bg-surface-2 hover:text-fg"
+                    >
+                      <X className="h-4 w-4" aria-hidden />
+                    </button>
+
+                    <h2 className="font-display pr-7 text-lg font-semibold tracking-tight text-fg">
+                      {perfil?.nombre
+                        ? `${perfil.nombre.split(' ')[0]}, ¿te doy un recorrido?`
+                        : '¿Te doy un recorrido?'}
                     </h2>
-                    <p className="mt-1.5 text-sm text-fg-muted">
-                      Te doy un recorrido por la plataforma. Menos de dos minutos, y solo lo que
-                      te toca a ti.
+                    <p className="mt-1 text-sm text-fg-muted">
+                      Menos de dos minutos, y solo lo que te toca a ti.
                     </p>
 
-                    <div className="mt-4 flex flex-col gap-2">
-                      <Button bloque onClick={() => setFase('pasos')}>
-                        Sí
-                      </Button>
-                      <Button bloque variante="secundario" onClick={cerrar}>
-                        No
-                      </Button>
-                      <Button
-                        bloque
-                        variante="fantasma"
-                        onClick={() => {
-                          guardar.mutate({ mostrar_tutorial: false })
-                          cerrar()
-                        }}
-                      >
-                        No volver a preguntar
+                    {/* En fila y sin ocupar todo el ancho: tres botones
+                        apilados a lo largo daban a esto el peso de una
+                        decisión importante, y es una oferta que se puede
+                        ignorar. */}
+                    <div className="mt-3.5 flex items-center gap-2">
+                      <Button onClick={() => setFase('pasos')}>Sí, muéstrame</Button>
+                      <Button variante="fantasma" onClick={cerrar}>
+                        Ahora no
                       </Button>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        guardar.mutate({ mostrar_tutorial: false })
+                        cerrar()
+                      }}
+                      className="mt-2.5 text-xs text-fg-subtle underline-offset-2 transition-colors hover:text-fg-muted hover:underline"
+                    >
+                      No volver a preguntar
+                    </button>
                   </>
                 )}
 
@@ -468,7 +523,13 @@ export function Tutorial({
                         <span
                           key={n}
                           className={cn(
-                            'h-1 rounded-full transition-all duration-300',
+                            /* Propiedades nombradas y no `all`: con `all`
+                               el navegador vigila cada propiedad que pueda
+                               cambiar, y basta que una tercera se mueva
+                               para que se anime sola sin que nadie lo
+                               pidiera. Y 200ms, no 300: 300 es el techo de
+                               lo aceptable en UI, y esto es un punto. */
+                            'h-1 rounded-full transition-[width,background-color] duration-200 ease-out',
                             n === i ? 'w-5 bg-primary' : 'w-1.5 bg-line-strong',
                           )}
                         />
@@ -567,17 +628,42 @@ export function Tutorial({
                 )}
               </div>
 
-              {/* Él va a la derecha: en la imagen ya señala hacia la izquierda,
-                  o sea hacia su propio globo de texto. */}
-              <motion.img
-                src="/asistente.webp"
-                alt=""
+              {/*
+                La guía es la calavera del estudio, la misma que cae en el
+                login. Antes era un render 3D de banco de imágenes: un
+                señor de traje señalando, el único elemento de toda la
+                plataforma que no estaba dibujado a mano y que además no
+                tenía nada que ver con un estudio de tatuajes.
+
+                Flota y se ladea apenas. Los dos ritmos son primos entre sí
+                (3.4 y 4.6 s) para que no vuelvan a coincidir cada pocos
+                ciclos: si coincidieran, el movimiento se volvería un
+                cabeceo regular y se leería como un GIF en bucle.
+              */}
+              <motion.div
                 aria-hidden
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
-                className="h-24 w-auto shrink-0 select-none object-contain sm:h-32"
-                draggable={false}
-              />
+                animate={{ y: [0, -5, 0], rotate: [-4, 4, -4] }}
+                transition={{
+                  y: { duration: 3.4, repeat: Infinity, ease: 'easeInOut' },
+                  rotate: { duration: 4.6, repeat: Infinity, ease: 'easeInOut' },
+                }}
+                /* `fg-subtle` y no `fg-muted`: en `muted` la calavera salía
+                   más brillante que el título del propio globo y el ojo iba
+                   a ella primero. Acompaña, no habla.
+
+                   En la invitación desaparece en pantalla angosta: ahí el
+                   globo ya ocupa casi todo el ancho y la calavera se salía
+                   por la derecha encima del botón flotante. En el recorrido
+                   sí se queda —el velo despeja todo lo de abajo— y ahí es
+                   quien va contando los pasos. */
+                className={cn(
+                  'shrink-0 select-none text-fg-subtle',
+                  !enRecorrido && 'hidden sm:block',
+                )}
+              >
+                <CalaveraHablando tamano={64} className="sm:hidden" />
+                <CalaveraHablando tamano={84} className="hidden sm:block" />
+              </motion.div>
             </div>
           </motion.div>
         </Fragment>
