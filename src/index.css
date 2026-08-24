@@ -57,18 +57,47 @@
    para que Tailwind pueda aplicar opacidad (bg-surface/60).
    Modo oscuro por defecto: la app se usa de noche, en el estudio.        */
 
+/* ── La curva ───────────────────────────────────────────────────────────
+   Salida rápida y frenado largo. Va fuera de los bloques de tema porque no
+   depende del tema, y va aquí porque estaba escrita a mano en quince
+   sitios entre CSS y TS.
+
+   `lib/animacion.ts` ya había consolidado el lado de JavaScript —tiene el
+   comentario que lo cuenta— pero el CSS se quedó fuera de esa mudanza y
+   siguió repitiendo los cuatro números. Ahora el CSS lee esta variable y
+   en TS queda una sola constante, `SUAVE`, con la nota de que las dos
+   tienen que decir lo mismo.
+
+   Y no es una curva cualquiera: es prácticamente la ease-out fuerte que
+   recomienda Emil Kowalski, cubic-bezier(0.23, 1, 0.32, 1). Las easings
+   que trae CSS de fábrica son demasiado flojas para que una animación se
+   sienta intencional.                                                    */
+:root {
+  --suave: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 :root,
 .dark {
-  --bg: 11 11 14;
-  --surface: 19 19 24;
-  --surface-2: 27 27 34;
-  --surface-3: 36 36 45;
-  --border: 44 44 54;
-  --border-strong: 58 58 71;
+  --bg: 8 8 11;
+  --surface: 24 24 30;
+  --surface-2: 33 33 41;
+  --surface-3: 44 44 54;
+  --border: 52 52 63;
+  --border-strong: 68 68 82;
+  /* El canto de abajo de una superficie recibe menos luz que sus lados.
+     Un borde igual por los cuatro costados es lo que delata que no hay
+     ninguna luz en la escena. */
+  --border-bajo: 34 34 42;
 
   --fg: 237 237 242;
   --fg-muted: 160 160 174;
-  --fg-subtle: 110 110 126;
+  /* Subido de 110 a 130. A 110 daba 3.53:1 contra la superficie de una
+     tarjeta — por debajo del 4.5:1 que pide AA para texto normal, y lo
+     usan las etiquetas en versalitas, los pies de las fichas y las notas
+     al pie. Ya fallaba antes; al levantar la superficie de 19 a 24 para
+     abrir la escalera de elevación empeoraba, así que se corrige aquí.
+     A 130 queda en 4.68:1.                                             */
+  --fg-subtle: 130 130 146;
 
   --primary: 139 109 255;
   --primary-hover: 156 130 255;
@@ -80,6 +109,32 @@
   --danger: 240 96 90;
   --info: 86 168 245;
 
+  /* ── Elevación ────────────────────────────────────────────────────
+     En un tema oscuro la sombra sola no puede hacer el trabajo: no se
+     puede oscurecer lo que ya es casi negro. La que había aquí era
+     `rgb(0 0 0 / 0.06)` sobre un fondo de 11 — daba 10.34, seis décimas
+     de un nivel sobre 255. Existía en el CSS y no en la pantalla.
+
+     Quien de verdad crea el relieve en oscuro es el FILO: una línea
+     interior de 1px en el canto de arriba, como el reflejo que agarra el
+     borde de una lámina bajo una luz cenital. Un 7% de blanco sobre la
+     superficie da un salto de 16 niveles concentrado en un píxel, y el
+     ojo lee eso como canto mucho antes que cualquier diferencia de área.
+
+     La sombra sigue, pero cambia de papel: ya no inventa el volumen, solo
+     asienta la pieza contra el fondo. Por eso van dos, una de contacto
+     bien pegada y otra de proyección amplia.
+
+     En claro es al revés y por eso los valores viven en cada tema: ahí
+     la sombra sí tiene rango de sobra y el filo blanco sobre superficie
+     blanca no aporta nada, así que se apoya en la sombra y en un canto
+     apenas más claro que el papel.                                    */
+  --elevacion-1: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.55),
+    0 10px 28px -12px rgb(0 0 0 / 0.6);
+  --elevacion-2: inset 0 1px 0 rgb(255 255 255 / 0.09), 0 2px 4px rgb(0 0 0 / 0.55),
+    0 18px 44px -14px rgb(0 0 0 / 0.7);
+  --elevacion-hoja: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 -8px 44px -8px rgb(0 0 0 / 0.75);
+
   color-scheme: dark;
 }
 
@@ -90,10 +145,12 @@
   --surface-3: 233 233 239;
   --border: 226 226 234;
   --border-strong: 207 207 217;
+  --border-bajo: 210 210 220;
 
   --fg: 22 22 28;
   --fg-muted: 92 92 107;
-  --fg-subtle: 138 138 153;
+  /* Mismo caso que en oscuro: 138 daba 3.40:1 sobre blanco. A 116 da 4.60. */
+  --fg-subtle: 116 116 131;
 
   --primary: 107 78 240;
   --primary-hover: 92 62 232;
@@ -104,6 +161,15 @@
   --warn: 184 117 20;
   --danger: 214 59 52;
   --info: 31 121 214;
+
+  /* La misma escalera, pero aquí manda la sombra: sobre papel tiene todo
+     el rango del mundo. El filo va casi opaco porque la superficie es
+     blanca y el reflejo tiene que salir del propio canto, no del brillo. */
+  --elevacion-1: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(16 16 28 / 0.05),
+    0 8px 20px -10px rgb(16 16 28 / 0.12);
+  --elevacion-2: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 2px 4px rgb(16 16 28 / 0.06),
+    0 16px 34px -12px rgb(16 16 28 / 0.16);
+  --elevacion-hoja: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 -8px 40px -8px rgb(16 16 28 / 0.18);
 
   color-scheme: light;
 }
@@ -159,12 +225,35 @@
   /* ── Lluvia de calaveras del login ────────────────────────────────
      Capa decorativa detrás del formulario. `pointer-events: none` para
      que no robe ni un tap, y `overflow: hidden` porque el vaivén saca
-     las calaveras de los bordes y si no, aparece scroll horizontal.   */
+     las calaveras de los bordes y si no, aparece scroll horizontal.
+
+     La máscara abre una zona de respeto en el centro: donde está el
+     formulario la lluvia baja al 8% y recupera su fuerza hacia los
+     bordes. Sin ella pasaba una calavera justo por encima del campo de
+     contraseña y el ojo la seguía a ella en vez de leer la etiqueta —
+     decoración que le compite a la tarea es decoración mal puesta.
+
+     La elipse va más alta que ancha (20 × 24) porque eso es la columna
+     que protege: angosta y larga. Con una elipse ancha y baja había que
+     estirarla tanto para tapar el título que terminaba despejando media
+     pantalla, y entonces la lluvia solo existía en las esquinas.       */
   .lluvia {
     position: fixed;
     inset: 0;
     overflow: hidden;
     pointer-events: none;
+    -webkit-mask-image: radial-gradient(
+      ellipse 20rem 24rem at 50% 50%,
+      rgba(0, 0, 0, 0.08) 0%,
+      rgba(0, 0, 0, 0.08) 40%,
+      #000 88%
+    );
+    mask-image: radial-gradient(
+      ellipse 20rem 24rem at 50% 50%,
+      rgba(0, 0, 0, 0.08) 0%,
+      rgba(0, 0, 0, 0.08) 40%,
+      #000 88%
+    );
   }
 
   .calavera-carril {
@@ -243,7 +332,7 @@
      dar un salto. Si la animación no corriera, la barra se ve completa
      desde el primer fotograma: la gráfica nunca depende de ella. */
   .anim-crecer {
-    animation: crecer 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation: crecer 0.6s var(--suave) backwards;
     transform-origin: bottom;
   }
 
@@ -265,7 +354,7 @@
      aparece dibujada de una vez. */
   .anim-trazo {
     stroke-dasharray: 1;
-    animation: trazar 1.1s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation: trazar 1.1s var(--suave) backwards;
   }
 
   /* El relleno bajo la línea entra con ella. Termina en su opacidad
@@ -281,6 +370,33 @@
     animation: pulso 2.6s ease-out infinite;
   }
 
+  /* ── La mandíbula de la calavera que guía el tutorial ─────────────
+     Las unidades son las del viewBox (64 × 72.5), no píxeles: dentro de
+     un SVG, `translateY(3px)` son 3 unidades de usuario, así que el
+     gesto escala solo con el tamaño al que se pinte. */
+  .calavera-mandibula {
+    animation: calavera-hablar 4.6s ease-in-out infinite;
+  }
+
+  /* ── Trama de stencil ─────────────────────────────────────────────
+     El fondo de un diseño del catálogo que todavía no tiene foto.
+
+     Un rectángulo gris liso con el código encima se lee como imagen
+     rota: el ojo no distingue "no hay foto" de "la foto no cargó". El
+     rayado diagonal dice que el hueco es a propósito, y de paso es la
+     superficie sobre la que se calca un stencil, que es exactamente lo
+     que le falta a esa ficha.
+
+     Va en `currentColor` sobre el token, no en un gris fijo, para que
+     los dos temas la resuelvan solos. Y muy tenue: es papel, no reja. */
+  .trama-stencil {
+    background-image: repeating-linear-gradient(
+      135deg,
+      transparent 0 7px,
+      rgb(var(--fg) / 0.03) 7px 8px
+    );
+  }
+
   /* ── Lluvia de billetes de los KPI ────────────────────────────────
      Misma mecánica que la lluvia del login: dos capas anidadas, la de
      fuera cae y gira, la de dentro se mece. El desfase entre los dos
@@ -288,13 +404,41 @@
      en línea recta.
 
      Va detrás del contenido y con `pointer-events: none`: es fondo, no
-     debe robar un tap ni estorbar la lectura del número. */
+     debe robar un tap ni estorbar la lectura del número.
+
+     "Detrás" no alcanzaba. Estaba detrás y aun así pasaba un billete por
+     encima de MARGEN NETO y de TASA DE CIERRE, y una etiqueta en
+     versalitas de 11 px cruzada por una silueta se lee como suciedad de
+     pantalla. En un tablero la decoración no le compite al dato: pierde.
+
+     La máscara ancla el silencio arriba —toda la banda, de lado a lado—
+     y deja que la lluvia tome cuerpo hacia abajo y a la derecha, que es
+     el hueco de seis de las siete tarjetas. Arriba va completa y no solo
+     la izquierda porque esa franja lleva dos datos, no uno: la etiqueta
+     a la izquierda y el punto del semáforo a la derecha, y un billete
+     del mismo color junto al punto le quita filo justo al elemento que
+     resume la tarjeta. La cifra queda dentro de la zona protegida.
+
+     No apaga el semáforo: el color sigue ahí, y quien lo dice de verdad
+     son la cifra y el punto.                                           */
   .lluvia-billetes {
     position: absolute;
     inset: 0;
     overflow: hidden;
     pointer-events: none;
     border-radius: inherit;
+    -webkit-mask-image: radial-gradient(
+      150% 90% at 10% 0%,
+      rgba(0, 0, 0, 0.05) 0%,
+      rgba(0, 0, 0, 0.05) 60%,
+      #000 105%
+    );
+    mask-image: radial-gradient(
+      150% 90% at 10% 0%,
+      rgba(0, 0, 0, 0.05) 0%,
+      rgba(0, 0, 0, 0.05) 60%,
+      #000 105%
+    );
   }
 
   .billete-carril {
@@ -308,6 +452,20 @@
   .billete-vaiven {
     display: block;
     animation-name: billete-vaiven;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+  }
+
+  /* La tercera capa: el billete se ladea sobre su eje vertical mientras
+     baja. Es lo que separa una hoja de papel cayendo de una calcomanía
+     que se desliza — y es la única de las tres que da volumen, porque
+     las otras dos solo lo mueven por el plano.
+
+     El giro va corto a propósito; el porqué está en sus keyframes. */
+  .billete-voltear {
+    display: block;
+    animation-name: billete-voltear;
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
     animation-direction: alternate;
@@ -398,6 +556,26 @@
   }
 }
 
+/* Giro corto y perspectiva larga, después de verlo fotograma a fotograma.
+
+   Iba a ±52° con perspectiva de 240px buscando volumen, y lo que hacía era
+   destruir el dibujo: pasando de unos 35° el escorzo horizontal se suma a
+   la comba del papel y el billete se convierte en una cinta doblada. A 52°
+   la orla ya no se distingue y solo queda una mancha curva. Ninguna de las
+   dos cosas leía como billete, que era el punto.
+
+   ±26° achica el ancho a un 90% —se nota que se ladea— sin que el escorzo
+   alcance a competir con la comba. Y la perspectiva larga evita que el
+   borde cercano se agrande de más, que es lo que lo hacía verse estirado. */
+@keyframes billete-voltear {
+  from {
+    transform: perspective(520px) rotateY(-26deg);
+  }
+  to {
+    transform: perspective(520px) rotateY(26deg);
+  }
+}
+
 /* La línea se traza de un extremo al otro. Cierra en 0: línea completa. */
 @keyframes trazar {
   from { stroke-dashoffset: 1; }
@@ -468,17 +646,70 @@
   }
 }
 
+/* Hablar, no masticar.
+ *
+ * La diferencia está entera en el ritmo. Una mandíbula que sube y baja
+ * parejo es un cascanueces; el habla va en ráfagas de aperturas desiguales
+ * —unas sílabas apenas abren, otras se abren del todo— separadas por
+ * pausas. La de 52% a 72% es la que más trabaja: es el respiro entre dos
+ * frases, y sin ella el bucle se delata a los pocos segundos.
+ *
+ * Cierra en 0 al final para que "reducir movimiento", que congela todo en
+ * el último fotograma, la deje con la boca cerrada y no a media palabra. */
+@keyframes calavera-hablar {
+  0% { transform: translateY(0); }
+  4% { transform: translateY(2.2px); }
+  9% { transform: translateY(0.4px); }
+  14% { transform: translateY(4.4px); }
+  20% { transform: translateY(0.8px); }
+  25% { transform: translateY(2.6px); }
+  31% { transform: translateY(0.2px); }
+  37% { transform: translateY(3.8px); }
+  43% { transform: translateY(0.6px); }
+  48% { transform: translateY(1.8px); }
+  52% { transform: translateY(0); }
+  72% { transform: translateY(0); }
+  76% { transform: translateY(4px); }
+  81% { transform: translateY(0.5px); }
+  86% { transform: translateY(2.4px); }
+  91% { transform: translateY(0.3px); }
+  96% { transform: translateY(1.4px); }
+  100% { transform: translateY(0); }
+}
+
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
 }
 
 
+/* ── Reducir movimiento ───────────────────────────────────────────────
+   "Menos movimiento y más suave", no "cero". Quien pide reducir movimiento
+   pide que las cosas no se DESPLACEN —eso es lo que marea— no que la
+   interfaz pierda toda continuidad.
+
+   Antes esto apagaba absolutamente todo, incluidos los fundidos y los
+   cambios de color. El efecto era peor de lo que parece: un error de
+   formulario aparecía de golpe en vez de fundirse, un botón cambiaba de
+   color de un fotograma al otro, y varias cosas pasaban a leerse como
+   parpadeos. Se perdía la comprensión, que es justo lo que la transición
+   estaba ayudando a sostener.
+
+   Ahora se apaga el movimiento y se conservan opacidad y color, que
+   informan sin desplazar nada. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
+    /* Las animaciones por fotogramas sí se cortan enteras: en esta app son
+       todas decorativas o de recorrido (lluvias, iconos del menú, trazado
+       de gráficas) y ninguna transporta información. */
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+
+    /* De las transiciones se quita solo el transporte. La duración general
+       baja pero no a cero, y las dos propiedades que no mueven nada
+       conservan un tiempo corto para que el cambio siga siendo legible. */
+    transition-property: opacity, color, background-color, border-color, fill, stroke !important;
+    transition-duration: 120ms !important;
   }
 
   /* La regla de arriba dejaría las calaveras congeladas en el último

@@ -32,7 +32,20 @@ export function Segmentado<T extends string>({
               key={o.valor}
               onClick={() => onCambio(o.valor)}
               className={cn(
-                'relative whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150',
+                'relative whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium',
+                /* Se hunde al presionar. Es el control más tocado de la
+                   app —cada cambio de filtro pasa por aquí— y era el único
+                   sin acuse de recibo: el indicador viaja con su resorte,
+                   pero eso empieza DESPUÉS de que el dedo ya se fue. El
+                   hundido confirma en el momento del toque que la interfaz
+                   escuchó. 150ms, dentro de los 100-160 de una pulsación.
+
+                   Las tres propiedades van nombradas en una sola
+                   declaración: `cn` es tailwind-merge y colapsa dos clases
+                   `transition-*` quedándose con la última, así que
+                   `transition-colors` + `transition-transform` habría
+                   dejado el color sin transición. */
+                'transition-[color,transform] duration-150 ease-out active:scale-[0.97]',
                 activo ? 'text-primary-fg' : 'text-fg-muted hover:text-fg',
               )}
             >

@@ -4,6 +4,19 @@ const color = (v) => `rgb(var(${v}) / <alpha-value>)`
 export default {
   darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  /*
+   * Que `hover:` solo aplique donde hay un cursor de verdad.
+   *
+   * Sin esto, Tailwind compila cada `hover:` como un `:hover` pelado, y en
+   * una pantalla táctil ese estado se ACTIVA al tocar y se queda pegado
+   * hasta que tocas otra cosa. Se ve como si la tarjeta que abriste hace
+   * un minuto siguiera bajo el dedo. Hay 73 utilidades `hover:` en la app
+   * y esta línea las envuelve a todas en `@media (hover: hover)`.
+   *
+   * Es la corrección de movimiento que más pesa en este proyecto porque es
+   * un tablero que se usa en el teléfono del estudio, no en un escritorio.
+   */
+  future: { hoverOnlyWhenSupported: true },
   theme: {
     extend: {
       colors: {
@@ -13,6 +26,7 @@ export default {
         'surface-3': color('--surface-3'),
         line: color('--border'),
         'line-strong': color('--border-strong'),
+        'line-bajo': color('--border-bajo'),
         fg: color('--fg'),
         'fg-muted': color('--fg-muted'),
         'fg-subtle': color('--fg-subtle'),
@@ -54,15 +68,31 @@ export default {
       },
       spacing: { 4.5: '1.125rem', 13: '3.25rem', 18: '4.5rem', 22: '5.5rem' },
       borderRadius: { lg: '0.625rem', xl: '0.875rem', '2xl': '1.125rem', '3xl': '1.5rem' },
+      /*
+       * Las sombras salen de variables por tema y no de valores fijos.
+       * Antes eran negros con alfas bajísimos, calibrados para fondo
+       * claro; en el tema oscuro —que es el que se usa de noche en el
+       * estudio— no movían un solo nivel de gris. La escena entera no
+       * tenía fuente de luz. El porqué de cada valor está en index.css,
+       * donde viven los tres niveles.
+       */
       boxShadow: {
-        card: '0 1px 2px rgb(0 0 0 / 0.06), 0 1px 1px rgb(0 0 0 / 0.04)',
-        raised: '0 4px 16px -4px rgb(0 0 0 / 0.18)',
-        sheet: '0 -8px 40px -8px rgb(0 0 0 / 0.35)',
+        card: 'var(--elevacion-1)',
+        raised: 'var(--elevacion-2)',
+        sheet: 'var(--elevacion-hoja)',
       },
       transitionTimingFunction: {
-        out: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        out: 'var(--suave)',
         spring: 'cubic-bezier(0.34, 1.4, 0.64, 1)',
       },
+      /*
+       * El spinner gira más rápido que el 1s que trae Tailwind.
+       *
+       * No es un capricho: a igual tiempo de carga, un spinner rápido hace
+       * que la espera se PERCIBA más corta. Es de lo poco que mejora el
+       * rendimiento sentido sin tocar una sola consulta.
+       */
+      animation: { spin: 'spin 0.7s linear infinite' },
     },
   },
   plugins: [],

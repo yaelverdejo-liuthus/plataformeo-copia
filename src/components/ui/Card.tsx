@@ -6,7 +6,7 @@ import { cn } from '../../lib/cn'
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('rounded-2xl border border-line bg-surface p-4 shadow-card', className)}
+      className={cn('rounded-2xl border border-line border-b-line-bajo bg-surface p-4 shadow-card', className)}
       {...props}
     />
   )
@@ -48,7 +48,7 @@ export function CardAnimada({
       // de que el tap sí registró sobre la tarjeta.
       whileTap={onClick ? { scale: 0.985 } : undefined}
       className={cn(
-        'rounded-2xl border border-line bg-surface p-4 shadow-card',
+        'rounded-2xl border border-line border-b-line-bajo bg-surface p-4 shadow-card',
         onClick && 'cursor-pointer transition-colors duration-150 hover:border-line-strong hover:bg-surface-2',
         className,
       )}

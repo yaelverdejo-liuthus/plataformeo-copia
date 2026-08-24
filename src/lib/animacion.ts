@@ -14,7 +14,17 @@ import type { Transition, Variants } from 'framer-motion'
  * en línea desde JS y se le escapa por completo.
  */
 
-/** Salida rápida, frenado largo. Se siente ágil sin verse brusca. */
+/**
+ * Salida rápida, frenado largo. Se siente ágil sin verse brusca.
+ *
+ * Su gemela en CSS es `--suave`, en index.css. Las dos tienen que decir los
+ * mismos cuatro números: son el mismo movimiento visto desde los dos lados,
+ * y si se separan, una hoja que entra por CSS y una tarjeta que entra por
+ * framer dejan de sentirse como la misma app.
+ *
+ * No se puede leer la variable desde aquí —framer necesita el arreglo de
+ * números, no una cadena de CSS— así que la única defensa es esta nota.
+ */
 export const SUAVE = [0.22, 1, 0.36, 1] as const
 
 export const DURACION = {

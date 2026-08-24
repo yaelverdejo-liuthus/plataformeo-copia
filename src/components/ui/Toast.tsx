@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle, CheckCircle2, Info, ShieldAlert } from 'lucide-react'
+import { SUAVE } from '../../lib/animacion'
 import { cn } from '../../lib/cn'
 
 type Tipo = 'exito' | 'error' | 'info' | 'regla'
@@ -69,8 +70,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               layout
               initial={{ opacity: 0, y: -16, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -12, scale: 0.97 }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              /* La salida más rápida que la entrada. Entrar es el sistema
+                 presentándose y merece los 200ms; salir es quitarse de en
+                 medio, y ahí la lentitud solo estorba. Un aviso que tarda
+                 lo mismo en irse que en llegar se siente pegajoso. */
+              exit={{
+                opacity: 0,
+                y: -12,
+                scale: 0.97,
+                transition: { duration: 0.15, ease: SUAVE },
+              }}
+              transition={{ duration: 0.2, ease: SUAVE }}
               className={cn(
                 'pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-2xl border px-4 py-3',
                 'bg-surface/95 shadow-raised backdrop-blur',

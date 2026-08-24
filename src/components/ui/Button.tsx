@@ -68,7 +68,21 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
   )
 })
 
-/** Botón redondo flotante para el alta rápida en móvil. */
+/**
+ * Botón redondo flotante para el alta rápida en móvil.
+ *
+ * Y solo en móvil, que es lo que este comentario decía desde el principio
+ * mientras el estilo lo dibujaba también en escritorio. Ahí no aportaba
+ * nada: las cinco pantallas que lo usan ya llevan el mismo alta en el
+ * encabezado, así que era un segundo botón para la misma acción y encima
+ * tapaba la última fila de la lista.
+ *
+ * En móvil sí se queda: no hay encabezado fijo y el pulgar no llega arriba.
+ *
+ * El tutorial no se rompe al esconderlo. `buscarVisible` elige, entre los
+ * duplicados responsive, el que tenga `offsetWidth > 0`; por eso el alta del
+ * encabezado lleva el mismo `data-tour` y el foco cae en el que se ve.
+ */
 export function BotonFlotante({
   className,
   children,
@@ -76,15 +90,30 @@ export function BotonFlotante({
 }: Omit<HTMLMotionProps<'button'>, 'children'> & { children?: ReactNode }) {
   return (
     <motion.button
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
+      /*
+       * Sin animación de entrada, solo respuesta al toque.
+       *
+       * Entraba con un resorte desde `scale`+`opacity`, y como vive dentro
+       * de cada pantalla, se desmontaba y se volvía a montar en CADA cambio
+       * de sección: el mismo botón, en el mismo sitio, repitiendo su
+       * aparición cinco veces por minuto. Medido durante Tablero → Pauta,
+       * estaba a 0.25 de opacidad mientras el esqueleto todavía cargaba,
+       * o sea peleándose por la atención con el estado de carga.
+       *
+       * La regla es la frecuencia: algo que se ve decenas de veces al día
+       * no se anima. El botón ya estaba ahí antes de cambiar de sección y
+       * sigue ahí después; presentarse otra vez es de mala educación.
+       *
+       * El hundido al tocar se queda: eso no es presentación, es acuse de
+       * recibo, y ocurre solo cuando el dedo lo pide.
+       */
       whileTap={{ scale: 0.92 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+      transition={{ duration: 0.12, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
         'fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] right-4 z-30',
         'flex h-14 w-14 items-center justify-center rounded-2xl',
         'bg-primary text-primary-fg shadow-raised',
-        'md:bottom-6 md:right-6',
+        'md:hidden',
         className,
       )}
       {...props}

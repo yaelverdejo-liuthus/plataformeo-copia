@@ -1,5 +1,6 @@
 import { forwardRef, useId, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { ChevronDown } from 'lucide-react'
 import { DESPLEGAR, DURACION, transicion } from '../../lib/animacion'
 import { cn } from '../../lib/cn'
 
@@ -8,6 +9,25 @@ const BASE =
   'placeholder:text-fg-subtle transition-colors duration-150 ' +
   'focus:border-primary/60 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/25 ' +
   'disabled:opacity-60'
+
+/**
+ * Ata el mensaje al campo para quien no lo está viendo.
+ *
+ * El error se pintaba en rojo debajo del input y ahí se acababa: para un
+ * lector de pantalla el campo seguía siendo válido y sin descripción. Quien
+ * navega a ciegas oía "Correo, cuadro de edición" y nada más — el motivo
+ * del rechazo estaba en pantalla y era el único que no se enteraba.
+ *
+ * Devuelve el par que hay que ponerle al control. Va aquí y no en cada
+ * campo porque los cuatro (input, número, select, textarea) comparten la
+ * misma envoltura, y porque el id lo tiene que conocer también el <p>.
+ */
+export function atributosDescripcion(idFinal: string, error?: string, hint?: string) {
+  return {
+    'aria-invalid': error ? true : undefined,
+    'aria-describedby': error ? `${idFinal}-error` : hint ? `${idFinal}-hint` : undefined,
+  } as const
+}
 
 function Envoltura({
   etiqueta,
@@ -40,6 +60,7 @@ function Envoltura({
         {error ? (
           <motion.p
             key="error"
+            id={`${htmlFor}-error`}
             variants={DESPLEGAR}
             initial="oculto"
             animate="visible"
@@ -50,7 +71,7 @@ function Envoltura({
             {error}
           </motion.p>
         ) : hint ? (
-          <p key="hint" className="text-sm text-fg-subtle">
+          <p key="hint" id={`${htmlFor}-hint`} className="text-sm text-fg-subtle">
             {hint}
           </p>
         ) : null}
@@ -76,6 +97,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       <input
         ref={ref}
         id={idFinal}
+        {...atributosDescripcion(idFinal, error, hint)}
         className={cn(BASE, 'h-11', error && 'border-danger/60 focus:ring-danger/25', className)}
         {...props}
       />
@@ -105,6 +127,7 @@ export const InputNumero = forwardRef<HTMLInputElement, InputProps & { prefijo?:
             type="text"
             inputMode="numeric"
             autoComplete="off"
+            {...atributosDescripcion(idFinal, error, hint)}
             className={cn(
               BASE,
               'tabular h-11',
@@ -126,7 +149,17 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: string
 }
 
-/** Select nativo: en móvil la rueda del sistema gana a cualquier dropdown propio. */
+/**
+ * Select nativo: en móvil la rueda del sistema gana a cualquier dropdown propio.
+ *
+ * La flecha es un icono de la librería y no un SVG incrustado en un
+ * `background-image`. Dentro de un data URI el color va escrito a mano, y el
+ * que estaba —#A0A0AE— es el `--fg-muted` del tema OSCURO: en claro la
+ * flecha salía lavada mientras el texto de al lado iba en un gris mucho más
+ * firme. Como elemento hereda `currentColor` y los dos temas se resuelven
+ * solos. De paso deja de haber un icono dibujado a mano conviviendo con la
+ * familia de lucide que usa el resto de la app.
+ */
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
   { etiqueta, hint, error, className, id, children, ...props },
   ref,
@@ -135,23 +168,27 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
   const idFinal = id ?? auto
   return (
     <Envoltura etiqueta={etiqueta} hint={hint} error={error} htmlFor={idFinal}>
-      <select
-        ref={ref}
-        id={idFinal}
-        className={cn(
-          BASE,
-          'h-11 appearance-none bg-[length:1.1rem] bg-[right_0.75rem_center] bg-no-repeat pr-10',
-          error && 'border-danger/60',
-          className,
-        )}
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A0A0AE' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")",
-        }}
-        {...props}
-      >
-        {children}
-      </select>
+      <div className="relative">
+        <select
+          ref={ref}
+          id={idFinal}
+          {...atributosDescripcion(idFinal, error, hint)}
+          className={cn(
+            BASE,
+            'h-11 appearance-none pr-10',
+            error && 'border-danger/60 focus:ring-danger/25',
+            className,
+          )}
+          {...props}
+        >
+          {children}
+        </select>
+        <ChevronDown
+          aria-hidden
+          strokeWidth={2.5}
+          className="pointer-events-none absolute right-3 top-1/2 size-[1.1rem] -translate-y-1/2 text-fg-muted"
+        />
+      </div>
     </Envoltura>
   )
 })
@@ -174,7 +211,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
         ref={ref}
         id={idFinal}
         rows={3}
-        className={cn(BASE, 'resize-none py-2.5 leading-relaxed', error && 'border-danger/60', className)}
+        {...atributosDescripcion(idFinal, error, hint)}
+        className={cn(
+          BASE,
+          'resize-none py-2.5 leading-relaxed',
+          error && 'border-danger/60 focus:ring-danger/25',
+          className,
+        )}
         {...props}
       />
     </Envoltura>
@@ -214,9 +257,17 @@ export function Switch({
           activo ? 'bg-primary' : 'bg-surface-3',
         )}
       >
+        {/*
+          La perilla se pinta contra su riel, no en blanco fijo. Apagado el
+          riel es `surface-3`, que en tema claro es un gris casi blanco: una
+          perilla blanca encima daba 1.1:1 y el interruptor parecía un riel
+          vacío. Encendido el riel es `primary`, y ahí `primary-fg` es el
+          token que ya existe para lo que va montado sobre el morado.
+        */}
         <span
           className={cn(
-            'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm',
+            'absolute top-0.5 h-5 w-5 rounded-full shadow-sm',
+            activo ? 'bg-primary-fg' : 'bg-fg-muted',
             'transition-transform duration-200 ease-out',
             activo ? 'translate-x-[1.375rem]' : 'translate-x-0.5',
           )}
