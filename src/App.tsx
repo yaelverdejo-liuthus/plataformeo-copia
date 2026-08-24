@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react'
+import { lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { useRol } from './hooks/useRol'
@@ -11,7 +11,7 @@ import { TrabajoDetalle } from './pages/TrabajoDetalle'
 import { Catalogo } from './pages/Catalogo'
 import { Contenido } from './pages/Contenido'
 import { Config } from './pages/Config'
-import { Skeleton, SkeletonKPIs } from './components/ui/Estados'
+import { Skeleton } from './components/ui/Estados'
 import { Button } from './components/ui/Button'
 
 // Dashboard y Pauta son las únicas que cargan Recharts (~400 kB). Se traen
@@ -102,9 +102,7 @@ export function App() {
         <Route
           index
           element={
-            <Suspense fallback={<SkeletonKPIs n={6} />}>
-              <Dashboard />
-            </Suspense>
+<Dashboard />
           }
         />
         <Route path="leads" element={<Leads />} />
@@ -115,17 +113,13 @@ export function App() {
         <Route
           path="ads"
           element={
-            <Suspense fallback={<SkeletonKPIs n={4} />}>
-              <Ads />
-            </Suspense>
+<Ads />
           }
         />
         <Route
           path="ads/:id"
           element={
-            <Suspense fallback={<SkeletonKPIs n={4} />}>
-              <CampanaDetalle />
-            </Suspense>
+<CampanaDetalle />
           }
         />
         <Route

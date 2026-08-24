@@ -1,4 +1,4 @@
-import { useState, type ComponentType } from 'react'
+import { Suspense, useState, type ComponentType } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -24,7 +24,9 @@ import { Sheet } from '../ui/Sheet'
 import { Tutorial } from '../Tutorial'
 import { EditarPerfil } from '../EditarPerfil'
 import { IconoContenido } from '../IconoContenido'
+import { SkeletonLista } from '../ui/Estados'
 import { cn } from '../../lib/cn'
+import { precargaAl, precargarRuta } from '../../lib/precarga'
 import type { Perfil } from '../../lib/tipos'
 
 /**
@@ -103,7 +105,7 @@ export function AppShell() {
 
         <nav data-tour="nav" className="flex-1 space-y-0.5 px-3">
           {entradas.map((e) => (
-            <NavLink key={e.ruta} to={e.ruta} end={e.ruta === '/'}>
+            <NavLink key={e.ruta} to={e.ruta} end={e.ruta === '/'} {...precargaAl(e.ruta)}>
               {({ isActive }) => (
                 <span
                   className={cn(
@@ -249,8 +251,28 @@ export function AppShell() {
           queda instantáneo, que en el teléfono se siente mejor que 180 ms de
           espera, y ninguna pantalla depende de que algo se anime para verse.
         */}
+        {/*
+          UNA sola frontera de Suspense para todas las rutas, aquí y no una
+          por ruta.
+
+          Con una por ruta, ir de Leads a Pauta montaba una frontera NUEVA,
+          y ante una frontera nueva React no tiene nada viejo que conservar:
+          tira la pantalla anterior en el acto y enseña el respaldo. Medido,
+          el área de contenido quedaba vacía 245 ms — sin título y sin
+          esqueleto. Un hueco en blanco es peor que un esqueleto.
+
+          Compartiendo frontera, la de Leads ya está montada cuando empieza
+          la navegación, así que React deja Leads en pantalla mientras
+          resuelve Pauta y cambia de una vez cuando está lista. Nada
+          parpadea porque nada se va antes de tiempo.
+
+          El respaldo solo se ve cuando de verdad no hay nada que conservar:
+          entrar por URL directa o recargar sobre una ruta perezosa.
+        */}
         <div className="mx-auto max-w-6xl px-4 pb-24 pt-4 md:px-8 md:pb-10 md:pt-8">
-          <Outlet />
+          <Suspense fallback={<SkeletonLista />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
 
@@ -261,7 +283,13 @@ export function AppShell() {
       >
         <div className="flex">
           {barra.map((e) => (
-            <NavLink key={e.ruta} to={e.ruta} end={e.ruta === '/'} className="flex-1">
+            <NavLink
+              key={e.ruta}
+              to={e.ruta}
+              end={e.ruta === '/'}
+              className="flex-1"
+              {...precargaAl(e.ruta)}
+            >
               {({ isActive }) => (
                 <span
                   className={cn(
@@ -279,7 +307,17 @@ export function AppShell() {
             </NavLink>
           ))}
 
-          <button onClick={() => setMasAbierto(true)} className="flex-1">
+          {/* Abrir "Más" ya es intención de ir a alguna de las que hay
+              dentro, y son justo las que no caben en la barra. Se piden las
+              suyas mientras la hoja sube: para cuando el dedo elige, el
+              archivo llegó. */}
+          <button
+            onClick={() => {
+              enMas.forEach((e) => precargarRuta(e.ruta))
+              setMasAbierto(true)
+            }}
+            className="flex-1"
+          >
             <span
               className={cn(
                 'flex h-16 flex-col items-center justify-center gap-1 transition-colors duration-150',
@@ -298,6 +336,7 @@ export function AppShell() {
           {enMas.map((e) => (
             <button
               key={e.ruta}
+              {...precargaAl(e.ruta)}
               onClick={() => {
                 setMasAbierto(false)
                 navegar(e.ruta)
