@@ -26,3 +26,11 @@ dist-ssr
 # entorno local
 .env.local
 .env
+
+# Skills de terceros instaladas para el pase de diseño (Emil Kowalski,
+# Impeccable Design, Taste). Son herramientas del entorno de trabajo, no
+# código de la plataforma, y traen sus propias licencias.
+.claude/skills/
+
+# Salidas de las pruebas de navegador
+.playwright-mcp/
