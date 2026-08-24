@@ -358,7 +358,11 @@ export function Leads() {
             }))}
           />
           {puede && (
-            <Button onClick={() => abrir('nuevo')} className="hidden md:inline-flex">
+            <Button
+              data-tour="nuevo-lead"
+              onClick={() => abrir('nuevo')}
+              className="hidden md:inline-flex"
+            >
               <Plus className="h-4 w-4" />
               Nuevo lead
             </Button>
@@ -434,7 +438,10 @@ export function Leads() {
                 <h2 className="mb-2 text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
                   {g.titulo} · {g.leads.length}
                 </h2>
-                <div className="space-y-2.5">
+                {/* Dos columnas desde lg, igual que Trabajos y Catálogo: en
+                    una sola, el nombre y su monto quedaban en extremos
+                    opuestos de una fila de mil píxeles. */}
+                <div className="grid gap-2.5 lg:grid-cols-2">
                   <AnimatePresence initial={false}>
                     {g.leads.map((l, i) => (
                       <TarjetaLead
@@ -453,7 +460,7 @@ export function Leads() {
           </AnimatePresence>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="grid gap-2.5 lg:grid-cols-2">
           <AnimatePresence initial={false}>
             {filtrados.map((l, i) => (
               <TarjetaLead

@@ -25,7 +25,15 @@ import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
 import { GraficaCostoConversacion } from '../components/GraficaCostoConversacion'
 import { ExplicacionCostoConv } from '../components/ExplicacionCostoConv'
 import { PLATAFORMA_ADS, VEREDICTO } from '../lib/etiquetas'
-import { dinero, dineroExacto, fechaCorta, hoyISO, numero, porcentaje } from '../lib/formato'
+import {
+  dinero,
+  dineroExacto,
+  fechaCorta,
+  hoyISO,
+  numero,
+  plural,
+  porcentaje,
+} from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
 import { DURACION, escalonar, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
@@ -639,7 +647,8 @@ export function CampanaDetalle() {
         descripcion={
           <>
             Se borra <span className="text-fg">{campana.nombre}</span> con sus{' '}
-            {campana.num_creativos} creativos y todos sus días capturados. El gasto de{' '}
+            {plural(campana.num_creativos, 'creativo', 'creativos')} y todos sus días capturados. El
+            gasto de{' '}
             {dinero(campana.gasto_real)} deja de contar en el tablero.
           </>
         }

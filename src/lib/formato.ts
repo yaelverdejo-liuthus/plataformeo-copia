@@ -33,6 +33,22 @@ export const porcentaje = (n: number | null | undefined, decimales = 0) =>
 export const multiplo = (n: number | null | undefined) =>
   n == null || !Number.isFinite(n) ? '—' : `${n.toFixed(1)}x`
 
+/**
+ * Cuenta con su sustantivo concordado: `plural(1, 'campaña activa',
+ * 'campañas activas')` → "1 campaña activa".
+ *
+ * Existía el bug en cinco encabezados —"1 campañas activas", "1 activos",
+ * "1 diseños"— y son justo las líneas que resumen la pantalla, lo primero
+ * que se lee. Con un estudio chico el 1 es el caso de todos los días, no
+ * el borde raro.
+ *
+ * El plural va explícito y no derivado con una regla: en español la regla
+ * tiene demasiadas excepciones (mes/meses, lápiz/lápices) y el segundo
+ * argumento cuesta menos que descubrir cuál se rompió.
+ */
+export const plural = (n: number, singular: string, plural: string) =>
+  `${numero(n)} ${n === 1 ? singular : plural}`
+
 /** minutos → "2 h 30 min" */
 export function minutosAHoras(min: number | null | undefined) {
   if (min == null || !Number.isFinite(min)) return '—'

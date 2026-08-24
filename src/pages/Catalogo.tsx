@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, ImageIcon, Plus, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, ImageIcon, ImagePlus, Plus, Trash2 } from 'lucide-react'
 import {
   useCatalogo,
   useGuardarDiseno,
@@ -22,7 +22,7 @@ import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
 import { SubidorImagen } from '../components/SubidorImagen'
 import { borrarImagenPorUrl } from '../lib/storage'
 import { AUTORIA, NIVEL, ZONAS } from '../lib/etiquetas'
-import { dinero, minutosAHoras } from '../lib/formato'
+import { dinero, minutosAHoras, plural } from '../lib/formato'
 import { mensajeDeError, esReglaDeNegocio, esDependencia } from '../lib/errores'
 import { cn } from '../lib/cn'
 import type { Catalogo as Diseno, Nivel } from '../lib/tipos'
@@ -161,7 +161,7 @@ export function Catalogo() {
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Catálogo</h1>
           <p className="text-sm text-fg-muted">
-            {(catalogo ?? []).length} diseños · de aquí sale la cotización
+            {plural((catalogo ?? []).length, 'diseño', 'diseños')} · de aquí sale la cotización
           </p>
         </div>
         {puede && (
@@ -224,9 +224,16 @@ export function Catalogo() {
                           className="aspect-[4/3] w-full object-cover"
                         />
                       ) : (
-                        <div className="flex aspect-[4/3] w-full items-center justify-center bg-surface-2">
-                          <span className="text-2xl font-semibold tracking-tight text-fg-subtle">
+                        /* Conserva el 4/3 aunque no haya foto: en una
+                           rejilla, dos alturas distintas dejan las fichas
+                           desalineadas y eso se nota más que el hueco. */
+                        <div className="trama-stencil flex aspect-[4/3] w-full flex-col items-center justify-center gap-1.5 bg-surface-2">
+                          <span className="font-display text-2xl font-semibold tracking-tight text-fg-subtle">
                             {d.id}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-xs text-fg-subtle">
+                            <ImagePlus className="h-3.5 w-3.5" aria-hidden />
+                            {puede ? 'Agregar foto' : 'Sin foto'}
                           </span>
                         </div>
                       )}

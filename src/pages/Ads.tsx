@@ -18,7 +18,15 @@ import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
 import { BotonCSV } from '../components/BotonCSV'
 import { ExplicacionCostoConv } from '../components/ExplicacionCostoConv'
 import { PLATAFORMA_ADS, VEREDICTO } from '../lib/etiquetas'
-import { dinero, dineroExacto, fechaCorta, hoyISO, numero, porcentaje } from '../lib/formato'
+import {
+  dinero,
+  dineroExacto,
+  fechaCorta,
+  hoyISO,
+  numero,
+  plural,
+  porcentaje,
+} from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
 import { DURACION, escalonar, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
@@ -142,7 +150,8 @@ export function Ads() {
           <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Pauta</h1>
           <p className="text-sm text-fg-muted">
             <span className="tabular">{dinero(totales.gasto)}</span> gastados ·{' '}
-            {numero(totales.conversaciones)} conversaciones · {totales.activas} campañas activas
+            {plural(totales.conversaciones, 'conversación', 'conversaciones')} ·{' '}
+            {plural(totales.activas, 'campaña activa', 'campañas activas')}
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -165,7 +174,11 @@ export function Ads() {
             }))}
           />
           {puede && (
-            <Button onClick={() => abrir('nueva')} className="hidden md:inline-flex">
+            <Button
+              data-tour="nueva-pauta"
+              onClick={() => abrir('nueva')}
+              className="hidden md:inline-flex"
+            >
               <Plus className="h-4 w-4" />
               Nueva campaña
             </Button>

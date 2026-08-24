@@ -42,13 +42,20 @@ export function Config() {
       </header>
 
       {isPending ? (
-        <div className="space-y-3">
+        // La misma rejilla que la lista real: si el esqueleto va en una
+        // columna y el contenido en dos, al cargar la página se reacomoda
+        // entera y parece que algo falló.
+        <div className="grid gap-3 lg:grid-cols-2">
           {Array.from({ length: 7 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-2xl" />
           ))}
         </div>
       ) : (
-        <div data-tour="umbrales" className="space-y-3">
+        // Dos columnas desde lg. En una sola, el título del umbral quedaba
+        // en el borde izquierdo y su campo a ochocientos píxeles a la
+        // derecha: una etiqueta y su control tan lejos dejan de leerse como
+        // la misma cosa, y hay que barrer la fila para saber qué se edita.
+        <div data-tour="umbrales" className="grid gap-3 lg:grid-cols-2">
           {ordenadas.map((fila, i) => (
             <FilaConfig
               key={fila.clave}

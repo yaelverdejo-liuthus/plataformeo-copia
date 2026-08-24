@@ -258,7 +258,11 @@ export function Contenido() {
             }))}
           />
           {puede && (
-            <Button onClick={() => abrir('nuevo')} className="hidden md:inline-flex">
+            <Button
+              data-tour="nuevo-video"
+              onClick={() => abrir('nuevo')}
+              className="hidden md:inline-flex"
+            >
               <Plus className="h-4 w-4" />
               Nuevo video
             </Button>

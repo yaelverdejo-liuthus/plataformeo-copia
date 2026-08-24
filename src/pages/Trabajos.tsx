@@ -21,6 +21,7 @@ import {
   fechaCorta,
   hora12,
   minutosAHoras,
+  plural,
 } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
 import { ENTRADA, transicion } from '../lib/animacion'
@@ -139,9 +140,11 @@ export function Trabajos() {
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Trabajos</h1>
           <p className="text-sm text-fg-muted">
-            {activos.length} activos · <span className="tabular">{dinero(porCobrar)}</span> por
-            cobrar
-            {vencidos > 0 && <span className="text-danger"> · {vencidos} vencidos</span>}
+            {plural(activos.length, 'activo', 'activos')} ·{' '}
+            <span className="tabular">{dinero(porCobrar)}</span> por cobrar
+            {vencidos > 0 && (
+              <span className="text-danger"> · {plural(vencidos, 'vencido', 'vencidos')}</span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -172,7 +175,11 @@ export function Trabajos() {
             }))}
           />
           {puede && (
-            <Button onClick={() => setAltaAbierta(true)} className="hidden md:inline-flex">
+            <Button
+              data-tour="nuevo-trabajo"
+              onClick={() => setAltaAbierta(true)}
+              className="hidden md:inline-flex"
+            >
               <Plus className="h-4 w-4" />
               Nuevo
             </Button>
@@ -251,7 +258,7 @@ export function Trabajos() {
                 />
               </Card>
 
-              <div className="space-y-2.5">
+              <div className="grid gap-2.5 lg:grid-cols-2">
                 <AnimatePresence initial={false}>
                   {historial.map((t, i) => (
                     <TarjetaTrabajo
@@ -304,7 +311,14 @@ export function Trabajos() {
                   </h2>
                   {g.nota && <span className="text-xs text-fg-subtle">{g.nota}</span>}
                 </div>
-                <div className="space-y-2.5">
+                {/* Dos columnas desde lg, como la rejilla que ya usa Catálogo.
+                    En una sola, a 1000 px de ancho, el nombre quedaba en el
+                    extremo izquierdo y su precio en el derecho con medio
+                    metro de vacío en medio: para saber cuánto debe Jair
+                    había que cruzar la tarjeta entera con la vista. Partida
+                    en dos, el recorrido del ojo se corta a la mitad y caben
+                    el doble de trabajos sin desplazar. */}
+                <div className="grid gap-2.5 lg:grid-cols-2">
                   <AnimatePresence initial={false}>
                     {g.trabajos.map((t, i) => (
                       <TarjetaTrabajo
