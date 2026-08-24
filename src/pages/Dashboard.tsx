@@ -9,7 +9,7 @@ import { useContenido } from '../lib/queries/contenido'
 import { useCreativosTodos } from '../lib/queries/ads'
 import { useUmbrales } from '../lib/queries/config'
 import { Card, TituloSeccion } from '../components/ui/Card'
-import { LluviaBilletes } from '../components/LluviaBilletes'
+import { DefinicionesBillete, LluviaBilletes } from '../components/LluviaBilletes'
 import { SkeletonKPIs, ErrorCarga } from '../components/ui/Estados'
 import {
   dinero,
@@ -152,6 +152,9 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* El dibujo del billete, una sola vez para las siete tarjetas. */}
+      <DefinicionesBillete />
+
       <header>
         <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Tablero</h1>
         <p className="text-sm text-fg-muted">

@@ -14,7 +14,8 @@ import { useMemo } from 'react'
  *
  * Es DECORACIÓN y se comporta como tal: detrás del contenido, sin robar
  * taps, y bajo "reducir movimiento" desaparece por completo (index.css).
- * Ningún dato del tablero depende de que esto se vea.
+ * Ningún dato del tablero depende de que esto se vea. La máscara de
+ * `.lluvia-billetes` la mantiene fuera de la etiqueta, la cifra y el punto.
  */
 
 type Luz = 'verde' | 'ambar' | 'rojo' | 'sin_datos'
@@ -32,6 +33,10 @@ const COLOR: Record<Luz, string> = {
    billete de más se paga siete veces en un teléfono de gama baja. */
 const CANTIDAD = 6
 
+/** Debajo de este ancho en px, la orla se dibuja gruesa y se van las
+    cifras de las esquinas: a medio píxel, el detalle fino es lodo. */
+const UMBRAL_DETALLE = 30
+
 const entre = (min: number, max: number) => min + Math.random() * (max - min)
 
 function sembrar() {
@@ -40,11 +45,12 @@ function sembrar() {
     // de atrás chicos, pálidos y lentos; los de adelante grandes y nítidos.
     // Sin esa correlación se ven como calcomanías en un solo plano.
     const profundidad = Math.random()
+    const ancho = 20 + profundidad * 18
 
     return {
       id,
       izquierda: entre(-6, 92),
-      ancho: 15 + profundidad * 13,
+      ancho,
       // Lento a propósito: es fondo de una tarjeta que se lee, no un
       // protector de pantalla.
       caida: entre(15, 24) - profundidad * 4,
@@ -55,7 +61,13 @@ function sembrar() {
       vaiven: entre(3, 6),
       deriva: 4 + profundidad * 9,
       giro: entre(-70, 70),
+      // El volteo va desacoplado del vaivén: si compartieran duración, el
+      // billete llegaría al extremo de su deriva exactamente cuando se pone
+      // de canto, y las seis harían lo mismo a la vez. Desfasados se ve
+      // aire; sincronizados se ve un carrusel.
+      volteo: entre(2.4, 4.8),
       brillo: 0.1 + profundidad * 0.12,
+      detalle: ancho < UMBRAL_DETALLE ? 'chico' : 'grande',
     }
   })
 }
@@ -87,7 +99,19 @@ export function LluviaBilletes({ luz }: { luz: Luz }) {
               ['--deriva' as string]: `${b.deriva}px`,
             }}
           >
-            <Billete ancho={b.ancho} />
+            <svg
+              className="billete-voltear"
+              width={b.ancho}
+              height={b.ancho * PROPORCION}
+              viewBox={`0 0 ${ANCHO} ${ALTO}`}
+              fill="currentColor"
+              style={{
+                animationDuration: `${b.volteo}s`,
+                animationDelay: `${b.retraso}s`,
+              }}
+            >
+              <use href={`#billete-${b.detalle}`} />
+            </svg>
           </div>
         </div>
       ))}
@@ -95,26 +119,75 @@ export function LluviaBilletes({ luz }: { luz: Luz }) {
   )
 }
 
+/* ── El dibujo ────────────────────────────────────────────────────────────
+   Antes era un rectángulo redondeado con un círculo negro al centro: el
+   icono universal de "aquí iba una imagen". Lo que lo vuelve dinero:
+
+   · La ORLA grabada, un filete fino paralelo al borde. Es la señal más
+     fuerte de las tres — ningún otro objeto rectangular la lleva.
+   · La viñeta central va como óvalo HUECO, no como mancha rellena. Un
+     círculo negro sólido no evoca un retrato, evoca un agujero.
+   · Y la curvatura: el papel en el aire nunca está plano. El billete va
+     combado y con las puntas a distinta altura, así que aun quieto parece
+     que está cayendo.
+
+   PROPORCIÓN: 1.9 a 1, no la 2.2 de un billete real. Medido con regla el
+   dato es 2.2, pero a 30 px de ancho eso deja 13 px de alto y el billete
+   deja de leerse como objeto: es una tira. Y como además va combado, el
+   comba se come parte de esos 13 y termina de aplanarlo. Aquí gana la
+   lectura sobre la exactitud.
+
+   La comba también se bajó: iba al 16% del alto y a poco que el billete
+   girara se veía un plátano en vez de un papel.
+
+   Todo en UN path con evenodd, por la misma razón que las calaveras: los
+   huecos son transparencia de verdad y el mismo dibujo sirve en los dos
+   temas. El anidamiento de contornos alterna relleno y hueco, y de ahí sale
+   la orla: silueta (relleno), orla exterior (hueco), orla interior (relleno
+   otra vez), y encima la viñeta y las esquinas (huecos).                  */
+
+const ANCHO = 44
+const ALTO = 28
+const PROPORCION = ALTO / ANCHO
+
+const SILUETA = 'M2 5.5C14 3.6 30 3.3 42 3.5V22.5C30 22.3 14 22.6 2 24.5Z'
+
+/* La orla, en dos grosores. No es que la chica lleve menos detalle: lleva
+   el MISMO, más gordo. Un filete de 0.9 unidades a 24 px de ancho mide
+   medio píxel y se deshace en un gris sucio, así que la de lejos se dibuja
+   a 1.5 y sobrevive. Sin ella el billete chico quedaba en un rectángulo
+   con un óvalo — una etiqueta, no dinero. */
+const ORLA_EXTERIOR = 'M3.8 7.3C15 5.4 29.5 5.1 40.2 5.3V20.7C29.5 20.5 15 20.8 3.8 22.7Z'
+
+const ORLA_FINA = ORLA_EXTERIOR + 'M4.7 8.2C15.5 6.3 29.5 6 39.3 6.2V19.8C29.5 19.6 15.5 19.9 4.7 21.8Z'
+
+const ORLA_GRUESA =
+  ORLA_EXTERIOR + 'M5.3 8.8C15.8 6.9 29.5 6.6 38.7 6.8V19.2C29.5 19 15.8 19.3 5.3 21.2Z'
+
+const VINETA = 'M18.4 13.2a3.6 3.2 0 1 1 7.2 0 3.6 3.2 0 1 1-7.2 0Z'
+
+/** Las cifras de las esquinas, sugeridas. A tamaño chico serían lodo. */
+const ESQUINAS = 'M6.2 13.6h2v2h-2Z M35.8 12h2v2h-2Z'
+
+const CHICO = SILUETA + ORLA_GRUESA + VINETA
+const GRANDE = SILUETA + ORLA_FINA + VINETA + ESQUINAS
+
 /**
- * Un billete de una sola pieza.
+ * Los dos dibujos, definidos UNA vez para todo el tablero.
  *
- * El óvalo del centro y las dos marcas de los lados son huecos de verdad
- * (fill-rule evenodd), no formas pintadas del color del fondo: así el
- * billete funciona igual en tema claro y oscuro sin saber qué hay detrás.
+ * Va aparte y se monta en la página, no dentro de `<LluviaBilletes>`: hay
+ * siete tarjetas con semáforo, así que ahí adentro se declararía siete
+ * veces el mismo `id`. El navegador se queda con el primero y funciona de
+ * casualidad, pero son ids duplicados en el documento y seis copias del
+ * mismo path que nadie usa.
  */
-function Billete({ ancho }: { ancho: number }) {
+export function DefinicionesBillete() {
   return (
-    <svg
-      width={ancho}
-      height={ancho * 0.56}
-      viewBox="0 0 32 18"
-      fill="currentColor"
-      aria-hidden
-    >
-      <path
-        fillRule="evenodd"
-        d="M3 1h26a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2Zm13 4.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2ZM5.7 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm20.6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"
-      />
+    <svg width="0" height="0" aria-hidden className="absolute">
+      <defs>
+        <path id="billete-chico" fillRule="evenodd" d={CHICO} />
+        <path id="billete-grande" fillRule="evenodd" d={GRANDE} />
+      </defs>
     </svg>
   )
 }
