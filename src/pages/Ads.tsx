@@ -10,6 +10,7 @@ import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
 import { Button, BotonFlotante } from '../components/ui/Button'
 import { Input, InputNumero, Select, Switch, Textarea } from '../components/ui/Campo'
+import { SelectorFecha } from '../components/ui/SelectorFecha'
 import { Sheet } from '../components/ui/Sheet'
 import { Badge } from '../components/ui/Badge'
 import { CardAnimada } from '../components/ui/Card'
@@ -370,13 +371,18 @@ export function Ads() {
           />
 
           <div className="grid grid-cols-2 gap-3">
-            <Input etiqueta="Inicio" type="date" {...register('fecha_inicio')} />
-            <Input
+            <SelectorFecha
+              etiqueta="Inicio"
+              valor={watch('fecha_inicio') ?? ''}
+              onCambio={(v) => setValue('fecha_inicio', v, { shouldDirty: true })}
+            />
+            <SelectorFecha
               etiqueta="Fin"
-              type="date"
+              opcional
               hint="Opcional"
               error={errors.fecha_fin?.message}
-              {...register('fecha_fin')}
+              valor={watch('fecha_fin') ?? ''}
+              onCambio={(v) => setValue('fecha_fin', v, { shouldDirty: true })}
             />
           </div>
 

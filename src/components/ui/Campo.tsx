@@ -29,7 +29,12 @@ export function atributosDescripcion(idFinal: string, error?: string, hint?: str
   } as const
 }
 
-function Envoltura({
+/**
+ * La etiqueta, el control y su mensaje. Exportada porque los selectores de
+ * fecha y hora no son `<input>` —son un botón que abre un panel— pero
+ * tienen que verse y anunciarse igual que el resto de los campos.
+ */
+export function Envoltura({
   etiqueta,
   hint,
   error,

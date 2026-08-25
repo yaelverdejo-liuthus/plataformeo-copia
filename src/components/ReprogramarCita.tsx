@@ -3,7 +3,9 @@ import { CalendarClock } from 'lucide-react'
 import { useReprogramar, useReprogramaciones } from '../lib/queries/leads'
 import { useToast } from './ui/Toast'
 import { Button } from './ui/Button'
-import { Input, Textarea } from './ui/Campo'
+import { Textarea } from './ui/Campo'
+import { SelectorFecha } from './ui/SelectorFecha'
+import { SelectorHora } from './ui/SelectorHora'
 import { Sheet } from './ui/Sheet'
 import { fechaCorta, hora12 } from '../lib/formato'
 import { mensajeDeError, esReglaDeNegocio } from '../lib/errores'
@@ -99,18 +101,8 @@ export function ReprogramarCita({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input
-            etiqueta="Nueva fecha"
-            type="date"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-          />
-          <Input
-            etiqueta="Nueva hora"
-            type="time"
-            value={hora}
-            onChange={(e) => setHora(e.target.value)}
-          />
+          <SelectorFecha etiqueta="Nueva fecha" valor={fecha} onCambio={setFecha} />
+          <SelectorHora etiqueta="Nueva hora" opcional valor={hora} onCambio={setHora} />
         </div>
 
         <Textarea

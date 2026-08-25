@@ -17,6 +17,7 @@ import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
 import { Button } from '../components/ui/Button'
 import { Input, InputNumero, Select, Switch } from '../components/ui/Campo'
+import { SelectorFecha } from '../components/ui/SelectorFecha'
 import { Sheet } from '../components/ui/Sheet'
 import { Badge } from '../components/ui/Badge'
 import { Card, CardAnimada } from '../components/ui/Card'
@@ -559,12 +560,7 @@ export function CampanaDetalle() {
               </option>
             ))}
           </Select>
-          <Input
-            etiqueta="Fecha"
-            type="date"
-            value={fechaDia}
-            onChange={(e) => setFechaDia(e.target.value)}
-          />
+          <SelectorFecha etiqueta="Fecha" valor={fechaDia} onCambio={setFechaDia} />
           <div className="grid grid-cols-2 gap-3">
             <InputNumero
               etiqueta="Gasto real"

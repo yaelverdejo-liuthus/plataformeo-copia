@@ -9,7 +9,9 @@ import { useActualizarLead } from '../lib/queries/leads'
 import { useUmbrales } from '../lib/queries/config'
 import { useToast } from './ui/Toast'
 import { Button } from './ui/Button'
-import { Input, InputNumero, Select, Textarea } from './ui/Campo'
+import { InputNumero, Select, Textarea } from './ui/Campo'
+import { SelectorFecha } from './ui/SelectorFecha'
+import { SelectorHora } from './ui/SelectorHora'
 import { Sheet } from './ui/Sheet'
 import { LEAD_ESTATUS, ZONAS } from '../lib/etiquetas'
 import { dinero, hoyISO } from '../lib/formato'
@@ -358,27 +360,36 @@ export function WizardEstatusLead({
                 {...register('que_pidio')}
               />
 
-              <Input etiqueta="Fecha de la cotización" type="date" {...register('cotizado_en')} />
+              <SelectorFecha
+                etiqueta="Fecha de la cotización"
+                valor={watch('cotizado_en') ?? ''}
+                onCambio={(v) => setValue('cotizado_en', v, { shouldDirty: true })}
+              />
             </>
           )}
 
           {paso === 'agenda' && (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <Input
+                <SelectorFecha
                   etiqueta="Fecha del tatuaje"
-                  type="date"
-                  autoFocus
-                  {...register('fecha_tatuaje')}
+                  valor={watch('fecha_tatuaje') ?? ''}
+                  onCambio={(v) => setValue('fecha_tatuaje', v, { shouldDirty: true })}
                 />
-                <Input etiqueta="Hora" type="time" {...register('hora')} />
+                <SelectorHora
+                  etiqueta="Hora"
+                  opcional
+                  valor={watch('hora') ?? ''}
+                  onCambio={(v) => setValue('hora', v, { shouldDirty: true })}
+                />
               </div>
 
-              <Input
+              <SelectorFecha
                 etiqueta="Fecha de trazado"
-                type="date"
+                opcional
                 hint="Opcional. Son 20 min con marcador sobre el cuerpo, antes de la sesión."
-                {...register('fecha_trazado')}
+                valor={watch('fecha_trazado') ?? ''}
+                onCambio={(v) => setValue('fecha_trazado', v, { shouldDirty: true })}
               />
 
               <InputNumero

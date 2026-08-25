@@ -21,6 +21,8 @@ import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
 import { Button, BotonFlotante } from '../components/ui/Button'
 import { Input, InputNumero, Select, Textarea } from '../components/ui/Campo'
+import { SelectorFecha } from '../components/ui/SelectorFecha'
+import { SelectorHora } from '../components/ui/SelectorHora'
 import { Sheet } from '../components/ui/Sheet'
 import { Badge } from '../components/ui/Badge'
 import { CardAnimada } from '../components/ui/Card'
@@ -141,6 +143,7 @@ export function Leads() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<Formulario, unknown, Salida>({
     resolver: zodResolver(esquema),
@@ -615,19 +618,25 @@ export function Leads() {
                 Cita y anticipo
               </legend>
               <div className="grid grid-cols-2 gap-3">
-                <Input
+                <SelectorFecha
                   etiqueta="Fecha del tatuaje"
-                  type="date"
                   error={errors.fecha_tatuaje?.message}
-                  {...register('fecha_tatuaje')}
+                  valor={watch('fecha_tatuaje') ?? ''}
+                  onCambio={(v) => setValue('fecha_tatuaje', v, { shouldDirty: true })}
                 />
-                <Input etiqueta="Hora" type="time" {...register('hora')} />
+                <SelectorHora
+                  etiqueta="Hora"
+                  opcional
+                  valor={watch('hora') ?? ''}
+                  onCambio={(v) => setValue('hora', v, { shouldDirty: true })}
+                />
               </div>
-              <Input
+              <SelectorFecha
                 etiqueta="Fecha de trazado"
-                type="date"
+                opcional
                 hint="Opcional, 20 min antes de la sesión"
-                {...register('fecha_trazado')}
+                valor={watch('fecha_trazado') ?? ''}
+                onCambio={(v) => setValue('fecha_trazado', v, { shouldDirty: true })}
               />
               <InputNumero
                 etiqueta="Anticipo cobrado"
@@ -648,11 +657,12 @@ export function Leads() {
                 placeholder="Mandar 2 horarios + pedir foto de zona"
                 {...register('siguiente_accion')}
               />
-              <Input
+              <SelectorFecha
                 etiqueta="Fecha de seguimiento"
-                type="date"
+                opcional
                 hint="Si llega esta fecha y sigue abierto, aparece en rojo y en el tablero."
-                {...register('fecha_seguimiento')}
+                valor={watch('fecha_seguimiento') ?? ''}
+                onCambio={(v) => setValue('fecha_seguimiento', v, { shouldDirty: true })}
               />
             </>
           )}

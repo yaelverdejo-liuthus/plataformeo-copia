@@ -16,6 +16,7 @@ import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
 import { Button, BotonFlotante } from '../components/ui/Button'
 import { Input, InputNumero, Select, Switch } from '../components/ui/Campo'
+import { SelectorFecha } from '../components/ui/SelectorFecha'
 import { Sheet } from '../components/ui/Sheet'
 import { Badge } from '../components/ui/Badge'
 import { CardAnimada } from '../components/ui/Card'
@@ -512,7 +513,11 @@ export function Contenido() {
                 </option>
               ))}
             </Select>
-            <Input etiqueta="Fecha" type="date" {...register('fecha')} />
+            <SelectorFecha
+              etiqueta="Fecha"
+              valor={watch('fecha') ?? ''}
+              onCambio={(v) => setValue('fecha', v, { shouldDirty: true })}
+            />
           </div>
 
           <Select etiqueta="Formato" error={errors.formato?.message} {...register('formato')}>

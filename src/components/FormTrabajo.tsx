@@ -9,6 +9,8 @@ import { useUmbrales } from '../lib/queries/config'
 import { useToast } from './ui/Toast'
 import { Button } from './ui/Button'
 import { Input, InputNumero, Select } from './ui/Campo'
+import { SelectorFecha } from './ui/SelectorFecha'
+import { SelectorHora } from './ui/SelectorHora'
 import { InputDuracion } from './ui/InputDuracion'
 import { ORIGEN, TRABAJO_ESTATUS, ZONAS } from '../lib/etiquetas'
 import { dinero } from '../lib/formato'
@@ -208,7 +210,13 @@ export function FormTrabajo({
         <legend className="px-1 text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
           Cita de trazado · 20 min
         </legend>
-        <Input etiqueta="Fecha de trazado" type="date" {...register('fecha_trazado')} />
+        <SelectorFecha
+          etiqueta="Fecha de trazado"
+          opcional
+          valor={watch('fecha_trazado') ?? ''}
+          onCambio={(v) => setValue('fecha_trazado', v, { shouldDirty: true, shouldValidate: true })}
+          error={errors.fecha_trazado?.message}
+        />
       </fieldset>
 
       <fieldset className="space-y-3 rounded-2xl border border-line bg-surface-2/50 p-3.5">
@@ -216,8 +224,22 @@ export function FormTrabajo({
           Cita de tatuaje · la sesión
         </legend>
         <div className="grid grid-cols-2 gap-3">
-          <Input etiqueta="Fecha" type="date" {...register('fecha_tatuaje')} />
-          <Input etiqueta="Hora" type="time" {...register('hora')} />
+          <SelectorFecha
+            etiqueta="Fecha"
+            opcional
+            valor={watch('fecha_tatuaje') ?? ''}
+            onCambio={(v) =>
+              setValue('fecha_tatuaje', v, { shouldDirty: true, shouldValidate: true })
+            }
+            error={errors.fecha_tatuaje?.message}
+          />
+          <SelectorHora
+            etiqueta="Hora"
+            opcional
+            valor={watch('hora') ?? ''}
+            onCambio={(v) => setValue('hora', v, { shouldDirty: true, shouldValidate: true })}
+            error={errors.hora?.message}
+          />
         </div>
       </fieldset>
 
