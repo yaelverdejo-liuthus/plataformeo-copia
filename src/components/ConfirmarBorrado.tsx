@@ -75,7 +75,7 @@ export function ConfirmarBorrado({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full max-w-sm rounded-3xl border border-line bg-surface p-5 shadow-raised"
+            className="relative w-full max-w-sm rounded-3xl bg-surface p-5 shadow-arcilla-alta"
           >
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-danger/12 text-danger">
               <TriangleAlert className="h-5 w-5" />

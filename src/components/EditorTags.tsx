@@ -60,7 +60,7 @@ export function EditorTags({
 
       <div
         className={cn(
-          'flex flex-wrap items-center gap-1.5 rounded-xl border border-line bg-surface-2 px-2.5 py-2',
+          'flex flex-wrap items-center gap-1.5 rounded-xl pozo px-2.5 py-2',
           'transition-colors duration-150',
           !deshabilitado &&
             'focus-within:border-primary/60 focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary/25',
@@ -106,7 +106,7 @@ export function EditorTags({
               key={s}
               type="button"
               onClick={() => agregar(s)}
-              className="rounded-full border border-line px-2.5 py-1 text-xs text-fg-subtle transition-colors hover:border-primary/40 hover:text-primary"
+              className="rounded-full pozo px-2.5 py-1 text-xs text-fg-subtle transition-colors hover:border-primary/40 hover:text-primary"
             >
               + {s}
             </button>

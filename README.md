@@ -6,6 +6,11 @@ No es un CRM genérico ni un sistema de reservas público: es una herramienta in
 Documentos de origen: `QUE_ES_LA_PLATAFORMA.md` (el porqué), `SPEC_PLATAFORMA.md` (fuente de verdad
 técnica) y `Tablero_Tatuajes_v2.xlsx` (la especificación de datos en la práctica).
 
+El sistema visual está documentado aparte, en **[`DESIGN.md`](DESIGN.md)**. Antes de tocar
+cualquier pantalla, léelo: la app entera está hecha de un solo material y hay dos o tres reglas
+que no son evidentes (por qué no hay bordes de 1px, por qué `ring-*` de Tailwind rompe el
+material, por qué los tintes van con `color-mix` y no con alfa).
+
 ---
 
 ## Arrancar en local
@@ -42,7 +47,11 @@ src/
     etiquetas.ts       nombres visibles y colores de cada enum
     csv.ts             exportación
     queries/           un archivo por entidad (TanStack Query)
-  hooks/               useAuth, useRol, useTema, useConexion, useRealtime
+    animacion.ts       vocabulario de movimiento: curvas, duraciones, resortes
+  estilos/
+    arcilla.css        los tokens del material, por tema
+  hooks/               useAuth, useRol, useTema, useConexion, useRealtime,
+                       useQuieto (para los bucles decorativos)
   components/
     ui/                Button, Campo, Card, Badge, Sheet, Estados, Toast, Segmentado
     layout/            AppShell (sidebar en desktop, bottom nav + "Más" en móvil)
@@ -52,6 +61,7 @@ src/
 supabase/
   migrations/          schema + RLS + vistas + seed del catálogo
   seed_ejemplo.sql     datos del Excel, solo para validar cálculos
+  seed_diseno.sql      datos sintéticos con volumen, para trabajar el diseño
 ```
 
 ---
@@ -68,6 +78,8 @@ supabase/
 | Saldo y minutos totales | columnas generadas `stored` |
 | ¿El video pasa el filtro? | vista `v_contenido_filtro` |
 | ¿Escalar o matar el creativo? | vista `v_ads_veredicto` |
+| Un lead agendado tiene expediente | trigger `crear_trabajo_de_lead` |
+| Borrar el expediente devuelve el lead a cotizado | trigger `lead_vuelve_a_cotizado` |
 | Quién puede escribir qué | políticas RLS + `mi_rol()` |
 
 Los 7 umbrales están en la tabla `config` y se editan desde **Ajustes** (solo admin).

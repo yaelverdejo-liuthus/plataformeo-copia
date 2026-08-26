@@ -206,7 +206,7 @@ export function FormTrabajo({
       </div>
 
       {/* ── Las dos citas, separadas: son dos eventos distintos ─────── */}
-      <fieldset className="space-y-3 rounded-2xl border border-line bg-surface-2/50 p-3.5">
+      <fieldset className="space-y-3 rounded-2xl pozo p-3.5">
         <legend className="px-1 text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
           Cita de trazado · 20 min
         </legend>
@@ -219,7 +219,7 @@ export function FormTrabajo({
         />
       </fieldset>
 
-      <fieldset className="space-y-3 rounded-2xl border border-line bg-surface-2/50 p-3.5">
+      <fieldset className="space-y-3 rounded-2xl pozo p-3.5">
         <legend className="px-1 text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
           Cita de tatuaje · la sesión
         </legend>
@@ -315,7 +315,7 @@ export function FormTrabajo({
       <label className="flex items-center gap-3 py-1 text-base text-fg">
         <input
           type="checkbox"
-          className="h-5 w-5 rounded border-line-strong bg-surface-2 text-primary focus:ring-primary/30"
+          className="h-5 w-5 rounded-md border-0 bg-honda text-primary shadow-pozo"
           {...register('retoque_pendiente')}
         />
         Retoque pendiente

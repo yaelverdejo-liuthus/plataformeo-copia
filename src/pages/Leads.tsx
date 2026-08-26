@@ -13,6 +13,7 @@ import {
   Plus,
   Trash2,
   UserPlus,
+  Hammer,
 } from 'lucide-react'
 import { useLeads, useActualizarLead, useCrearLead, useEliminarLead } from '../lib/queries/leads'
 import { useTrabajos } from '../lib/queries/trabajos'
@@ -391,7 +392,7 @@ export function Leads() {
         <select
           value={origen}
           onChange={(e) => setOrigen(e.target.value as Origen | 'todos')}
-          className="h-9 rounded-lg border border-line bg-surface-2 px-3 text-sm text-fg-muted"
+          className="h-9 rounded-lg pozo px-3 text-sm text-fg-muted"
         >
           <option value="todos">Todos los orígenes</option>
           {Object.entries(ORIGEN).map(([v, t]) => (
@@ -454,6 +455,10 @@ export function Leads() {
                         indice={i}
                         vencido={seguimientoVencido(l)}
                         onAbrir={() => setDetalle(l)}
+                        onVerTrabajo={() => {
+                          const t = trabajoDe(l)
+                          if (t) navegar(`/trabajos/${t.id}`)
+                        }}
                       />
                     ))}
                   </AnimatePresence>
@@ -473,6 +478,10 @@ export function Leads() {
                 indice={i}
                 vencido={seguimientoVencido(l)}
                 onAbrir={() => setDetalle(l)}
+                onVerTrabajo={() => {
+                  const t = trabajoDe(l)
+                  if (t) navegar(`/trabajos/${t.id}`)
+                }}
               />
             ))}
           </AnimatePresence>
@@ -554,7 +563,7 @@ export function Leads() {
                 setEditando(null)
                 navegar(`/trabajos/${expedienteDelEditado.id}`)
               }}
-              className="flex w-full items-center gap-3 rounded-2xl border border-line bg-surface-2/50 px-3.5 py-3 text-left transition-colors hover:border-line-strong"
+              className="flex w-full items-center gap-3 rounded-2xl pozo px-3.5 py-3 text-left pulsable"
             >
               <Briefcase className="h-5 w-5 shrink-0 text-primary" />
               <div className="min-w-0 flex-1">
@@ -571,7 +580,7 @@ export function Leads() {
 
           {/* Cotización: aparece sola en cuanto la etapa la requiere */}
           {!expedienteDelEditado && (pideCotizacion || !esAlta) && (
-            <fieldset className="space-y-3 rounded-2xl border border-line bg-surface-2/50 p-3.5">
+            <fieldset className="space-y-3 rounded-2xl pozo p-3.5">
               <legend className="px-1 text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
                 Cotización
               </legend>
@@ -613,7 +622,7 @@ export function Leads() {
 
           {/* Agenda: solo en el alta. Después se mueve con motivo. */}
           {esAlta && pideAgenda && (
-            <fieldset className="space-y-3 rounded-2xl border border-line bg-surface-2/50 p-3.5">
+            <fieldset className="space-y-3 rounded-2xl pozo p-3.5">
               <legend className="px-1 text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
                 Cita y anticipo
               </legend>
@@ -682,9 +691,9 @@ export function Leads() {
               href={urlWhatsApp(detalle.whatsapp)}
               target="_blank"
               rel="noreferrer"
-              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-success/12 text-base font-medium text-success"
+              className="pulsable flex h-12 items-center justify-center gap-2 rounded-2xl bg-success/15 text-base font-semibold text-success shadow-arcilla"
             >
-              <MessageCircle className="anim-repicar h-5 w-5" />
+              <MessageCircle className="gesto gesto-repicar h-5 w-5" />
               Abrir WhatsApp
             </a>
 
@@ -760,7 +769,7 @@ export function Leads() {
             {trabajoDe(detalle) && (
               <button
                 onClick={() => navegar(`/trabajos/${trabajoDe(detalle)!.id}`)}
-                className="flex w-full items-center gap-3 rounded-xl border border-line bg-surface-2 px-3.5 py-3 text-left transition-colors hover:border-line-strong"
+                className="flex w-full items-center gap-3 rounded-xl pozo px-3.5 py-3 text-left pulsable"
               >
                 <Briefcase className="h-5 w-5 shrink-0 text-primary" />
                 <div className="min-w-0 flex-1">
@@ -802,7 +811,7 @@ export function Leads() {
                           setDetalle(null)
                         }}
                         disabled={detalle.estatus === e}
-                        className="rounded-xl border border-line px-3 py-2.5 text-sm text-fg-muted transition-colors hover:border-line-strong hover:text-fg disabled:border-primary/40 disabled:bg-primary/10 disabled:text-primary"
+                        className="rounded-xl pozo px-3 py-2.5 text-sm text-fg-muted pulsable hover:text-fg disabled:bg-primary/15 disabled:text-primary disabled:opacity-100"
                       >
                         {LEAD_ESTATUS[e].texto}
                       </button>
@@ -810,7 +819,7 @@ export function Leads() {
                   </div>
                 </div>
 
-                <div className="flex gap-2 border-t border-line pt-4">
+                <div className="flex gap-2 pt-4">
                   <Button
                     variante="secundario"
                     className="flex-1"
@@ -868,6 +877,7 @@ function TarjetaLead({
   indice,
   vencido,
   onAbrir,
+  onVerTrabajo,
 }: {
   lead: Lead
   /** Su expediente, si ya se agendó. Manda sobre la copia del lead. */
@@ -875,6 +885,8 @@ function TarjetaLead({
   indice: number
   vencido: boolean
   onAbrir: () => void
+  /** Salto directo al expediente. Solo se usa si `trabajo` existe. */
+  onVerTrabajo: () => void
 }) {
   const agendado = lead.estatus === 'agendado'
   // La fecha también sale del trabajo: reprogramar mueve el expediente, y la
@@ -960,15 +972,14 @@ function TarjetaLead({
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
             aria-label={`Abrir WhatsApp de ${lead.nombre}`}
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-success/12 text-success transition-colors hover:bg-success/20"
+            className="pulsable flex h-11 w-11 items-center justify-center rounded-xl bg-success/15 text-success shadow-arcilla-sutil hover:bg-success/22"
           >
-            {/* El desfase por posición evita que toda la lista repique a la
-                vez, que se vería como un parpadeo de la pantalla entera. Se
-                topa a los 5 para que el último no tarde una eternidad. */}
-            <MessageCircle
-              className="anim-repicar h-5 w-5"
-              style={{ animationDelay: `${(indice % 5) * 0.45}s` }}
-            />
+            {/* Ya no lleva `animationDelay`. Ese desfase existía para que
+                treinta globos en bucle no repicaran al unísono y la lista
+                entera no pareciera parpadear. Ahora el globo solo repica
+                cuando tocas SU tarjeta, así que nunca hay más de uno
+                sonando y no hay nada que desfasar. */}
+            <MessageCircle className="gesto gesto-repicar h-5 w-5" />
           </a>
         </div>
       </div>
@@ -980,9 +991,70 @@ function TarjetaLead({
         WhatsApp de arriba tampoco ayudaba — al ser lo único que se veía
         pulsable, hacía pensar que era la única acción de la tarjeta.
       */}
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-2.5">
-        <span className="text-xs font-medium text-primary">Ver más detalles</span>
-        <ChevronRight className="h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5" />
+      {/*
+        Es un <button> y no un <span>, que es lo que era.
+
+        La tarjeta entera sigue abriendo la ficha al tocarla —en el
+        teléfono eso es lo cómodo— pero ese gesto solo existe para quien
+        usa el dedo o el ratón. Con teclado no había forma de entrar: el
+        contenedor no era enfocable y el único control alcanzable dentro
+        de la tarjeta era el enlace de WhatsApp, que lleva a otro sitio.
+
+        Poniendo el pie como botón, la acción principal de la tarjeta
+        pasa a tener un control real, con nombre propio, alcanzable con
+        Tab. `stopPropagation` evita que el clic burbujee hasta la
+        tarjeta y dispare `onAbrir` dos veces.
+      */}
+      <div className="mt-3 flex items-center gap-2 pt-2.5">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onAbrir()
+          }}
+          className="-ml-1 flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-1 py-0.5 text-left"
+        >
+          <span className="text-xs font-medium text-primary">Ver más detalles</span>
+          {!trabajo && (
+            <ChevronRight className="h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5" />
+          )}
+        </button>
+
+        {/*
+          El atajo al expediente.
+
+          Cuando un lead ya se agendó, la base le crea su trabajo sola
+          (trigger `crear_trabajo_de_lead`), y esta tarjeta ya venía
+          MOSTRANDO datos de ese trabajo — el precio y el saldo salen de
+          ahí, no del lead. O sea que la relación era visible pero no
+          navegable: veías que el expediente existe y no podías llegar a
+          él. Había que abrir la ficha, bajar y buscar "Ver su trabajo":
+          tres toques para algo que es un salto directo.
+
+          Va con el folio a la vista (`T-106`) y no con un texto genérico
+          porque el folio es como se le nombra a un trabajo en el resto de
+          la app — en su propia tarjeta, en el CSV, al hablar entre ellos.
+          Un botón que dice lo mismo que dirías en voz alta.
+
+          `stopPropagation` porque la tarjeta entera también es clicable y
+          lleva a la ficha del lead; sin esto, tocar el atajo abriría las
+          dos cosas.
+        */}
+        {trabajo && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onVerTrabajo()
+            }}
+            aria-label={`Ver el expediente ${trabajo.id} de ${lead.nombre}`}
+            className="pulsable flex shrink-0 items-center gap-1.5 rounded-lg bg-primary/15 px-2.5 py-1.5 text-2xs font-semibold uppercase tracking-[0.06em] text-primary shadow-arcilla-sutil"
+          >
+            <Hammer className="h-3.5 w-3.5" />
+            <span className="font-mono tracking-normal">{trabajo.id}</span>
+            <ChevronRight className="h-3.5 w-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
+          </button>
+        )}
       </div>
     </CardAnimada>
   )
@@ -990,7 +1062,7 @@ function TarjetaLead({
 
 function Dato({ titulo, valor }: { titulo: string; valor: string | null | undefined }) {
   return (
-    <div className="flex gap-4 border-b border-line pb-3 last:border-0">
+    <div className="flex gap-4 pb-3 last:border-0">
       <span className="w-32 shrink-0 text-fg-subtle">{titulo}</span>
       <span className="min-w-0 flex-1 text-fg">{valor || '—'}</span>
     </div>

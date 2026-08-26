@@ -89,7 +89,7 @@ export function GraficaCostoConversacion({
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="relative h-56 w-full overflow-hidden rounded-xl border border-line">
+          <div className="relative h-56 w-full overflow-hidden rounded-xl pozo">
             <svg
               viewBox="0 0 100 100"
               preserveAspectRatio="none"

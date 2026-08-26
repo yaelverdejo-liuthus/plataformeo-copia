@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useQuieto } from '../hooks/useQuieto'
 import {
   ALTO,
   ANCHO,
@@ -123,14 +124,18 @@ export function LluviaCalaveras() {
   // pulsación en el formulario reiniciaría toda la lluvia desde arriba.
   const calaveras = useMemo(() => generar(), [])
 
+  // Se para sola si la pestaña se va al fondo. En el login no hay scroll
+  // que la saque de pantalla, pero sí una pestaña que se queda abierta.
+  const { ref, quieto } = useQuieto<HTMLDivElement>()
+
   return (
-    <div className="lluvia" aria-hidden>
+    <div ref={ref} data-quieto={quieto} className="lluvia" aria-hidden>
       <DefinicionesCalavera />
 
       {calaveras.map((c) => (
         <div
           key={c.id}
-          className="calavera-carril"
+          className="carril-caida"
           style={{
             left: `${c.izquierda}%`,
             animationDuration: `${c.caida}s`,
@@ -140,7 +145,7 @@ export function LluviaCalaveras() {
           }}
         >
           <div
-            className="calavera-vaiven"
+            className="carril-vaiven"
             style={{
               animationDuration: `${c.vaiven}s`,
               animationDelay: `${c.retraso}s`,

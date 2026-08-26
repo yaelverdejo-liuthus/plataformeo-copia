@@ -96,7 +96,7 @@ export function ExplicacionCostoConv({ className }: { className?: string }) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-line bg-surface-2/50 p-3.5">
+          <div className="rounded-2xl pozo p-3.5">
             <p className="text-sm leading-relaxed text-fg-muted">
               Esos dos cortes —{dinero(bueno)} y {dinero(malo)}— se cambian en{' '}
               <span className="text-fg">Ajustes</span>, y son supuestos de arranque: ajústalos
@@ -161,7 +161,7 @@ function Regla({
 }) {
   const v = VEREDICTO[veredicto]
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-line bg-surface-2/40 px-3 py-2.5">
+    <div className="flex items-start gap-3 rounded-xl pozo px-3 py-2.5">
       <span className="shrink-0 pt-0.5">
         <Badge tono={v.tono as Tono} punto>
           {v.texto}

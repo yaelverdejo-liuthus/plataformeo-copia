@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
-import { DURACION, SUAVE } from '../lib/animacion'
+import { DURACION, SALIDA } from '../lib/animacion'
 import { cn } from '../lib/cn'
 
 /**
@@ -38,7 +38,7 @@ const LOGOS: { nombre: string; d: string }[] = [
 /** Lo que dura cada logo en pantalla antes de ceder el turno. */
 const MS_POR_LOGO = 3000
 
-const CURVA = `cubic-bezier(${SUAVE.join(', ')})`
+const CURVA = `cubic-bezier(${SALIDA.join(', ')})`
 
 export function IconoContenido({ className }: { className?: string }) {
   const sinMovimiento = useReducedMotion()

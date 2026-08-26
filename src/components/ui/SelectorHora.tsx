@@ -153,7 +153,7 @@ export const SelectorHora = forwardRef<HTMLButtonElement, Props>(function Select
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         className={cn(
-          'flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-line bg-surface-2 px-3.5 text-left text-base',
+          'flex h-11 w-full items-center justify-between gap-2 rounded-xl pozo px-3.5 text-left text-base',
           'transition-colors duration-150 ease-out',
           'focus:border-primary/60 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/25',
           'disabled:opacity-60',
@@ -205,7 +205,7 @@ export const SelectorHora = forwardRef<HTMLButtonElement, Props>(function Select
         </div>
 
         {/* ── La salida para lo que no está en la lista ── */}
-        <div className="border-t border-line p-2">
+        <div className="p-2">
           <label htmlFor={`${id}-libre`} className="sr-only">
             Otra hora
           </label>

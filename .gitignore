@@ -34,3 +34,6 @@ dist-ssr
 
 # Salidas de las pruebas de navegador
 .playwright-mcp/
+
+# Capturas del pase de diseño
+.capturas/

@@ -56,7 +56,7 @@ export class ErrorBoundary extends Component<
             </button>
             <button
               onClick={() => window.location.reload()}
-              className="h-12 flex-1 rounded-xl border border-line bg-surface-2 text-base font-medium text-fg"
+              className="h-12 flex-1 rounded-xl pozo text-base font-medium text-fg"
             >
               Recargar
             </button>

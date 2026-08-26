@@ -450,14 +450,14 @@ export function Tutorial({
             aria-label={enRecorrido ? 'Tutorial' : 'Tutorial disponible'}
           >
             <div className="flex items-end gap-1.5">
-              <div className="relative min-w-0 flex-1 rounded-2xl border border-line bg-surface p-4 shadow-raised">
+              <div className="relative min-w-0 flex-1 rounded-2xl bg-surface p-4 shadow-arcilla-alta">
                 {/* Piquito del globo, apuntando al elemento iluminado */}
                 {flecha && caja && (
                   <span
                     className={cn(
                       'absolute h-3 w-3 rotate-45 bg-surface',
                       flecha === 'arriba'
-                        ? '-top-1.5 border-l border-t border-line'
+                        ? '-top-1.5 border-l'
                         : '-bottom-1.5 border-b border-r border-line',
                     )}
                     style={{

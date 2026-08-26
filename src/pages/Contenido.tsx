@@ -318,10 +318,10 @@ export function Contenido() {
                     )
                   }
                   className={cn(
-                    'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                    'pulsable rounded-full px-3 py-1.5 text-xs font-medium',
                     activo
-                      ? 'border-primary/50 bg-primary/15 text-primary'
-                      : 'border-line text-fg-muted hover:border-line-strong hover:text-fg',
+                      ? 'bg-primary/20 text-primary shadow-arcilla-sutil'
+                      : 'pozo text-fg-muted hover:text-fg',
                   )}
                 >
                   {t}
@@ -554,7 +554,7 @@ export function Contenido() {
             hint="Para clasificar y filtrar. Enter o coma para agregar cada uno."
           />
 
-          <div className="rounded-2xl border border-line bg-surface-2/50 px-3.5 py-1">
+          <div className="rounded-2xl pozo px-3.5 py-1">
             <Switch
               activo={Boolean(watch('precio_en_pantalla'))}
               onCambio={(v) => setValue('precio_en_pantalla', v)}
@@ -568,7 +568,7 @@ export function Contenido() {
               acaba de publicarse. */}
           {!esAlta && (
             <>
-              <div className="rounded-2xl border border-line bg-surface-2/50 px-3.5 py-1">
+              <div className="rounded-2xl pozo px-3.5 py-1">
                 <Switch
                   activo={Boolean(watch('promocionado'))}
                   onCambio={(v) => setValue('promocionado', v)}

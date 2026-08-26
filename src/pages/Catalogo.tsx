@@ -208,7 +208,7 @@ export function Catalogo() {
                       ease: [0.22, 1, 0.36, 1],
                     }}
                     className={cn(
-                      'overflow-hidden rounded-2xl border border-line bg-surface shadow-card',
+                      'arcilla overflow-hidden rounded-2xl',
                       !d.publicado && 'opacity-70',
                     )}
                   >
@@ -279,7 +279,7 @@ export function Catalogo() {
                         onClick={() =>
                           alternar.mutate({ id: d.id, publicado: !d.publicado })
                         }
-                        className="flex h-11 w-full items-center justify-center gap-2 border-t border-line text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+                        className="flex h-11 w-full items-center justify-center gap-2 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
                       >
                         {d.publicado ? (
                           <>
@@ -388,7 +388,7 @@ export function Catalogo() {
             hint="La foto real de la pieza, no una ilustración genérica"
           />
 
-          <div className="rounded-2xl border border-line bg-surface-2/50 px-3.5 py-1">
+          <div className="rounded-2xl pozo px-3.5 py-1">
             <Switch
               activo={Boolean(retoque)}
               onCambio={(v) => setValue('retoque_incluido', v)}
@@ -409,7 +409,7 @@ export function Catalogo() {
             </p>
           )}
 
-          <div className="rounded-2xl border border-line bg-surface-2/50 px-3.5 py-1">
+          <div className="rounded-2xl pozo px-3.5 py-1">
             <Switch
               activo={Boolean(watch('publicado'))}
               onCambio={(v) => setValue('publicado', v)}
@@ -421,7 +421,7 @@ export function Catalogo() {
           <Textarea etiqueta="Notas" {...register('notas')} />
 
           {editando && editando !== 'nuevo' && (
-            <div className="border-t border-line pt-4">
+            <div className="pt-4">
               <Button
                 type="button"
                 variante="peligro"

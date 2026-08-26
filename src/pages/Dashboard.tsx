@@ -21,7 +21,7 @@ import {
   porcentaje,
 } from '../lib/formato'
 import { mensajeDeError } from '../lib/errores'
-import { DURACION, escalonar, transicion } from '../lib/animacion'
+import { DURACION, ENTRADA_ARCILLA, SALIDA, escalonar, transicion } from '../lib/animacion'
 import { cn } from '../lib/cn'
 
 type Luz = 'verde' | 'ambar' | 'rojo' | 'sin_datos'
@@ -156,8 +156,8 @@ export function Dashboard() {
       <DefinicionesBillete />
 
       <header>
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Tablero</h1>
-        <p className="text-sm text-fg-muted">
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-fg">Tablero</h1>
+        <p className="mt-1 max-w-[60ch] text-sm text-fg-muted">
           Todo sale de Leads, Trabajos, Contenido y Pauta. Aquí no se captura nada.
         </p>
       </header>
@@ -166,9 +166,9 @@ export function Dashboard() {
       <section data-tour="atencion">
         <TituloSeccion>Requiere tu atención</TituloSeccion>
         {atencion.length === 0 ? (
-          <Card className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/12 text-success">
-              <PartyPopper className="h-4.5 w-4.5" />
+          <Card className="flex items-center gap-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/18 text-success shadow-arcilla-sutil">
+              <PartyPopper className="h-5 w-5" />
             </div>
             <p className="text-base text-fg-muted">Nada pendiente. Todo al corriente.</p>
           </Card>
@@ -189,23 +189,78 @@ export function Dashboard() {
                 <Link
                   to={a.ruta}
                   className={cn(
-                    'flex items-center gap-3 rounded-2xl border p-3.5 transition-colors',
+                    /*
+                     * La pieza ES roja o ES ámbar, con el mismo valor en
+                     * los dos temas. No se tiñe contra la superficie.
+                     *
+                     * Se probó teñida y no funcionaba: en oscuro quedaba
+                     * casi negra y en claro casi blanca, y en los dos
+                     * casos la fila se veía igual que una tarjeta normal.
+                     * Un aviso que se confunde con lo que no es aviso ya
+                     * falló, y da igual lo bien resuelto que esté el
+                     * material.
+                     *
+                     * Todo lo demás de la app se adapta al tema porque es
+                     * material. Esto no es material: es una señal.
+                     */
+                    'pulsable flex items-center gap-3.5 rounded-2xl p-4 shadow-arcilla-color',
                     a.tono === 'peligro'
-                      ? 'border-danger/25 bg-danger/8 hover:bg-danger/12'
-                      : 'border-warn/25 bg-warn/8 hover:bg-warn/12',
+                      ? 'bg-aviso-peligro hover:brightness-110'
+                      : 'bg-aviso-amarillo hover:brightness-105',
                   )}
                 >
-                  <AlertCircle
+                  <span
                     className={cn(
-                      'h-5 w-5 shrink-0',
-                      a.tono === 'peligro' ? 'text-danger' : 'text-warn',
+                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+                      /* El icono va sobre el mismo tono un paso más hondo:
+                         una pieza metida en la masa, no un círculo
+                         pintado encima. */
+                      a.tono === 'peligro'
+                        ? 'bg-aviso-peligro-hondo text-aviso-peligro-fg'
+                        : 'bg-aviso-amarillo-hondo text-aviso-amarillo-fg',
+                      'shadow-[inset_0_2px_4px_rgb(0_0_0/0.25),inset_0_-1px_0_rgb(255_255_255/0.2)]',
+                    )}
+                  >
+                    <AlertCircle className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={cn(
+                        'text-base font-semibold',
+                        a.tono === 'peligro' ? 'text-aviso-peligro-fg' : 'text-aviso-amarillo-fg',
+                      )}
+                    >
+                      {a.texto}
+                    </p>
+                    {/*
+                      El detalle NO va atenuado, y es deliberado.
+
+                      Sobre un fondo saturado, bajar la opacidad del texto
+                      lo acerca al fondo en luminancia y destruye el
+                      contraste: un blanco al 80% sobre este rojo da
+                      2.3:1, peor que el gris que se estaba evitando. Así
+                      que se distingue por tamaño y peso, no por tono, y
+                      el color es un segundo valor a contraste pleno.
+                    */}
+                    <p
+                      className={cn(
+                        'truncate text-sm',
+                        a.tono === 'peligro'
+                          ? 'text-aviso-peligro-fg-2'
+                          : 'text-aviso-amarillo-fg-2',
+                      )}
+                    >
+                      {a.detalle}
+                    </p>
+                  </div>
+                  <ChevronRight
+                    className={cn(
+                      'h-4 w-4 shrink-0',
+                      a.tono === 'peligro'
+                        ? 'text-aviso-peligro-fg-2'
+                        : 'text-aviso-amarillo-fg-2',
                     )}
                   />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-base font-medium text-fg">{a.texto}</p>
-                    <p className="truncate text-sm text-fg-muted">{a.detalle}</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-fg-subtle" />
                 </Link>
               </motion.div>
             ))}
@@ -307,7 +362,7 @@ export function Dashboard() {
       {/* ── Embudo y mezcla ─────────────────────────────────────────── */}
       <section className="grid gap-3 lg:grid-cols-2">
         <Card>
-          <p className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">Embudo</p>
+          <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-fg-subtle">Embudo</p>
           {isPending || !d || !dv ? (
             <div className="mt-3 space-y-2">
               <div className="skeleton h-6 w-full rounded-lg" />
@@ -335,7 +390,7 @@ export function Dashboard() {
         </Card>
 
         <Card>
-          <p className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">
+          <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-fg-subtle">
             Mezcla de niveles
           </p>
           {isPending || !d ? (
@@ -462,8 +517,11 @@ function MezclaNiveles({ datos }: { datos: { nivel: string; valor: number; tono:
         })}
       </div>
 
-      {/* Línea de base: sin ella las barras flotan */}
-      <div className="h-px w-full bg-line" />
+      {/* La repisa donde se apoyan las barras. Era una línea de 1px; ahora
+          es un canal de 3px excavado en la tarjeta, que es lo que hace que
+          las barras se vean METIDAS en algo en vez de flotando sobre un
+          filo. */}
+      <div className="pozo h-[3px] w-full rounded-full" />
 
       <p className="mt-2 text-xs text-fg-subtle">
         {datos
@@ -494,10 +552,11 @@ function KPI({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-card"
+      variants={ENTRADA_ARCILLA}
+      initial="oculto"
+      animate="visible"
+      transition={transicion()}
+      className="arcilla relative overflow-hidden rounded-2xl p-4"
     >
       {luz !== undefined && <LluviaBilletes luz={estado} />}
 
@@ -505,28 +564,43 @@ function KPI({
           compite con el fondo en vez de estar sobre él. */}
       <div className="relative">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-fg-subtle">{titulo}</p>
+          <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+            {titulo}
+          </p>
           {estado !== 'sin_datos' && (
+            /* El punto del semáforo es un foco encendido: lleva un halo de
+               su propio color. Es la única sombra de color de la app, y se
+               la gana por ser el elemento que resume la tarjeta entera. */
             <span
               className={cn(
-                'h-2 w-2 shrink-0 rounded-full',
-                estado === 'verde' && 'bg-success',
-                estado === 'ambar' && 'bg-warn',
-                estado === 'rojo' && 'bg-danger',
+                'h-2.5 w-2.5 shrink-0 rounded-full',
+                estado === 'verde' && 'bg-success shadow-[0_0_0_3px_rgb(var(--success)/0.18)]',
+                estado === 'ambar' && 'bg-warn shadow-[0_0_0_3px_rgb(var(--warn)/0.18)]',
+                estado === 'rojo' && 'bg-danger shadow-[0_0_0_3px_rgb(var(--danger)/0.18)]',
               )}
             />
           )}
         </div>
         <p
           className={cn(
-            'tabular font-display mt-1.5 text-2xl font-semibold',
+                        /*
+             * `text-2xl` y no más grande: a 1.75rem, "16 h 25 min" partía
+             * en dos renglones dentro de la columna de cinco del bloque de
+             * Tiempo, y una cifra de tablero partida deja de leerse de un
+             * vistazo, que es lo único que tiene que hacer.
+             *
+             * `whitespace-nowrap` es el cinturón: si algún día entra un
+             * valor más largo, preferimos que se salga —y se vea— a que se
+             * parta en silencio.
+             */
+            'tabular font-display mt-2 whitespace-nowrap text-2xl font-semibold leading-none',
             CLASE_LUZ[estado],
             estado === 'sin_datos' && 'text-fg',
           )}
         >
           {valor}
         </p>
-        {pie && <p className="mt-1 text-xs leading-snug text-fg-subtle">{pie}</p>}
+        {pie && <p className="mt-2 text-xs leading-snug text-fg-subtle">{pie}</p>}
       </div>
     </motion.div>
   )
@@ -548,12 +622,23 @@ function PasoEmbudo({
         <span className="text-fg-muted">{etiqueta}</span>
         <span className="tabular font-medium text-fg">{numero(valor)}</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-surface-3">
+      {/*
+        Canal excavado + barra apoyada dentro, el mismo par pozo/pieza que
+        el interruptor y el segmentado. Antes eran dos rectángulos de
+        distinto color y la barra parecía pintada sobre el carril.
+
+        La animación es de `width`, que dispara layout en cada fotograma.
+        Se queda porque son TRES barras, una sola vez al montar la
+        pantalla, y porque la alternativa —`scaleX` sobre una barra al
+        100%— deforma los extremos redondeados y se ve estirada. Un
+        transform sería más barato y se vería peor.
+      */}
+      <div className="pozo h-2.5 overflow-hidden rounded-full">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${ancho}%` }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="h-full rounded-full bg-primary"
+          transition={{ duration: 0.55, ease: SALIDA }}
+          className="h-full rounded-full bg-primary shadow-arcilla-sutil"
         />
       </div>
     </div>

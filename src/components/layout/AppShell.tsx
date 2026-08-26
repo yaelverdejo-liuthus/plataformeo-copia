@@ -25,6 +25,7 @@ import { Tutorial } from '../Tutorial'
 import { EditarPerfil } from '../EditarPerfil'
 import { IconoContenido } from '../IconoContenido'
 import { SkeletonLista } from '../ui/Estados'
+import { RESORTE_VIAJE } from '../../lib/animacion'
 import { cn } from '../../lib/cn'
 import { precargaAl, precargarRuta } from '../../lib/precarga'
 import type { Perfil } from '../../lib/tipos'
@@ -41,27 +42,36 @@ interface Entrada {
   etiqueta: string
   icono: Icono
   /**
-   * Clase de la animación en bucle del icono, definida en index.css. Cada
-   * una imita lo que hace la sección. Contenido no lleva: su icono ya se
-   * mueve solo, turnándose entre TikTok, Instagram y Facebook.
+   * Clase del gesto del icono, definida en index.css. Cada una imita lo
+   * que hace la sección: el martillo martilla, el engrane gira.
+   *
+   * Antes esto era una animación en BUCLE INFINITO y ahora corre UNA VEZ,
+   * disparada por dos cosas: entrar a la sección, o pasarle el cursor por
+   * encima donde haya cursor. El porqué está entero en index.css, en el
+   * bloque "GESTOS DE LOS ICONOS" — resumido: un menú se ve cientos de
+   * veces al día, y a esa frecuencia una animación deja de informar y
+   * pasa a ser ruido que compite contra los datos.
+   *
+   * Contenido no lleva ninguna: su icono ya se mueve solo, turnándose
+   * entre TikTok, Instagram y Facebook.
    */
-  anim?: string
+  gesto?: string
   soloAdmin?: boolean
 }
 
 /** Todo el menú, en orden. El sidebar de desktop los muestra todos. */
 const ENTRADAS: Entrada[] = [
-  { ruta: '/', etiqueta: 'Tablero', icono: LayoutDashboard, anim: 'anim-latir' },
-  { ruta: '/leads', etiqueta: 'Leads', icono: Users, anim: 'anim-asomarse' },
-  { ruta: '/trabajos', etiqueta: 'Trabajos', icono: Hammer, anim: 'anim-martillar' },
+  { ruta: '/', etiqueta: 'Tablero', icono: LayoutDashboard, gesto: 'gesto-latir' },
+  { ruta: '/leads', etiqueta: 'Leads', icono: Users, gesto: 'gesto-asomarse' },
+  { ruta: '/trabajos', etiqueta: 'Trabajos', icono: Hammer, gesto: 'gesto-martillar' },
   { ruta: '/contenido', etiqueta: 'Contenido', icono: IconoContenido },
-  { ruta: '/ads', etiqueta: 'Pauta', icono: Megaphone, anim: 'anim-vocear' },
-  { ruta: '/catalogo', etiqueta: 'Catálogo', icono: Images, anim: 'anim-hojear' },
+  { ruta: '/ads', etiqueta: 'Pauta', icono: Megaphone, gesto: 'gesto-vocear' },
+  { ruta: '/catalogo', etiqueta: 'Catálogo', icono: Images, gesto: 'gesto-hojear' },
   {
     ruta: '/config',
     etiqueta: 'Ajustes',
     icono: Settings,
-    anim: 'anim-engranar',
+    gesto: 'gesto-engranar',
     soloAdmin: true,
   },
 ]
@@ -97,10 +107,16 @@ export function AppShell() {
   return (
     <div className="min-h-dvh bg-bg">
       {/* ── Sidebar en desktop ──────────────────────────────────────── */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-surface md:flex">
-        <div className="px-5 py-6">
-          <p className="text-lg font-semibold tracking-tight text-fg">Estudio</p>
-          <p className="text-sm text-fg-subtle">Tablero de instrumentos</p>
+      {/*
+        La barra lateral es una PARED, no una tarjeta: va pegada al borde
+        de la ventana por tres lados, así que no puede tener sombra
+        proyectada en esos tres. Lleva solo la del canto derecho, que es
+        el único que da al contenido, y el filo de luz de arriba.
+      */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-surface shadow-[8px_0_28px_-16px_rgb(0_0_0/0.55)] md:flex">
+        <div className="px-5 pb-5 pt-7">
+          <p className="font-display text-xl font-semibold tracking-tight text-fg">Estudio</p>
+          <p className="mt-0.5 text-sm text-fg-subtle">Tablero de instrumentos</p>
         </div>
 
         <nav data-tour="nav" className="flex-1 space-y-0.5 px-3">
@@ -108,22 +124,39 @@ export function AppShell() {
             <NavLink key={e.ruta} to={e.ruta} end={e.ruta === '/'} {...precargaAl(e.ruta)}>
               {({ isActive }) => (
                 <span
+                  /*
+                   * `fila-nav` y `data-activo` son los dos disparadores del
+                   * gesto del icono: uno para el cursor, otro para la
+                   * sección activa. Los engancha el CSS, no JavaScript.
+                   *
+                   * `data-activo` solo aparece cuando la ruta está activa,
+                   * y ese cambio de atributo basta para que la animación
+                   * corra una vez. No hace falta remontar el nodo.
+                   */
                   className={cn(
-                    'relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-base transition-colors duration-150',
+                    'fila-nav relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-base',
+                    'transition-colors duration-150 ease-salida',
                     isActive ? 'text-fg' : 'text-fg-muted hover:bg-surface-2 hover:text-fg',
                   )}
+                  {...(isActive ? { 'data-activo': '' } : {})}
                 >
                   {isActive && (
                     <motion.span
                       layoutId="nav-activo"
-                      transition={{ type: 'spring', stiffness: 400, damping: 34 }}
-                      className="absolute inset-0 rounded-xl bg-primary/12"
+                      transition={RESORTE_VIAJE}
+                      /*
+                       * La pastilla del menú es la MISMA pieza para las
+                       * siete secciones: por eso viaja en vez de encenderse
+                       * y apagarse. Es barro de verdad, con su sombra, no
+                       * un resaltado translúcido.
+                       */
+                      className="absolute inset-0 rounded-xl bg-primary/16 shadow-arcilla-sutil"
                     />
                   )}
                   <e.icono
                     className={cn(
-                      'relative h-[18px] w-[18px]',
-                      e.anim,
+                      'relative h-[18px] w-[18px] shrink-0',
+                      e.gesto && `gesto ${e.gesto}`,
                       isActive && 'text-primary',
                     )}
                   />
@@ -134,13 +167,16 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="border-t border-line p-3">
+        {/* Separado por una sombra hacia arriba, no por un borde: en un
+            sistema con volumen la línea de 1px es lo único que se lee
+            como dibujo en vez de como material. */}
+        <div className="p-3 shadow-[0_-8px_16px_-14px_rgb(0_0_0/0.6)]">
           {/* Era un bloque muerto: mostraba quién eres y no llevaba a nada.
               Ahora es la puerta a editar el perfil, que es lo que uno espera
               al tocar su propia foto. */}
           <button
             onClick={() => setEditandoPerfil(true)}
-            className="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-surface-2"
+            className="pulsable group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-surface-2 hover:shadow-arcilla-sutil"
           >
             <Avatar perfil={perfil} />
             <div className="min-w-0 flex-1">
@@ -153,7 +189,7 @@ export function AppShell() {
           </button>
           <button
             onClick={verTutorial}
-            className="flex h-10 w-full items-center gap-2.5 rounded-xl px-3 text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            className="pulsable mt-1 flex h-10 w-full items-center gap-2.5 rounded-xl px-3 text-sm text-fg-muted hover:bg-surface-2 hover:text-fg hover:shadow-arcilla-sutil"
           >
             <HelpCircle className="h-4 w-4" />
             Ver tutorial
@@ -162,14 +198,14 @@ export function AppShell() {
           <div className="mt-1 flex gap-1">
             <button
               onClick={alternar}
-              className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+              className="pulsable flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm text-fg-muted hover:bg-surface-2 hover:text-fg hover:shadow-arcilla-sutil"
             >
               {tema === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               {tema === 'dark' ? 'Claro' : 'Oscuro'}
             </button>
             <button
               onClick={() => void salir()}
-              className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+              className="pulsable flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm text-fg-muted hover:bg-surface-2 hover:text-fg hover:shadow-arcilla-sutil"
             >
               <LogOut className="h-4 w-4" />
               Salir
@@ -184,12 +220,12 @@ export function AppShell() {
           dejaban el contenido sin repintar en el teléfono. El desenfoque solo
           se nota sobre un fondo translúcido, así que quitarlo y dejar el color
           sólido es el mismo cambio dicho dos veces. */}
-      <header className="safe-top sticky top-0 z-20 border-b border-line bg-bg md:hidden">
+      <header className="safe-top sticky top-0 z-20 bg-bg md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <span className="text-base font-semibold tracking-tight text-fg">Estudio</span>
+            <span className="font-display text-lg font-semibold tracking-tight text-fg">Estudio</span>
             {rol && (
-              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-fg-subtle">
+              <span className="rounded-full bg-surface-2 px-2.5 py-1 text-2xs font-semibold uppercase tracking-[0.06em] text-fg-subtle shadow-arcilla-sutil">
                 {NOMBRE_ROL[rol]}
               </span>
             )}
@@ -197,7 +233,7 @@ export function AppShell() {
           <button
             onClick={alternar}
             aria-label="Cambiar tema"
-            className="-mr-2 flex h-11 w-11 items-center justify-center rounded-xl text-fg-muted active:bg-surface-2"
+            className="pulsable -mr-2 flex h-11 w-11 items-center justify-center rounded-xl text-fg-muted"
           >
             {tema === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
@@ -212,9 +248,9 @@ export function AppShell() {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="sticky top-14 z-20 overflow-hidden md:top-0 md:ml-60"
+            className="sticky top-14 z-20 overflow-hidden md:top-0 md:ml-64"
           >
-            <div className="flex items-center gap-2 bg-warn/15 px-4 py-2 text-sm text-warn">
+            <div className="flex items-center gap-2 bg-warn/15 px-4 py-2.5 text-sm font-medium text-warn shadow-[inset_0_-6px_10px_-8px_rgb(0_0_0/0.5)]">
               <WifiOff className="h-4 w-4 shrink-0" />
               Sin conexión — puedes ver lo último cargado, pero no guardar.
             </div>
@@ -223,7 +259,7 @@ export function AppShell() {
       </AnimatePresence>
 
       {/* ── Contenido ───────────────────────────────────────────────── */}
-      <main className="md:ml-60">
+      <main className="md:ml-64">
         {/*
           Sin transición de página, y esta vez hasta el final.
 
@@ -279,7 +315,7 @@ export function AppShell() {
       {/* ── Navegación inferior en móvil ────────────────────────────── */}
       <nav
         data-tour="nav"
-        className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface md:hidden"
+        className="safe-bottom fixed inset-x-0 bottom-0 z-30 bg-surface shadow-[0_-10px_28px_-14px_rgb(0_0_0/0.6)] md:hidden"
       >
         <div className="flex">
           {barra.map((e) => (
@@ -293,15 +329,28 @@ export function AppShell() {
               {({ isActive }) => (
                 <span
                   className={cn(
-                    'flex h-16 flex-col items-center justify-center gap-1 transition-colors duration-150',
+                    'fila-nav relative flex h-16 flex-col items-center justify-center gap-1',
+                    'transition-colors duration-150 ease-salida',
                     isActive ? 'text-primary' : 'text-fg-subtle',
                   )}
+                  {...(isActive ? { 'data-activo': '' } : {})}
                 >
+                  {/* La misma pastilla viajera que en el escritorio, aquí
+                      detrás del icono. Es lo que hace que cambiar de
+                      sección se sienta como mover una pieza y no como
+                      encender otra luz. */}
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-activo-movil"
+                      transition={RESORTE_VIAJE}
+                      className="absolute inset-x-3 inset-y-2 rounded-2xl bg-primary/14 shadow-arcilla-sutil"
+                    />
+                  )}
                   <e.icono
-                    className={cn('h-[22px] w-[22px]', e.anim)}
+                    className={cn('relative h-[22px] w-[22px]', e.gesto && ('gesto ' + e.gesto))}
                     strokeWidth={isActive ? 2.4 : 1.8}
                   />
-                  <span className="text-2xs font-medium">{e.etiqueta}</span>
+                  <span className="relative text-2xs font-medium">{e.etiqueta}</span>
                 </span>
               )}
             </NavLink>
@@ -320,12 +369,20 @@ export function AppShell() {
           >
             <span
               className={cn(
-                'flex h-16 flex-col items-center justify-center gap-1 transition-colors duration-150',
+                'relative flex h-16 flex-col items-center justify-center gap-1',
+                'transition-colors duration-150 ease-salida',
                 masActivo ? 'text-primary' : 'text-fg-subtle',
               )}
             >
-              <MoreHorizontal className="h-[22px] w-[22px]" strokeWidth={masActivo ? 2.4 : 1.8} />
-              <span className="text-2xs font-medium">Más</span>
+              {masActivo && (
+                <motion.span
+                  layoutId="nav-activo-movil"
+                  transition={RESORTE_VIAJE}
+                  className="absolute inset-x-3 inset-y-2 rounded-2xl bg-primary/14 shadow-arcilla-sutil"
+                />
+              )}
+              <MoreHorizontal className="relative h-[22px] w-[22px]" strokeWidth={masActivo ? 2.4 : 1.8} />
+              <span className="relative text-2xs font-medium">Más</span>
             </span>
           </button>
         </div>
@@ -341,28 +398,28 @@ export function AppShell() {
                 setMasAbierto(false)
                 navegar(e.ruta)
               }}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left text-base text-fg transition-colors active:bg-surface-2"
+              className="pulsable fila-nav flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left text-base text-fg hover:bg-surface-2"
             >
-              <e.icono className={cn('h-5 w-5 text-fg-muted', e.anim)} />
+              <e.icono className={cn('h-5 w-5 text-fg-muted', e.gesto && ('gesto ' + e.gesto))} />
               {e.etiqueta}
             </button>
           ))}
 
           <button
             onClick={verTutorial}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left text-base text-fg transition-colors active:bg-surface-2"
+            className="pulsable fila-nav flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left text-base text-fg hover:bg-surface-2"
           >
             <HelpCircle className="h-5 w-5 text-fg-muted" />
             Ver tutorial
           </button>
 
-          <div className="!mt-4 border-t border-line pt-3">
+          <div className="!mt-4 pt-3 shadow-[0_-8px_16px_-14px_rgb(0_0_0/0.6)]">
             <button
               onClick={() => {
                 setMasAbierto(false)
                 setEditandoPerfil(true)
               }}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors active:bg-surface-2"
+              className="pulsable flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-surface-2"
             >
               <Avatar perfil={perfil} />
               <div className="min-w-0 flex-1">
@@ -375,7 +432,7 @@ export function AppShell() {
             </button>
             <button
               onClick={() => void salir()}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left text-base text-danger transition-colors active:bg-surface-2"
+              className="pulsable flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left text-base text-danger hover:bg-danger/10"
             >
               <LogOut className="h-5 w-5" />
               Cerrar sesión
@@ -407,12 +464,12 @@ function Avatar({ perfil }: { perfil: Perfil | null }) {
       <img
         src={perfil.avatar_url}
         alt=""
-        className="h-9 w-9 shrink-0 rounded-full object-cover"
+        className="h-9 w-9 shrink-0 rounded-full object-cover shadow-arcilla-sutil"
       />
     )
   }
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-semibold text-primary shadow-arcilla-sutil">
       {(perfil?.nombre ?? '?').slice(0, 1).toUpperCase()}
     </div>
   )

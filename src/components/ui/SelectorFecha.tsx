@@ -209,7 +209,7 @@ export const SelectorFecha = forwardRef<HTMLButtonElement, Props>(function Selec
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         className={cn(
-          'flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-line bg-surface-2 px-3.5 text-left text-base',
+          'flex h-11 w-full items-center justify-between gap-2 rounded-xl pozo px-3.5 text-left text-base',
           'transition-colors duration-150 ease-out',
           'focus:border-primary/60 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/25',
           'disabled:opacity-60',
@@ -309,7 +309,7 @@ export const SelectorFecha = forwardRef<HTMLButtonElement, Props>(function Selec
           </div>
 
           {/* ── Atajos ── */}
-          <div className="mt-2.5 flex items-center gap-1.5 border-t border-line pt-2.5">
+          <div className="mt-2.5 flex items-center gap-1.5 pt-2.5">
             <Atajo onClick={() => elegir(hoy)}>Hoy</Atajo>
             <Atajo onClick={() => elegir(sumarDias(hoy, 1))}>Mañana</Atajo>
             {opcional && valor && (

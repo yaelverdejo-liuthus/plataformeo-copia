@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { DURACION, SUAVE } from '../../lib/animacion'
+import { DURACION, SALIDA } from '../../lib/animacion'
 
 /**
  * Panel anclado a un disparador. Lo usan el selector de fecha y el de hora.
@@ -190,12 +190,12 @@ export function Popover({
                  es una superficie que se empuja, como el Sheet. */
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
-              exit={{ y: '100%', transition: { duration: 0.15, ease: SUAVE } }}
+              exit={{ y: '100%', transition: { duration: 0.15, ease: SALIDA } }}
               transition={{ type: 'spring', stiffness: 380, damping: 38 }}
-              className="safe-bottom fixed inset-x-0 bottom-0 z-[80] flex max-h-[80dvh] flex-col overflow-y-auto overscroll-contain rounded-t-3xl border-t border-line bg-surface shadow-sheet"
+              className="safe-bottom fixed inset-x-0 bottom-0 z-[80] flex max-h-[80dvh] flex-col overflow-y-auto overscroll-contain rounded-t-4xl bg-surface shadow-hoja"
             >
               <div className="flex justify-center pt-2.5">
-                <div className="h-1 w-9 rounded-full bg-line-strong" />
+                <div className="pozo h-1.5 w-10 rounded-full" />
               </div>
               {children}
             </motion.div>
@@ -217,8 +217,8 @@ export function Popover({
              salida más rápida que la entrada. */
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.1, ease: SUAVE } }}
-          transition={{ duration: DURACION.rapida, ease: SUAVE }}
+          exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.1, ease: SALIDA } }}
+          transition={{ duration: DURACION.rapida, ease: SALIDA }}
           style={{
             position: 'fixed',
             top: caja?.arriba ?? -9999,
@@ -227,7 +227,7 @@ export function Popover({
             maxHeight: caja?.maxAlto,
             transformOrigin: caja?.origen ?? 'center',
           }}
-          className="z-[80] flex flex-col overflow-y-auto overscroll-contain rounded-2xl border border-line border-b-line-bajo bg-surface shadow-raised"
+          className="z-[80] flex flex-col overflow-y-auto overscroll-contain rounded-2xl bg-surface shadow-arcilla-alta"
         >
           {children}
         </motion.div>

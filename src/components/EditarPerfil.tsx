@@ -125,7 +125,7 @@ export function EditarPerfil({ abierto, onCerrar }: { abierto: boolean; onCerrar
 
           {/* El rol se muestra pero no se edita: que se vea de dónde salen
               los permisos evita la pregunta de "por qué no me deja". */}
-          <div className="rounded-2xl border border-line bg-surface-2/50 px-3.5 py-3">
+          <div className="rounded-2xl pozo px-3.5 py-3">
             <p className="text-sm font-medium text-fg-muted">Rol</p>
             <p className="mt-0.5 text-base text-fg">{rol ? NOMBRE_ROL[rol] : '—'}</p>
             <p className="mt-1 text-sm text-fg-subtle">

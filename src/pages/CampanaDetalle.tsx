@@ -423,7 +423,7 @@ export function CampanaDetalle() {
         </div>
 
         {(registros ?? []).length === 0 ? (
-          <p className="rounded-2xl border border-line bg-surface px-4 py-6 text-center text-sm text-fg-subtle">
+          <p className="rounded-2xl arcilla px-4 py-6 text-center text-sm text-fg-subtle">
             {(creativos ?? []).length === 0
               ? 'Primero agrega un creativo; el gasto se captura contra uno de ellos.'
               : 'Sin días capturados. Una fila por creativo por día.'}
@@ -438,7 +438,7 @@ export function CampanaDetalle() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.97, transition: transicion(DURACION.rapida) }}
                 transition={{ ...transicion(), delay: escalonar(i, 0.02) }}
-                className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3.5 py-2.5"
+                className="flex items-center gap-3 rounded-xl arcilla px-3.5 py-2.5"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-fg">{a.creativo}</p>
@@ -521,7 +521,7 @@ export function CampanaDetalle() {
             value={presupuestoCr}
             onChange={(e) => setPresupuestoCr(e.target.value.replace(/[^\d.]/g, ''))}
           />
-          <div className="rounded-2xl border border-line bg-surface-2/50 px-3.5 py-1">
+          <div className="rounded-2xl pozo px-3.5 py-1">
             <Switch
               activo={activoCr}
               onCambio={setActivoCr}

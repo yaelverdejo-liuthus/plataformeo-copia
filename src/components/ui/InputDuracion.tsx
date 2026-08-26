@@ -54,7 +54,7 @@ export function InputDuracion({
   }
 
   const clase = cn(
-    'w-full rounded-xl border border-line bg-surface-2 px-3.5 h-11 text-base text-fg tabular',
+    'w-full rounded-xl pozo px-3.5 h-11 text-base text-fg tabular',
     'placeholder:text-fg-subtle transition-colors duration-150',
     'focus:border-primary/60 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/25',
     'disabled:opacity-60',

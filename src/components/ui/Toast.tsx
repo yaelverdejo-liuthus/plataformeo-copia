@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle, CheckCircle2, Info, ShieldAlert } from 'lucide-react'
-import { SUAVE } from '../../lib/animacion'
+import { SALIDA } from '../../lib/animacion'
 import { cn } from '../../lib/cn'
 
 type Tipo = 'exito' | 'error' | 'info' | 'regla'
@@ -22,19 +22,19 @@ const Ctx = createContext<{
 
 const ESTILOS: Record<Tipo, { clase: string; icono: ReactNode }> = {
   exito: {
-    clase: 'border-success/30 bg-success/12 text-success',
+    clase: 'text-success ring-1 ring-inset ring-success/25',
     icono: <CheckCircle2 className="h-5 w-5 shrink-0" />,
   },
   error: {
-    clase: 'border-danger/30 bg-danger/12 text-danger',
+    clase: 'text-danger ring-1 ring-inset ring-danger/25',
     icono: <AlertTriangle className="h-5 w-5 shrink-0" />,
   },
   info: {
-    clase: 'border-info/30 bg-info/12 text-info',
+    clase: 'text-info ring-1 ring-inset ring-info/25',
     icono: <Info className="h-5 w-5 shrink-0" />,
   },
   regla: {
-    clase: 'border-warn/35 bg-warn/12 text-warn',
+    clase: 'text-warn ring-1 ring-inset ring-warn/25',
     icono: <ShieldAlert className="h-5 w-5 shrink-0" />,
   },
 }
@@ -78,12 +78,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 opacity: 0,
                 y: -12,
                 scale: 0.97,
-                transition: { duration: 0.15, ease: SUAVE },
+                transition: { duration: 0.15, ease: SALIDA },
               }}
-              transition={{ duration: 0.2, ease: SUAVE }}
+              transition={{ duration: 0.2, ease: SALIDA }}
               className={cn(
-                'pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-2xl border px-4 py-3',
-                'bg-surface/95 shadow-raised backdrop-blur',
+                'pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-2xl px-4 py-3.5',
+                /*
+                 * El aviso es la pieza que MÁS flota de toda la app:
+                 * aparece por encima de todo, incluidas las hojas. Por eso
+                 * lleva `arcilla-alta`, el peldaño de proyección más larga
+                 * — es lo que lo despega del contenido en vez de dejarlo
+                 * apoyado sobre él.
+                 *
+                 * El fondo va sólido y no translúcido. Con `bg-surface/95`
+                 * más `backdrop-blur` se veía bien sobre contenido quieto y
+                 * fatal sobre una lista con scroll: el desenfoque arrastra
+                 * lo de abajo y el texto del aviso queda nadando. Un aviso
+                 * tiene que poder leerse de un vistazo mientras algo se
+                 * mueve detrás, que es exactamente cuándo aparece.
+                 */
+                'bg-surface shadow-arcilla-alta',
                 ESTILOS[a.tipo].clase,
               )}
             >

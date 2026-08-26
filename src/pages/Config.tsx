@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { ENTRADA_ARCILLA, transicion } from '../lib/animacion'
 import { Check, MessageCircle } from 'lucide-react'
 import { useConfig, useGuardarConfig } from '../lib/queries/config'
 import { useToast } from '../components/ui/Toast'
 import { Card } from '../components/ui/Card'
+import { EngranajeArcilla } from '../components/EngranajeArcilla'
 import { Skeleton, ErrorCarga } from '../components/ui/Estados'
 import { CLAVES_CONFIG_ORDEN, ETIQUETA_CONFIG } from '../lib/etiquetas'
 import { telFormateado, urlWhatsApp } from '../lib/formato'
@@ -33,12 +35,33 @@ export function Config() {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-fg">Ajustes</h1>
-        <p className="text-sm text-fg-muted">
-          Los 7 umbrales que usa todo el sistema. Cambiarlos recalcula el filtro de contenido, el
-          veredicto de pauta y los semáforos del tablero.
-        </p>
+      {/*
+        El engranaje va JUNTO al título, no encima ni de fondo.
+
+        Es la maquinaria del sistema y el título dice de qué máquina se
+        trata: separarlos convertiría la pieza en un adorno suelto. Y
+        detrás del texto sería peor todavía — una silueta cruzando un
+        párrafo es exactamente la decoración que le compite al contenido,
+        que es lo que este rediseño vino a quitar del resto de la app.
+
+        `shrink-0` y tamaño fijo: es un objeto, no una caja elástica. En
+        móvil baja de 88 a 64 px, que sigue bastando para que el canto
+        extruido se lea.
+      */}
+      <header className="flex items-start gap-4 sm:gap-5">
+        <div className="h-16 w-16 shrink-0 sm:h-[5.5rem] sm:w-[5.5rem]">
+          <EngranajeArcilla className="h-full w-full" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-fg sm:text-3xl">
+            Ajustes
+          </h1>
+          <p className="mt-1 max-w-[60ch] text-sm text-fg-muted">
+            Los 7 umbrales que usa todo el sistema. Cambiarlos recalcula el filtro de contenido, el
+            veredicto de pauta y los semáforos del tablero.
+          </p>
+        </div>
       </header>
 
       {isPending ? (
@@ -99,7 +122,7 @@ export function Config() {
           rel="noreferrer"
           className="mt-4 flex h-12 items-center justify-center gap-2 rounded-xl bg-success/12 text-base font-medium text-success transition-colors hover:bg-success/20"
         >
-          <MessageCircle className="anim-repicar h-5 w-5" />
+          <MessageCircle className="gesto gesto-repicar h-5 w-5" />
           WhatsApp · {telFormateado(WHATSAPP_SOPORTE)}
         </a>
       </Card>
@@ -135,9 +158,34 @@ function FilaConfig({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22, delay: Math.min(indice, 8) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+      variants={ENTRADA_ARCILLA}
+      initial="oculto"
+      animate="visible"
+      /*
+       * El escalonado arranca en 600ms, y ese número sale de cronometrar
+       * la secuencia entera contra una regla incómoda.
+       *
+       * El engranaje voltea en el centro hasta los 780ms y luego viaja a
+       * su esquina hasta los 1500. Lo tentador sería esperarlo: las
+       * tarjetas entrarían con la pieza ya colocada y todo quedaría muy
+       * ordenado. Sería un error — `animate.md` es explícito en que una
+       * pantalla de tipo Operate no puede hacer esperar a nadie a través
+       * de una coreografía de carga, y kilómetro y medio de segundo
+       * mirando un engranaje antes de poder tocar un umbral es
+       * exactamente eso.
+       *
+       * Así que las tarjetas entran DURANTE el viaje: arrancan a los
+       * 600ms y la última aterriza a los 950, mientras la pieza todavía
+       * cruza la pantalla por encima. El engranaje las barre al pasar.
+       *
+       * Se gana por los dos lados: la lectura causal se conserva —el
+       * giro trae los umbrales— y la pantalla queda usable a un segundo,
+       * no a segundo y medio.
+       *
+       * 50ms entre tarjeta y tarjeta: dentro de los 30-80 que se sienten
+       * como cascada sin que la lista se note lenta.
+       */
+      transition={{ ...transicion(), delay: 0.6 + Math.min(indice, 8) * 0.05 }}
     >
       <Card>
         <div className="flex items-start justify-between gap-4">
@@ -161,7 +209,7 @@ function FilaConfig({
               onKeyDown={(e) => {
                 if (e.key === 'Enter') e.currentTarget.blur()
               }}
-              className="tabular h-11 w-full rounded-xl border border-line bg-surface-2 px-3.5 text-right text-lg font-semibold text-fg transition-colors focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/25"
+              className="tabular h-11 w-full rounded-xl pozo px-3.5 text-right text-lg font-semibold text-fg transition-colors focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/25"
             />
             {guardado && (
               <motion.span

@@ -4,11 +4,37 @@ import { ChevronDown } from 'lucide-react'
 import { DESPLEGAR, DURACION, transicion } from '../../lib/animacion'
 import { cn } from '../../lib/cn'
 
+/*
+ * ── El campo es un HUECO, no una caja ────────────────────────────────
+ *
+ * Este es el otro lado del material. Una tarjeta es una pieza de barro
+ * POSADA sobre la mesa: tiene filo arriba y sombra proyectada debajo. Un
+ * campo de formulario es lo contrario — un hueco EXCAVADO en la pieza — y
+ * por eso lleva `.pozo`: sombra interior desde arriba, ningún apoyo
+ * debajo. Un hoyo no proyecta sombra.
+ *
+ * La distinción no es un juego formal, es lo que hace que un formulario
+ * se entienda sin leer nada: lo que sobresale se aprieta, lo que se hunde
+ * se llena. Antes los dos eran el mismo rectángulo con borde de 1px y la
+ * única diferencia era el color de fondo.
+ *
+ * El error no pinta un borde rojo —no hay bordes— sino que tiñe el propio
+ * hueco. La `ring` de error se queda porque un hueco rojo sobre una
+ * superficie oscura es un cambio sutil, y un campo rechazado tiene que
+ * encontrarse de un vistazo en un formulario de doce.
+ */
 const BASE =
-  'w-full rounded-xl border border-line bg-surface-2 px-3.5 text-base text-fg ' +
-  'placeholder:text-fg-subtle transition-colors duration-150 ' +
-  'focus:border-primary/60 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/25 ' +
+  'pozo w-full rounded-xl px-3.5 text-base text-fg ' +
+  'placeholder:text-fg-subtle ' +
+  '[transition-property:box-shadow,background-color] duration-150 ease-salida ' +
   'disabled:opacity-60'
+
+/**
+ * El pozo de un campo rechazado. La clase vive en index.css porque tiene
+ * que SUMAR su filo rojo a la sombra del hueco, y las utilidades `ring-*`
+ * de Tailwind sustituyen `box-shadow` en vez de sumarse a él.
+ */
+const POZO_ERROR = 'pozo-error'
 
 /**
  * Ata el mensaje al campo para quien no lo está viendo.
@@ -103,7 +129,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         ref={ref}
         id={idFinal}
         {...atributosDescripcion(idFinal, error, hint)}
-        className={cn(BASE, 'h-11', error && 'border-danger/60 focus:ring-danger/25', className)}
+        className={cn(BASE, 'h-11', error && POZO_ERROR, className)}
         {...props}
       />
     </Envoltura>
@@ -137,7 +163,7 @@ export const InputNumero = forwardRef<HTMLInputElement, InputProps & { prefijo?:
               BASE,
               'tabular h-11',
               prefijo && 'pl-8',
-              error && 'border-danger/60 focus:ring-danger/25',
+              error && POZO_ERROR,
               className,
             )}
             {...props}
@@ -181,7 +207,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           className={cn(
             BASE,
             'h-11 appearance-none pr-10',
-            error && 'border-danger/60 focus:ring-danger/25',
+            error && POZO_ERROR,
             className,
           )}
           {...props}
@@ -220,7 +246,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
         className={cn(
           BASE,
           'resize-none py-2.5 leading-relaxed',
-          error && 'border-danger/60 focus:ring-danger/25',
+          error && POZO_ERROR,
           className,
         )}
         {...props}
@@ -229,7 +255,19 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
   )
 })
 
-/** Interruptor. 44px de alto de área táctil aunque el riel se vea más chico. */
+/**
+ * Interruptor. 44px de alto de área táctil aunque el riel se vea más chico.
+ *
+ * En arcilla el interruptor se explica solo: el riel es un CANAL excavado
+ * y la perilla es una pieza que se apoya dentro y corre por él. Es el
+ * mismo par pozo/pieza que separa un campo de una tarjeta, aplicado a un
+ * control, y por eso no necesita ninguna etiqueta de "on/off" para que se
+ * entienda de qué lado está.
+ *
+ * El color del canal sigue siendo lo que dice el estado —verde violeta
+ * encendido, hueco apagado— porque la posición sola no basta para quien
+ * no distingue bien la izquierda de la derecha en un riel de 44px.
+ */
 export function Switch({
   activo,
   onCambio,
@@ -250,31 +288,39 @@ export function Switch({
       aria-checked={activo}
       disabled={disabled}
       onClick={() => onCambio(!activo)}
-      className="flex w-full items-center justify-between gap-4 py-2 text-left disabled:opacity-60"
+      className="group flex w-full items-center justify-between gap-4 rounded-xl py-2 text-left disabled:opacity-60"
     >
       <span className="min-w-0">
         <span className="block text-base text-fg">{etiqueta}</span>
         {descripcion && <span className="block text-sm text-fg-subtle">{descripcion}</span>}
       </span>
+
+      {/* El canal. Encendido se llena de color, apagado queda hueco. */}
       <span
         className={cn(
-          'relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 ease-out',
-          activo ? 'bg-primary' : 'bg-surface-3',
+          'relative h-7 w-12 shrink-0 rounded-full',
+          'transition-[background-color,box-shadow] duration-200 ease-salida',
+          activo ? 'bg-primary shadow-pozo' : 'pozo',
         )}
       >
         {/*
-          La perilla se pinta contra su riel, no en blanco fijo. Apagado el
-          riel es `surface-3`, que en tema claro es un gris casi blanco: una
-          perilla blanca encima daba 1.1:1 y el interruptor parecía un riel
-          vacío. Encendido el riel es `primary`, y ahí `primary-fg` es el
-          token que ya existe para lo que va montado sobre el morado.
+          La perilla se pinta contra su canal, no en blanco fijo. Apagada
+          el canal es el fondo hondo, que en tema claro es un lila casi
+          blanco: una perilla blanca encima daba 1.1:1 y el interruptor
+          parecía un riel vacío. Encendida el canal es `primary`, y ahí
+          `primary-fg` es el token que ya existe para lo que va montado
+          sobre el morado.
+
+          Lleva `arcilla-sutil` para que se lea como pieza apoyada dentro
+          del canal y no como un círculo pintado en él. Es la sombra la
+          que la mete dentro.
         */}
         <span
           className={cn(
-            'absolute top-0.5 h-5 w-5 rounded-full shadow-sm',
+            'absolute top-1 h-5 w-5 rounded-full shadow-arcilla-sutil',
             activo ? 'bg-primary-fg' : 'bg-fg-muted',
-            'transition-transform duration-200 ease-out',
-            activo ? 'translate-x-[1.375rem]' : 'translate-x-0.5',
+            'transition-transform duration-200 ease-salida',
+            activo ? 'translate-x-6' : 'translate-x-1',
           )}
         />
       </span>

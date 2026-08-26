@@ -386,7 +386,7 @@ export function Ads() {
             />
           </div>
 
-          <div className="rounded-2xl border border-line bg-surface-2/50 px-3.5 py-1">
+          <div className="rounded-2xl pozo px-3.5 py-1">
             <Switch
               activo={Boolean(watch('activa'))}
               onCambio={(v) => setValue('activa', v)}

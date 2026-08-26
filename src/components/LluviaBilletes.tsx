@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useQuieto } from '../hooks/useQuieto'
 
 /**
  * Lluvia de billetes de fondo para los KPI con semáforo.
@@ -16,6 +17,23 @@ import { useMemo } from 'react'
  * taps, y bajo "reducir movimiento" desaparece por completo (index.css).
  * Ningún dato del tablero depende de que esto se vea. La máscara de
  * `.lluvia-billetes` la mantiene fuera de la etiqueta, la cifra y el punto.
+ *
+ * ── Le bajaron el volumen, y por qué ─────────────────────────────────
+ *
+ * Esta lluvia se ve cada vez que alguien abre el Tablero, o sea decenas
+ * de veces al día, y ocupa el fondo de las siete tarjetas que son el
+ * motivo de la pantalla. A esa frecuencia, la pregunta del marco de
+ * Emil Kowalski no es "¿cómo la animo?" sino "¿debería animarse?", y la
+ * respuesta honesta para un tablero es: mucho menos de lo que estaba.
+ *
+ * Así que se conserva —es de lo poco que hace que esta app tenga voz—
+ * pero con tres frenos: cuatro billetes en vez de seis, más lentos, y
+ * más pálidos. La regla es que la decoración nunca le compita al dato.
+ * Cuando compite, pierde.
+ *
+ * Y se apaga sola: `data-quieto` para la tarjeta que sale de pantalla o
+ * la pestaña que se va al fondo. Un bucle corriendo donde nadie lo mira
+ * es batería quemada a cambio de nada.
  */
 
 type Luz = 'verde' | 'ambar' | 'rojo' | 'sin_datos'
@@ -28,10 +46,12 @@ const COLOR: Record<Luz, string> = {
   sin_datos: 'var(--fg-subtle)',
 }
 
-/* Seis alcanza para que se lea como lluvia y no como cuatro billetes
-   sueltos. Son siete tarjetas con semáforo en el tablero, así que cada
-   billete de más se paga siete veces en un teléfono de gama baja. */
-const CANTIDAD = 6
+/* Cuatro. Con seis se leía como lluvia y también como ruido detrás de una
+   cifra; con cuatro sigue leyéndose el gesto y deja de haber siempre algo
+   moviéndose en el rabillo del ojo. Y son siete tarjetas con semáforo en
+   el tablero, así que cada billete de más se paga siete veces en un
+   teléfono de gama baja. */
+const CANTIDAD = 4
 
 /** Debajo de este ancho en px, la orla se dibuja gruesa y se van las
     cifras de las esquinas: a medio píxel, el detalle fino es lodo. */
@@ -52,12 +72,14 @@ function sembrar() {
       izquierda: entre(-6, 92),
       ancho,
       // Lento a propósito: es fondo de una tarjeta que se lee, no un
-      // protector de pantalla.
-      caida: entre(15, 24) - profundidad * 4,
+      // protector de pantalla. Se alargó de 15-24s a 22-34s en el pase de
+      // animación: a la velocidad anterior el ojo todavía seguía a los
+      // billetes; a ésta ya solo los registra.
+      caida: entre(22, 34) - profundidad * 5,
       // Retraso NEGATIVO: la animación arranca a media caída y la tarjeta
       // ya aparece poblada. Con retrasos positivos el tablero se ve vacío
       // los primeros veinte segundos, justo cuando lo están mirando.
-      retraso: -entre(0, 22),
+      retraso: -entre(0, 32),
       vaiven: entre(3, 6),
       deriva: 4 + profundidad * 9,
       giro: entre(-70, 70),
@@ -66,7 +88,8 @@ function sembrar() {
       // de canto, y las seis harían lo mismo a la vez. Desfasados se ve
       // aire; sincronizados se ve un carrusel.
       volteo: entre(2.4, 4.8),
-      brillo: 0.1 + profundidad * 0.12,
+      // Más pálidos que antes (iba de 0.10 a 0.22).
+      brillo: 0.07 + profundidad * 0.08,
       detalle: ancho < UMBRAL_DETALLE ? 'chico' : 'grande',
     }
   })
@@ -77,22 +100,38 @@ export function LluviaBilletes({ luz }: { luz: Luz }) {
   // refresco de datos reiniciaría la lluvia desde arriba de golpe.
   const billetes = useMemo(() => sembrar(), [])
 
+  // Se para sola cuando la tarjeta sale de pantalla o la pestaña se va al
+  // fondo. En el Tablero hay siete de estas y en el teléfono solo se ven
+  // dos o tres a la vez.
+  const { ref, quieto } = useQuieto<HTMLDivElement>()
+
   return (
-    <div className="lluvia-billetes" style={{ color: `rgb(${COLOR[luz]})` }} aria-hidden>
+    <div
+      ref={ref}
+      data-quieto={quieto}
+      className="lluvia-billetes"
+      style={{ color: `rgb(${COLOR[luz]})` }}
+      aria-hidden
+    >
       {billetes.map((b) => (
         <div
           key={b.id}
-          className="billete-carril"
+          className="carril-caida"
           style={{
             left: `${b.izquierda}%`,
             animationDuration: `${b.caida}s`,
             animationDelay: `${b.retraso}s`,
             ['--giro' as string]: `${b.giro}deg`,
             ['--brillo' as string]: b.brillo,
+            /* El recorrido va en px y no en %: la tarjeta mide distinto
+               según lleve pie o no, y con % cada KPI tendría una lluvia
+               de velocidad diferente. */
+            ['--desde' as string]: '-34px',
+            ['--hasta' as string]: '172px',
           }}
         >
           <div
-            className="billete-vaiven"
+            className="carril-vaiven"
             style={{
               animationDuration: `${b.vaiven}s`,
               animationDelay: `${b.retraso}s`,
@@ -100,7 +139,7 @@ export function LluviaBilletes({ luz }: { luz: Luz }) {
             }}
           >
             <svg
-              className="billete-voltear"
+              className="carril-voltear"
               width={b.ancho}
               height={b.ancho * PROPORCION}
               viewBox={`0 0 ${ANCHO} ${ALTO}`}

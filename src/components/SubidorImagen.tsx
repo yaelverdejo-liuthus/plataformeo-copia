@@ -78,7 +78,7 @@ export function SubidorImagen({
       />
 
       {valor ? (
-        <div className="relative overflow-hidden rounded-2xl border border-line bg-surface-2">
+        <div className="relative overflow-hidden rounded-2xl pozo">
           {/* key en la URL: al reemplazar la foto, la nueva se funde sobre
               la anterior en vez de cambiar de golpe, que a media subida se
               confunde con un parpadeo de error. */}
@@ -108,7 +108,7 @@ export function SubidorImagen({
           </AnimatePresence>
 
           {!deshabilitado && (
-            <div className="flex border-t border-line">
+            <div className="flex">
               <button
                 type="button"
                 disabled={subiendo}
@@ -125,7 +125,7 @@ export function SubidorImagen({
                   void borrarImagenPorUrl(valor)
                   onCambio(null)
                 }}
-                className="flex h-11 w-14 items-center justify-center border-l border-line text-fg-subtle transition-colors hover:bg-danger/12 hover:text-danger disabled:opacity-60"
+                className="pulsable flex h-11 w-14 items-center justify-center rounded-r-xl text-fg-subtle hover:bg-danger/15 hover:text-danger disabled:opacity-60"
                 aria-label="Quitar imagen"
               >
                 <Trash2 className="h-4 w-4" />
@@ -152,10 +152,10 @@ export function SubidorImagen({
           }}
           className={cn(
             'flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-2xl',
-            'border-2 border-dashed transition-colors',
+            'pozo [transition-property:background-color,color] duration-150 ease-salida',
             arrastrando
-              ? 'border-primary/60 bg-primary/8 text-primary'
-              : 'border-line-strong bg-surface-2/50 text-fg-subtle hover:border-primary/40 hover:text-fg-muted',
+              ? 'bg-primary/15 text-primary'
+              : 'text-fg-subtle hover:text-fg-muted',
             'disabled:opacity-60',
           )}
         >

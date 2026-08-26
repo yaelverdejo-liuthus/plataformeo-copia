@@ -221,10 +221,10 @@ export function Trabajos() {
                 key={p.valor}
                 onClick={() => setPeriodo(p.valor)}
                 className={cn(
-                  'rounded-xl border px-3 py-2 text-sm transition-colors',
+                  'pulsable rounded-xl px-3.5 py-2 text-sm font-medium',
                   periodo === p.valor
-                    ? 'border-primary/40 bg-primary/10 text-primary'
-                    : 'border-line text-fg-muted hover:border-line-strong hover:text-fg',
+                    ? 'bg-primary/20 text-primary shadow-arcilla-sutil'
+                    : 'pozo text-fg-muted hover:text-fg',
                 )}
               >
                 {p.texto}
@@ -361,7 +361,7 @@ export function Trabajos() {
                         ease: [0.22, 1, 0.36, 1],
                       }}
                       onClick={() => navegar(`/trabajos/${t.id}`)}
-                      className="group cursor-pointer rounded-xl border border-line bg-surface p-3 transition-colors hover:border-line-strong"
+                      className="group cursor-pointer rounded-xl arcilla p-3 pulsable"
                     >
                       <div className="flex items-baseline justify-between gap-2">
                         <p className="truncate text-base font-medium text-fg">{t.cliente}</p>
@@ -380,7 +380,7 @@ export function Trabajos() {
 
                       {/* Mismo aviso que en la agenda: estas tarjetas también
                           abren el expediente y tampoco lo decían. */}
-                      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-line pt-2">
+                      <div className="mt-2.5 flex items-center justify-between gap-2 pt-2">
                         <span className="text-2xs font-medium text-primary">Ver expediente</span>
                         <ChevronRight className="h-3.5 w-3.5 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5" />
                       </div>
@@ -439,7 +439,17 @@ function TarjetaTrabajo({
     <CardAnimada
       indice={indice}
       onClick={onAbrir}
-      className={cn('group', urgente && 'border-danger/30')}
+      /*
+        Urgente ya no se dice con un borde rojo —no hay bordes— sino
+        tiñendo la masa, igual que los avisos del Tablero. El tinte va con
+        `color-mix` sobre la superficie y no con una alfa, porque una alfa
+        se mezclaría con el fondo casi negro de la página y el rojo se
+        perdería.
+      */
+      className={cn(
+        'group',
+        urgente && 'bg-[color-mix(in_srgb,rgb(var(--danger))_14%,rgb(var(--surface)))]',
+      )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -492,10 +502,21 @@ function TarjetaTrabajo({
         flecha es la misma que ya usa Leads para "Ver su trabajo", así el
         gesto se aprende una vez y sirve en las dos pantallas.
       */}
-      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-2.5">
+      {/* Un <button> de verdad, no un <span>. Ver la nota de la tarjeta de
+          Leads: la tarjeta entera abre el expediente al tocarla, pero eso
+          solo sirve con dedo o ratón. Este pie es el control alcanzable
+          con Tab, y `stopPropagation` evita abrirlo dos veces. */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          onAbrir()
+        }}
+        className="-mx-1 mt-3 flex w-[calc(100%+0.5rem)] items-center justify-between gap-2 rounded-lg px-1 pt-2.5 text-left"
+      >
         <span className="text-xs font-medium text-primary">Ver expediente completo</span>
         <ChevronRight className="h-4 w-4 shrink-0 text-primary transition-transform duration-150 group-hover:translate-x-0.5" />
-      </div>
+      </button>
     </CardAnimada>
   )
 }

@@ -383,7 +383,7 @@ export function TrabajoDetalle() {
         rel="noreferrer"
         className="flex h-12 items-center justify-center gap-2 rounded-xl bg-success/12 text-base font-medium text-success"
       >
-        <MessageCircle className="anim-repicar h-5 w-5" />
+        <MessageCircle className="gesto gesto-repicar h-5 w-5" />
         WhatsApp · {telFormateado(t.whatsapp)}
       </a>
 
@@ -398,7 +398,7 @@ export function TrabajoDetalle() {
                 key={e}
                 onClick={() => void cambiarEstatus(e)}
                 disabled={t.estatus === e}
-                className="rounded-xl border border-line px-3.5 py-2.5 text-sm text-fg-muted transition-colors hover:border-line-strong hover:text-fg disabled:border-primary/40 disabled:bg-primary/10 disabled:text-primary"
+                className="rounded-xl pozo px-3.5 py-2.5 text-sm text-fg-muted pulsable hover:text-fg disabled:bg-primary/15 disabled:text-primary disabled:opacity-100"
               >
                 {TRABAJO_ESTATUS[e].texto}
               </button>
