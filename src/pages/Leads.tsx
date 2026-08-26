@@ -534,18 +534,77 @@ export function Leads() {
             ))}
           </Select>
 
+          {/*
+            Hoja propia en arcilla, solo para este campo.
+
+            Antes era un <select> nativo. Es el estándar del proyecto para
+            selects normales -"en móvil la rueda del sistema gana a
+            cualquier dropdown propio", ver Campo.tsx- y sigue siéndolo en
+            todos los demás. Pero el picker nativo lo dibuja el SISTEMA
+            OPERATIVO, no la app: sigue el modo oscuro del teléfono en vez
+            del tema que elige quien usa la app, así que un formulario en
+            claro podía abrir un picker negro que no se parece a nada más
+            en pantalla. Aquí, con tres opciones y una frase de por qué
+            cada una, vale más la consistencia que la rueda nativa.
+
+            Mismo par canal/pastilla que el Segmentado: un pozo hace de
+            canal y la opción activa es una pieza de arcilla que se apoya
+            dentro. El punto de cada fila usa la misma lógica que el
+            interruptor - hueco cuando no tiene valor, relleno cuando sí.
+          */}
           {esAlta && (
-            <Select
-              etiqueta="¿En qué punto está?"
-              hint="Marca hasta dónde llegó ya. Los datos de cada etapa se piden abajo."
-              {...register('estatus')}
-            >
-              {EMBUDO_LEAD.map((e) => (
-                <option key={e} value={e}>
-                  {LEAD_ESTATUS[e].texto} — {LEAD_ESTATUS[e].descripcion}
-                </option>
-              ))}
-            </Select>
+            <div className="space-y-1.5">
+              <span className="block text-sm font-medium text-fg-muted">¿En qué punto está?</span>
+              <div
+                role="radiogroup"
+                aria-label="¿En qué punto está?"
+                className="pozo space-y-1 rounded-2xl p-1.5"
+              >
+                {EMBUDO_LEAD.map((e) => {
+                  const activo = estatusAlta === e
+                  return (
+                    <button
+                      key={e}
+                      type="button"
+                      role="radio"
+                      aria-checked={activo}
+                      onClick={() => setValue('estatus', e, { shouldDirty: true })}
+                      className={cn(
+                        'pulsable flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left',
+                        activo ? 'bg-primary text-primary-fg shadow-arcilla-sutil' : 'text-fg-muted',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
+                          activo ? 'bg-primary-fg' : 'pozo',
+                        )}
+                      >
+                        {activo && <span className="h-2 w-2 rounded-full bg-primary" />}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className={cn(
+                            'block text-base font-medium',
+                            activo ? 'text-primary-fg' : 'text-fg',
+                          )}
+                        >
+                          {LEAD_ESTATUS[e].texto}
+                        </span>
+                        <span
+                          className={cn('block text-sm', activo ? 'text-primary-fg/70' : 'text-fg-subtle')}
+                        >
+                          {LEAD_ESTATUS[e].descripcion}
+                        </span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="text-sm text-fg-subtle">
+                Marca hasta dónde llegó ya. Los datos de cada etapa se piden abajo.
+              </p>
+            </div>
           )}
 
           <Textarea

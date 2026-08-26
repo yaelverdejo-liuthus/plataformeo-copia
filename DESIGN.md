@@ -436,6 +436,33 @@ comería el pozo y el hueco quedaría plano justo mientras lo usas.
 `outline-offset` además lo separa de la pieza, que hace falta porque pegado
 al canto se confunde con el filo de luz de la propia arcilla.
 
+### La excepción: el estatus del alta de lead no usa `<select>`
+
+Todo `Select` de la app es nativo a propósito -"en móvil la rueda del
+sistema gana a cualquier dropdown propio", ver el comentario en
+`Campo.tsx`- y eso sigue valiendo para el resto. El campo "¿En qué punto
+está?" del alta de leads es la única excepción, y es una excepción de
+un solo campo, no un cambio de regla.
+
+El motivo no es de gusto: un picker nativo lo dibuja el **sistema
+operativo**, y sigue el modo oscuro del teléfono, no el tema que la
+persona eligió dentro de la app. Un formulario en tema claro podía abrir
+un picker negro que no se parecía a nada más en pantalla, y ningún CSS
+puede entrar ahí a corregirlo -es la única superficie de toda la app que
+de verdad no se puede tematizar.
+
+Con solo tres opciones y una frase de por qué cada una, se optó por
+consistencia sobre la rueda nativa: un radiogroup (`role="radiogroup"` +
+botones `role="radio"`) con el mismo par canal/pastilla que el
+Segmentado -un `.pozo` como canal, la opción activa como pieza de
+arcilla apoyada dentro (`bg-primary shadow-arcilla-sutil`)- y el punto de
+cada fila con la misma lógica que el interruptor: hueco cuando no tiene
+valor, relleno cuando sí.
+
+Se conecta a react-hook-form sin `register`: como `estatus` ya vive en
+`defaultValues`, `watch('estatus')` y `setValue('estatus', e)` bastan.
+Ni Zod ni la validación se enteran de que el control cambió de forma.
+
 ---
 
 ## Reglas duras

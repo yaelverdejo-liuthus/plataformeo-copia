@@ -54,7 +54,12 @@ export const LEAD_ESTATUS: Record<
  * El embudo en orden. `agendado` es el final del recorrido comercial:
  * de ahí en adelante el expediente vive en Trabajos.
  */
-export const EMBUDO_LEAD: LeadEstatus[] = ['nuevo', 'cotizado', 'agendado']
+/** Los tres estatus del embudo hacia adelante; 'perdido' no cuenta un
+    avance, así que queda fuera. Tipado como tupla literal -no como
+    `LeadEstatus[]`- para que quien lo consuma con `setValue('estatus', e)`
+    no tenga que descartar 'perdido' a mano en cada sitio. */
+export const EMBUDO_LEAD: readonly ('nuevo' | 'cotizado' | 'agendado')[] =
+  ['nuevo', 'cotizado', 'agendado']
 
 export const TRABAJO_ESTATUS: Record<TrabajoEstatus, { texto: string; tono: Tono }> = {
   trazado_agendado: { texto: 'Trazado agendado', tono: 'info' },
