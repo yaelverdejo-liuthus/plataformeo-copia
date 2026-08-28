@@ -503,10 +503,25 @@ function MezclaNiveles({ datos }: { datos: { nivel: string; valor: number; tono:
                       // Rayado diagonal: textura de sombreado en vez de una
                       // mancha lisa. Va con el color del FONDO, asi que
                       // funciona igual en tema claro y oscuro.
-                      'repeating-linear-gradient(45deg, transparent 0 5px, rgb(var(--bg) / 0.22) 5px 7px)',
-                      // Fuerte arriba y desvanecido hacia la base, que sobre
-                      // el fondo oscuro se lee como luz saliendo.
-                      `linear-gradient(to top, ${color(0.18)}, ${color(0.85)})`,
+                      'repeating-linear-gradient(45deg, transparent 0 5px, rgb(var(--bg) / 0.1) 5px 7px)',
+                      // La curvatura de lado. Ver `--modelado-tubo`: es lo
+                      // que separa un cilindro de una tarjeta de pie.
+                      'var(--modelado-tubo)',
+                      // El cuerpo va OPACO, y ese es el cambio que hace que
+                      // se vea el relieve.
+                      //
+                      // Antes iba de 0.18 a 0.85: se desvanecia hacia la
+                      // base "como luz saliendo". Se veia bien y era el
+                      // motivo de que ninguna sombra funcionara encima —
+                      // toda la app esta hecha de cuerpos OPACOS y estas
+                      // barras eran lo unico translucido, asi que se salian
+                      // del material en vez de estar hechas de el. No se
+                      // puede modelar el volumen de algo que deja ver el
+                      // fondo a traves.
+                      //
+                      // Ahora es un cuerpo solido con una variacion minima,
+                      // y todo el relieve lo pone `--arcilla-barra`.
+                      `linear-gradient(to top, ${color(0.9)}, ${color(1)})`,
                     ].join(', '),
                   }}
                 >

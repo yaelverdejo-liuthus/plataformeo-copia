@@ -188,11 +188,45 @@
    * Tampoco lleva la proyeccion larga: la barra no flota sobre la
    * tarjeta, esta METIDA en su canal. Solo la sombra de contacto.
    */
+  /*
+   * La curvatura de lado de una pieza cilindrica.
+   *
+   * Va como FONDO y no como box-shadow, y esa es la diferencia entre que
+   * parezca plastilina o no. Una sombra interior solo alcanza unos pocos
+   * pixeles desde el canto: deja dos bandas oscuras en los bordes y el
+   * centro plano, que se lee como una tarjeta de pie. Un cilindro se
+   * sombrea a lo ANCHO ENTERO, de la luz al lado iluminado a la sombra
+   * del otro, y eso solo lo hace un degradado.
+   *
+   * Luz a la izquierda y sombra a la derecha porque la luz de esta app
+   * viene de arriba a la izquierda: la misma que fija el degradado del
+   * `body::before` y la que ilumina el engranaje de Ajustes. Iluminada
+   * por el otro lado, la pieza se ve pegada encima de la escena.
+   *
+   * Blancos y negros con alfa, no colores: asi sirve para cualquier tono
+   * de barra sin tener una version por color.
+   */
+  --modelado-tubo:
+    /* El brillo. La plastilina es MATE, asi que es ancho y suave, no un
+       punto duro: un punto brillante la convertiria en plastico. Va
+       arriba a la izquierda, de donde viene la luz, y en porcentajes
+       para que se encoja con la barra en vez de desbordarla cuando la
+       barra es baja. */
+    radial-gradient(120% 52% at 26% 4%, rgb(255 255 255 / 0.3), transparent 62%),
+    linear-gradient(
+    to right,
+    rgb(255 255 255 / 0.28) 0%,
+    rgb(255 255 255 / 0.1) 20%,
+    rgb(255 255 255 / 0) 44%,
+    rgb(0 0 0 / 0.09) 64%,
+    rgb(0 0 0 / 0.3) 100%
+  );
+
   --arcilla-barra:
-    inset 0 1.5px 0 rgb(255 255 255 / 0.38),
-    inset 0 6px 10px -7px rgb(255 255 255 / 0.35),
-    inset 0 -10px 14px -8px rgb(0 0 0 / 0.34),
-    0 2px 5px -1px rgb(0 0 0 / 0.32);
+    inset 0 2px 0 rgb(255 255 255 / 0.5),
+    inset 0 11px 14px -8px rgb(255 255 255 / 0.45),
+    inset 0 -13px 18px -8px rgb(0 0 0 / 0.45),
+    0 3px 7px -2px rgb(0 0 0 / 0.38);
 }
 
 /* ══ TEMA OSCURO — el de por defecto ═══════════════════════════════

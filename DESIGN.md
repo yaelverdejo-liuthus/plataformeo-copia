@@ -68,6 +68,7 @@ declaración de `box-shadow`:
 | `--arcilla-pozo` | Un hueco excavado. **Sin apoyo**: un hoyo no proyecta sombra |
 | `--arcilla-color` | Piezas de color pleno: los avisos del Tablero |
 | `--arcilla-barra` | Lo mismo a escala de barra de gráfica |
+| `--modelado-tubo` | La curvatura de lado. **Es un fondo, no una sombra** |
 
 Los dos últimos viven en `:root`, fuera de los bloques de tema, porque
 van sobre color saturado y no sobre la superficie: sus capas están
@@ -79,6 +80,21 @@ quedar en veinte píxeles de alto— la pared se comería la barra entera y
 solo se vería una mancha oscura. Es la misma pieza, proporcionada al
 objeto, y sin la proyección larga: una barra no flota sobre la tarjeta,
 está metida en su canal.
+
+**Una barra plana no se arregla con sombras: se arregla dándole cuerpo.**
+Las barras se desvanecían hacia la base (`color(0.18)`), y ninguna sombra
+encima funcionaba por una razón simple — toda la app está hecha de cuerpos
+**opacos**, y esas barras eran lo único translúcido. No se puede modelar
+el volumen de algo que deja ver el fondo a través. Ahora el cuerpo es
+sólido y todo el relieve lo ponen las capas.
+
+Y la curvatura a lo ancho va en un **fondo**, no en una `box-shadow`: una
+sombra interior solo alcanza unos píxeles desde el canto, así que deja dos
+bandas oscuras en los bordes y el centro plano — que se lee como una
+tarjeta de pie. Un cilindro se sombrea de lado a lado, y eso solo lo hace
+un degradado. `--modelado-tubo` lleva además un brillo ancho y suave
+arriba a la izquierda: la plastilina es **mate**, y un punto de brillo duro
+la convertiría en plástico.
 
 ### Las utilidades
 
