@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
+  AlertTriangle,
   Briefcase,
   CalendarClock,
   ChevronRight,
@@ -18,6 +19,7 @@ import {
 import { useLeads, useActualizarLead, useCrearLead, useEliminarLead } from '../lib/queries/leads'
 import { useTrabajos } from '../lib/queries/trabajos'
 import { useCatalogo } from '../lib/queries/catalogo'
+import { useUmbrales } from '../lib/queries/config'
 import { useRol } from '../hooks/useRol'
 import { useToast } from '../components/ui/Toast'
 import { Button, BotonFlotante } from '../components/ui/Button'
@@ -122,6 +124,7 @@ export function Leads() {
   const { data: leads, isPending, error, refetch } = useLeads()
   const { data: trabajos } = useTrabajos()
   const { data: catalogo } = useCatalogo()
+  const { umbrales } = useUmbrales()
   const { puedeEscribir } = useRol()
   const crear = useCrearLead()
   const actualizar = useActualizarLead()
@@ -152,6 +155,25 @@ export function Leads() {
   })
 
   const estatusAlta = watch('estatus')
+
+  /*
+   * El aviso de anticipo bajo, igual que en FormTrabajo y en el wizard.
+   *
+   * Faltaba solo aqui, y era el hueco mas facil de pasar por alto: este
+   * formulario permite dar de alta un lead YA agendado -el caso del
+   * conocido que llego, cotizo y dejo el anticipo en la misma visita-,
+   * asi que pide el anticipo sin pasar por ninguna de las otras dos
+   * pantallas que si avisaban.
+   *
+   * Avisa, no bloquea. El minimo de Ajustes es un acuerdo del estudio,
+   * no una regla de la base: si alguien cobro menos, el dato correcto es
+   * lo que de verdad cobro. Lo que la base si impide es agendar con
+   * anticipo en cero, y de eso se encarga el `superRefine` de arriba.
+   */
+  const anticipoMinimo = umbrales.anticipo_minimo ?? 0
+  const anticipoActual = aNumero(watch('anticipo')) ?? 0
+  const anticipoBajo =
+    anticipoActual > 0 && anticipoMinimo > 0 && anticipoActual < anticipoMinimo
   const esAlta = editando === 'nuevo'
 
   const seguimientoVencido = (l: Lead) => {
@@ -725,6 +747,13 @@ export function Leads() {
                 error={errors.anticipo?.message}
                 {...register('anticipo')}
               />
+              {anticipoBajo && (
+                <p className="flex items-start gap-2 rounded-xl border border-warn/25 bg-warn/10 px-3.5 py-2.5 text-sm text-warn">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  El anticipo acordado es de {dinero(anticipoMinimo)}. Este es menor — se guarda
+                  igual, pero quedará registrado así.
+                </p>
+              )}
               <p className="rounded-xl border border-success/25 bg-success/10 px-3.5 py-2.5 text-sm text-success">
                 Al guardar se crea solo su expediente en Trabajos.
               </p>
