@@ -389,10 +389,23 @@ export function Leads() {
           ]}
         />
 
-        <select
+        {/*
+          Va por la primitiva `Select`, no por un <select> crudo.
+
+          Era el último que quedaba suelto en toda la app, y por eso se
+          escapó del cambio que quitó el desplegable del sistema: al no
+          pasar por la primitiva, seguía abriendo el panel que dibuja el
+          sistema operativo — negro con la app en claro y al revés.
+
+          `w-auto` porque este vive en un stack vertical y debe medir lo
+          que mide su texto, no el ancho de la columna: es un filtro
+          compacto, no un campo de formulario. `BASE` trae `w-full`, y
+          tailwind-merge deja ganar al que se pasa aquí.
+        */}
+        <Select
           value={origen}
           onChange={(e) => setOrigen(e.target.value as Origen | 'todos')}
-          className="h-9 rounded-lg pozo px-3 text-sm text-fg-muted"
+          className="h-9 w-auto rounded-lg px-3 text-sm"
         >
           <option value="todos">Todos los orígenes</option>
           {Object.entries(ORIGEN).map(([v, t]) => (
@@ -400,7 +413,7 @@ export function Leads() {
               {t}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {error ? (
