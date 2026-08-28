@@ -159,19 +159,19 @@ export function Ads() {
           <BotonExportar
             nombre="campanas"
             filas={(campanas ?? []).map((c) => ({
-              nombre: c.nombre,
-              plataforma: PLATAFORMA_ADS[c.plataforma],
-              objetivo: c.objetivo,
-              presupuesto_total: c.presupuesto_total,
-              presupuesto_asignado: c.presupuesto_asignado,
-              creativos: c.num_creativos,
-              gasto_real: c.gasto_real,
-              conversaciones: c.conversaciones,
-              costo_por_conversacion: c.costo_por_conversacion ?? '',
-              veredicto: VEREDICTO[c.veredicto].texto,
-              fecha_inicio: c.fecha_inicio,
-              fecha_fin: c.fecha_fin,
-              activa: c.activa ? 'Sí' : 'No',
+              'Campaña': c.nombre,
+              'Plataforma': PLATAFORMA_ADS[c.plataforma],
+              'Objetivo': c.objetivo,
+              'Presupuesto total': c.presupuesto_total,
+              'Presupuesto asignado': c.presupuesto_asignado,
+              'Creativos': c.num_creativos,
+              'Gasto real': c.gasto_real,
+              'Conversaciones': c.conversaciones,
+              'Costo por conversación': c.costo_por_conversacion ?? '',
+              'Veredicto': VEREDICTO[c.veredicto].texto,
+              'Fecha de inicio': c.fecha_inicio,
+              'Fecha de fin': c.fecha_fin,
+              'Activa': c.activa ? 'Sí' : 'No',
             }))}
           />
           {puede && (

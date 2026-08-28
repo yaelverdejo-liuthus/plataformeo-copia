@@ -243,19 +243,19 @@ export function Contenido() {
           <BotonExportar
             nombre="contenido"
             filas={(contenido ?? []).map((c) => ({
-              fecha: c.fecha,
-              titulo: c.titulo,
-              plataforma: PLATAFORMA[c.plataforma],
-              formato: FORMATO[c.formato],
-              tags: (c.tags ?? []).join(' | '),
-              trabajo_id: c.trabajo_id,
-              precio_en_pantalla: c.precio_en_pantalla ? 'Sí' : 'No',
-              vistas_4h: c.vistas_4h,
-              guardados_4h: c.guardados_4h,
-              comentarios: c.comentarios,
-              pasa_filtro: c.pasa_filtro === true ? 'SI' : c.pasa_filtro === false ? 'NO' : '',
-              promocionado: c.promocionado ? 'Sí' : 'No',
-              gasto_promocion: c.gasto_promocion,
+              'Fecha': c.fecha,
+              'Título': c.titulo,
+              'Plataforma': PLATAFORMA[c.plataforma],
+              'Formato': FORMATO[c.formato],
+              'Etiquetas': (c.tags ?? []).join(' | '),
+              'Trabajo': c.trabajo_id,
+              'Precio en pantalla': c.precio_en_pantalla ? 'Sí' : 'No',
+              'Vistas a las 4 h': c.vistas_4h,
+              'Guardados a las 4 h': c.guardados_4h,
+              'Comentarios': c.comentarios,
+              'Pasa filtro': c.pasa_filtro === true ? 'SI' : c.pasa_filtro === false ? 'NO' : '',
+              'Promocionado': c.promocionado ? 'Sí' : 'No',
+              'Gasto en promoción': c.gasto_promocion,
             }))}
           />
           {puede && (

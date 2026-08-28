@@ -366,21 +366,21 @@ export function Leads() {
           <BotonExportar
             nombre="leads"
             filas={(leads ?? []).map((l) => ({
-              fecha: l.fecha,
-              nombre: l.nombre,
-              whatsapp: l.whatsapp,
-              origen: ORIGEN[l.origen],
-              que_pidio: l.que_pidio,
-              nivel_estimado: l.nivel_estimado,
-              zona: l.zona,
-              estatus: LEAD_ESTATUS[l.estatus].texto,
-              monto_cotizado: l.monto_cotizado,
-              anticipo: l.anticipo,
-              fecha_tatuaje: l.fecha_tatuaje,
-              hora: l.hora,
-              siguiente_accion: l.siguiente_accion,
-              fecha_seguimiento: l.fecha_seguimiento,
-              motivo_perdida: l.motivo_perdida,
+              'Fecha': l.fecha,
+              'Nombre': l.nombre,
+              'WhatsApp': l.whatsapp,
+              'Origen': ORIGEN[l.origen],
+              'Qué pidió': l.que_pidio,
+              'Nivel estimado': l.nivel_estimado,
+              'Zona': l.zona,
+              'Etapa': LEAD_ESTATUS[l.estatus].texto,
+              'Monto cotizado': l.monto_cotizado,
+              'Anticipo': l.anticipo,
+              'Fecha del tatuaje': l.fecha_tatuaje,
+              'Hora': l.hora,
+              'Siguiente acción': l.siguiente_accion,
+              'Fecha de seguimiento': l.fecha_seguimiento,
+              'Motivo de pérdida': l.motivo_perdida,
             }))}
           />
           {puede && (
