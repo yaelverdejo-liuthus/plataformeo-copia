@@ -198,6 +198,61 @@
   }
 
   /*
+   * La leyenda de un <fieldset>, dentro del flujo normal.
+   *
+   * Por defecto el navegador coloca el <legend> MONTADO SOBRE el borde
+   * superior del fieldset, y le abre un hueco: es la muesca clasica de
+   * "Datos personales" cortando la linea del recuadro. Con un borde de
+   * 1px se ve bien y es justo para lo que existe.
+   *
+   * Aqui no hay borde. Los fieldsets son `.pozo`, o sea un hueco relleno,
+   * asi que esa colocacion dejaba el texto a caballo del canto: mitad
+   * dentro de la pieza y mitad fuera. No era un fallo de esas pantallas
+   * sino una consecuencia del cambio de material, y por eso se corrige
+   * una vez aqui y no en cada llamada.
+   *
+   * `float` + `width: 100%` es la forma de sacar al legend de su
+   * colocacion especial y devolverlo al flujo. El `display: flow-root`
+   * del fieldset crea un contexto de formato que CONTIENE ese float; sin
+   * el, el contenido siguiente empezaria a la altura de la leyenda y se
+   * le montaria encima.
+   */
+  fieldset > legend {
+    float: left;
+    width: 100%;
+    /*
+     * El margen va aqui y no se hereda del `space-y` del fieldset.
+     *
+     * `space-y-*` reparte margenes ENTRE hermanos, y un elemento flotado
+     * ya no es hermano en el flujo: lo que separa a la leyenda de lo que
+     * viene debajo es su propia caja de exclusion, no el margen del
+     * siguiente. Sin esto, el primer campo sube hasta pegarse al texto.
+     */
+    margin-bottom: 0.5rem;
+  }
+
+  fieldset:has(> legend) {
+    display: flow-root;
+  }
+
+  /*
+   * Lo que sigue a la leyenda arranca SIEMPRE debajo de ella.
+   *
+   * Sin esto se rompia con los fieldsets de dos columnas. Un contenedor
+   * grid (o flex) establece su propio contexto de formato, y esos no
+   * fluyen alrededor de un float: se colocan AL LADO. Como la leyenda
+   * ocupa el 100% del ancho, al grid no le quedaba sitio y se desbordaba
+   * fuera de la pieza — el mismo sintoma que se venia a arreglar, movido
+   * de la leyenda al contenido.
+   *
+   * `clear` obliga a empezar por debajo del float y funciona igual para
+   * bloques, grid y flex.
+   */
+  fieldset > legend + * {
+    clear: both;
+  }
+
+  /*
    * El pozo de un campo rechazado.
    *
    * Existe como clase propia y no como `pozo ring-1 ring-danger` por una
