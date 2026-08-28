@@ -117,6 +117,7 @@ export default {
         'arcilla-alta': 'var(--arcilla-3)',
         hoja: 'var(--arcilla-hoja)',
         'arcilla-color': 'var(--arcilla-color)',
+        'arcilla-barra': 'var(--arcilla-barra)',
         hundida: 'var(--arcilla-hundida)',
         pozo: 'var(--arcilla-pozo)',
       },

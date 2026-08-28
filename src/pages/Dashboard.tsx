@@ -470,35 +470,46 @@ function MezclaNiveles({ datos }: { datos: { nivel: string; valor: number; tono:
               {/* Carril: la barra se apoya en su base */}
               <div className="flex w-full flex-1 items-end">
                 <div
-                  className="anim-crecer relative w-full overflow-hidden rounded-t-lg"
-                  style={{ height: `${alto}%`, animationDelay: `${i * 0.09}s` }}
+                  /*
+                    El degradado y el rayado van en el `background` del
+                    propio elemento, no en dos divs hijos como estaban.
+
+                    No es limpieza: una sombra INTERIOR se pinta encima
+                    del fondo pero DEBAJO del contenido, asi que dos hijos
+                    con fondo propio taparian todo el relieve de arcilla.
+                    Como fondos multiples del mismo elemento, la sombra
+                    queda por encima y se ve.
+
+                    El primero de la lista es el de arriba: el rayado
+                    sobre el degradado.
+                  */
+                  className={cn(
+                    'anim-crecer relative w-full overflow-hidden rounded-t-xl',
+                    /*
+                       La arcilla solo cuando hay algo que modelar.
+
+                       Un nivel en cero deja un toconcito del 1.5% -unos
+                       dos pixeles- y ahi las cuatro capas de sombra no
+                       leen como volumen sino como suciedad de pantalla.
+                       Es la regla del suelo del sistema, la misma por la
+                       que el punto del semaforo tampoco lleva sombra.
+                    */
+                    m.valor > 0 && 'shadow-arcilla-barra',
+                  )}
+                  style={{
+                    height: `${alto}%`,
+                    animationDelay: `${i * 0.09}s`,
+                    background: [
+                      // Rayado diagonal: textura de sombreado en vez de una
+                      // mancha lisa. Va con el color del FONDO, asi que
+                      // funciona igual en tema claro y oscuro.
+                      'repeating-linear-gradient(45deg, transparent 0 5px, rgb(var(--bg) / 0.22) 5px 7px)',
+                      // Fuerte arriba y desvanecido hacia la base, que sobre
+                      // el fondo oscuro se lee como luz saliendo.
+                      `linear-gradient(to top, ${color(0.18)}, ${color(0.85)})`,
+                    ].join(', '),
+                  }}
                 >
-                  {/* Degradado: fuerte arriba y desvanecido hacia la base,
-                      que sobre el fondo oscuro se lee como luz saliendo. */}
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: `linear-gradient(to top, ${color(0.18)}, ${color(0.85)})`,
-                    }}
-                  />
-
-                  {/* Rayado diagonal: le da textura de sombreado en vez de
-                      una mancha lisa. Va con el color del fondo, así que
-                      funciona igual en tema claro y oscuro. */}
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      backgroundImage:
-                        'repeating-linear-gradient(45deg, transparent 0 5px, rgb(var(--bg) / 0.22) 5px 7px)',
-                    }}
-                  />
-
-                  {/* Filo superior, para que la barra tenga un remate nítido */}
-                  <div
-                    className="absolute inset-x-0 top-0 h-[2px]"
-                    style={{ background: color(1) }}
-                  />
-
                   {/* Reflejo que sube cada tanto */}
                   <div
                     className="anim-brillo pointer-events-none absolute inset-x-0 h-1/2"

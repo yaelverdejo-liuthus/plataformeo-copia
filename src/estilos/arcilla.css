@@ -175,6 +175,24 @@
     inset 0 -14px 22px -10px rgb(0 0 0 / 0.32),
     0 3px 6px rgb(0 0 0 / 0.3),
     0 18px 34px -14px rgb(0 0 0 / 0.42);
+
+  /*
+   * La misma arcilla de color, a escala de barra de grafica.
+   *
+   * `--arcilla-color` esta calibrada para una pieza grande: sus capas
+   * miden 14 y 22px, y en una barra de nivel bajo -que puede quedar en
+   * veinte pixeles de alto- la pared se comeria la barra entera y solo
+   * se veria una mancha oscura. Aqui las mismas cuatro capas van
+   * proporcionadas al objeto.
+   *
+   * Tampoco lleva la proyeccion larga: la barra no flota sobre la
+   * tarjeta, esta METIDA en su canal. Solo la sombra de contacto.
+   */
+  --arcilla-barra:
+    inset 0 1.5px 0 rgb(255 255 255 / 0.38),
+    inset 0 6px 10px -7px rgb(255 255 255 / 0.35),
+    inset 0 -10px 14px -8px rgb(0 0 0 / 0.34),
+    0 2px 5px -1px rgb(0 0 0 / 0.32);
 }
 
 /* ══ TEMA OSCURO — el de por defecto ═══════════════════════════════

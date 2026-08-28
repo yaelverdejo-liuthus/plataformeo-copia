@@ -66,6 +66,19 @@ declaración de `box-shadow`:
 | `--arcilla-hoja` | Hojas y paneles. La sombra va hacia **arriba**: vienen de abajo |
 | `--arcilla-hundida` | La pieza mientras el dedo la aprieta |
 | `--arcilla-pozo` | Un hueco excavado. **Sin apoyo**: un hoyo no proyecta sombra |
+| `--arcilla-color` | Piezas de color pleno: los avisos del Tablero |
+| `--arcilla-barra` | Lo mismo a escala de barra de gráfica |
+
+Los dos últimos viven en `:root`, fuera de los bloques de tema, porque
+van sobre color saturado y no sobre la superficie: sus capas están
+calibradas contra el propio tinte de la pieza, no contra el fondo.
+
+**`--arcilla-barra` existe porque la escala importa.** Las capas de
+`--arcilla-color` miden 14 y 22 px; en una barra de nivel bajo —que puede
+quedar en veinte píxeles de alto— la pared se comería la barra entera y
+solo se vería una mancha oscura. Es la misma pieza, proporcionada al
+objeto, y sin la proyección larga: una barra no flota sobre la tarjeta,
+está metida en su canal.
 
 ### Las utilidades
 
