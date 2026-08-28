@@ -1,8 +1,23 @@
-import { forwardRef, useId, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ReactNode } from 'react'
+import {
+  Children,
+  forwardRef,
+  isValidElement,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type InputHTMLAttributes,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+  type ReactNode,
+} from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
+import { Check, ChevronDown } from 'lucide-react'
 import { DESPLEGAR, DURACION, transicion } from '../../lib/animacion'
 import { cn } from '../../lib/cn'
+import { Popover } from './Popover'
 
 /*
  * ── El campo es un HUECO, no una caja ────────────────────────────────
@@ -75,8 +90,16 @@ export function Envoltura({
 }) {
   return (
     <div className="space-y-1.5">
+      {/* El `id` de la etiqueta permite que un control que NO es el
+          <input> apuntado por `htmlFor` -el disparador del Select, que es
+          un <button>- se ate a ella con `aria-labelledby`. Un <label>
+          solo nombra automaticamente a controles nativos. */}
       {etiqueta && (
-        <label htmlFor={htmlFor} className="block text-sm font-medium text-fg-muted">
+        <label
+          id={`${htmlFor}-etiqueta`}
+          htmlFor={htmlFor}
+          className="block text-sm font-medium text-fg-muted"
+        >
           {etiqueta}
         </label>
       )}
@@ -181,45 +204,238 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 /**
- * Select nativo: en móvil la rueda del sistema gana a cualquier dropdown propio.
+ * Lee las <option> que le pasaron como hijos.
  *
- * La flecha es un icono de la librería y no un SVG incrustado en un
- * `background-image`. Dentro de un data URI el color va escrito a mano, y el
- * que estaba —#A0A0AE— es el `--fg-muted` del tema OSCURO: en claro la
- * flecha salía lavada mientras el texto de al lado iba en un gris mucho más
- * firme. Como elemento hereda `currentColor` y los dos temas se resuelven
- * solos. De paso deja de haber un icono dibujado a mano conviviendo con la
- * familia de lucide que usa el resto de la app.
+ * Se conserva esa API a proposito: hay una veintena de <Select> repartidos
+ * por la app y todos escriben sus opciones como <option>, muchas veces con
+ * un `.map()` en medio. Cambiar la firma habria obligado a tocar los
+ * veinte; leerlas aqui no obliga a tocar ninguno.
+ */
+function leerOpciones(children: ReactNode): { valor: string; texto: string; disabled?: boolean }[] {
+  return Children.toArray(children)
+    .filter(isValidElement)
+    .filter((el) => el.type === 'option')
+    .map((el) => {
+      const p = el.props as { value?: string | number; children?: ReactNode; disabled?: boolean }
+      return {
+        valor: String(p.value ?? ''),
+        texto: Children.toArray(p.children).join(''),
+        disabled: p.disabled,
+      }
+    })
+}
+
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  etiqueta?: string
+  hint?: string
+  error?: string
+}
+
+/**
+ * Select propio, con el <select> nativo escondido debajo.
+ *
+ * -- Por que dejo de ser nativo ----------------------------------------
+ *
+ * Antes esto era un <select> normal, con el argumento de que "en movil la
+ * rueda del sistema gana a cualquier dropdown propio". El argumento sigue
+ * siendo bueno para la ergonomia; el problema es otro y no tiene arreglo
+ * desde CSS: el desplegable de un <select> lo dibuja el SISTEMA
+ * OPERATIVO, y en iOS ignora `color-scheme`. O sea que con la app en tema
+ * claro se abria igual un panel negro, y al reves -- la unica superficie
+ * de toda la app que no se puede tematizar.
+ *
+ * No era un caso aislado de una pantalla: son ~20 selects en 8 archivos,
+ * asi que se arregla en la primitiva y se corrigen los veinte de una vez.
+ *
+ * -- El <select> nativo sigue ahi, y eso es lo importante --------------
+ *
+ * Debajo del disparador vive un <select> real, visualmente escondido pero
+ * NO deshabilitado. Es lo que recibe el `ref` y el `name` de
+ * `register()`, lo que valida react-hook-form y lo que enviaria un submit
+ * nativo. Este componente solo le pone una cara: nada de la logica de
+ * formularios cambio, y por eso no hubo que tocar ni una llamada.
+ *
+ * Se reusa `Popover`, el mismo que ya usan SelectorFecha y SelectorHora,
+ * que ademas se convierte solo en hoja inferior por debajo de 640px. Asi
+ * los tres selectores de la app se abren igual.
  */
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { etiqueta, hint, error, className, id, children, ...props },
+  { etiqueta, hint, error, className, id, children, disabled, ...props },
   ref,
 ) {
   const auto = useId()
   const idFinal = id ?? auto
+  const nativo = useRef<HTMLSelectElement | null>(null)
+  const [abierto, setAbierto] = useState(false)
+  const [disparador, setDisparador] = useState<HTMLButtonElement | null>(null)
+  const [valor, setValor] = useState('')
+
+  const opciones = useMemo(() => leerOpciones(children), [children])
+
+  /*
+   * Sincroniza el valor mostrado con el que tiene el <select> de verdad.
+   *
+   * Va SIN arreglo de dependencias, o sea que corre despues de cada
+   * render, y es deliberado: react-hook-form escribe el valor directo en
+   * el nodo cuando se llama a `setValue` -- por ejemplo al elegir un
+   * diseno del catalogo, que precarga nivel y zona -- y eso no dispara
+   * ningun evento que se pueda escuchar. Lo que si ocurre es que el
+   * formulario se vuelve a renderizar, y ahi es donde esto lo alcanza.
+   *
+   * Solo llama a `setValor` cuando de verdad cambio, asi que no hay bucle.
+   *
+   * El linter avisa de esto y su sugerencia -poner una lista vacia- es
+   * justo lo que NO hay que hacer: con `[]` solo correria al montar y el
+   * disparador se quedaria mostrando el valor inicial para siempre.
+   */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const v = nativo.current?.value ?? ''
+    setValor((previo) => (previo === v ? previo : v))
+  })
+
+  const elegida = opciones.find((o) => o.valor === valor)
+
+  /*
+   * Estable con useCallback y no una flecha en linea. Un ref en linea
+   * cambia de identidad en cada render, y React responde llamandolo con
+   * null y luego con el elemento: dos `setState` por render, con un
+   * instante en que el disparador es null y el panel no tiene a que
+   * anclarse. Es la misma nota que hay en SelectorHora.
+   */
+  const guardarDisparador = useCallback((el: HTMLButtonElement | null) => {
+    setDisparador(el)
+  }, [])
+
+  const guardarNativo = useCallback(
+    (el: HTMLSelectElement | null) => {
+      nativo.current = el
+      if (typeof ref === 'function') ref(el)
+      else if (ref) ref.current = el
+    },
+    [ref],
+  )
+
+  /*
+   * Escribir el valor con el setter del prototipo y luego lanzar el evento.
+   *
+   * Asignar `nodo.value = x` a secas no basta: React lleva su propio
+   * rastreador del valor de cada control y, si el valor que ve coincide
+   * con el que el anoto, se salta el evento -- el `onChange` de
+   * `register()` nunca se enteraria y el formulario se quedaria con el
+   * valor viejo. Llamando al setter nativo se actualiza el nodo por
+   * debajo del rastreador, y el `change` que va despues si llega.
+   */
+  function elegir(v: string) {
+    const nodo = nativo.current
+    if (nodo) {
+      const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLSelectElement.prototype,
+        'value',
+      )?.set
+      setter?.call(nodo, v)
+      nodo.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+    setValor(v)
+    setAbierto(false)
+    disparador?.focus()
+  }
+
   return (
     <Envoltura etiqueta={etiqueta} hint={hint} error={error} htmlFor={idFinal}>
       <div className="relative">
+        {/*
+          El <select> de verdad. `sr-only` y no `display:none` ni
+          `disabled`: tiene que seguir existiendo en el formulario para que
+          react-hook-form lo registre y para que un submit nativo lo
+          incluya. `tabIndex={-1}` porque quien navega con teclado debe
+          caer en el disparador, no aqui; `aria-hidden` para que un lector
+          de pantalla tampoco anuncie el control dos veces.
+        */}
         <select
-          ref={ref}
+          ref={guardarNativo}
           id={idFinal}
-          {...atributosDescripcion(idFinal, error, hint)}
-          className={cn(
-            BASE,
-            'h-11 appearance-none pr-10',
-            error && POZO_ERROR,
-            className,
-          )}
+          tabIndex={-1}
+          aria-hidden
+          disabled={disabled}
+          className="sr-only"
           {...props}
         >
           {children}
         </select>
-        <ChevronDown
-          aria-hidden
-          strokeWidth={2.5}
-          className="pointer-events-none absolute right-3 top-1/2 size-[1.1rem] -translate-y-1/2 text-fg-muted"
-        />
+
+        <button
+          ref={guardarDisparador}
+          type="button"
+          disabled={disabled}
+          onClick={() => setAbierto((v) => !v)}
+          aria-haspopup="listbox"
+          aria-expanded={abierto}
+          /* Se nombra con la etiqueta MAS su propio contenido, en ese
+             orden, para que se anuncie "Origen, Meta". Con solo
+             `aria-label` se perderia el valor elegido; sin nada, se
+             perderia la etiqueta, porque el <label> nombra al <select>
+             escondido y no a este boton. */
+          id={`${idFinal}-boton`}
+          aria-labelledby={
+            etiqueta ? `${idFinal}-etiqueta ${idFinal}-boton` : undefined
+          }
+          {...atributosDescripcion(idFinal, error, hint)}
+          className={cn(
+            BASE,
+            'flex h-11 items-center justify-between gap-2 pr-3 text-left',
+            error && POZO_ERROR,
+            className,
+          )}
+        >
+          <span className={cn('truncate', elegida && elegida.valor ? 'text-fg' : 'text-fg-subtle')}>
+            {elegida ? elegida.texto : (opciones[0] ? opciones[0].texto : '')}
+          </span>
+          <ChevronDown
+            aria-hidden
+            strokeWidth={2.5}
+            className="size-[1.1rem] shrink-0 text-fg-muted"
+          />
+        </button>
       </div>
+
+      <Popover
+        abierto={abierto}
+        onCerrar={() => setAbierto(false)}
+        disparador={disparador}
+        ancho={300}
+        etiqueta={etiqueta ?? 'Elegir opcion'}
+      >
+        <div
+          role="listbox"
+          aria-label={etiqueta}
+          className="max-h-72 space-y-0.5 overflow-y-auto p-2"
+        >
+          {opciones.map((o) => {
+            const activa = o.valor === valor
+            return (
+              <button
+                key={o.valor || `__vacia__${o.texto}`}
+                type="button"
+                role="option"
+                aria-selected={activa}
+                disabled={o.disabled}
+                onClick={() => elegir(o.valor)}
+                className={cn(
+                  'flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm',
+                  'transition-[color,background-color,transform] duration-150 ease-out active:scale-[0.98]',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
+                  'disabled:opacity-40',
+                  activa ? 'bg-primary font-semibold text-primary-fg' : 'text-fg hover:bg-surface-2',
+                )}
+              >
+                <span className="min-w-0 flex-1 truncate">{o.texto}</span>
+                {activa && <Check className="h-4 w-4 shrink-0" aria-hidden />}
+              </button>
+            )
+          })}
+        </div>
+      </Popover>
     </Envoltura>
   )
 })

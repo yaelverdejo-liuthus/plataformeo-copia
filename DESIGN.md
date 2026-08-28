@@ -436,32 +436,55 @@ comería el pozo y el hueco quedaría plano justo mientras lo usas.
 `outline-offset` además lo separa de la pieza, que hace falta porque pegado
 al canto se confunde con el filo de luz de la propia arcilla.
 
-### La excepción: el estatus del alta de lead no usa `<select>`
+### Ningún desplegable es del sistema operativo
 
-Todo `Select` de la app es nativo a propósito -"en móvil la rueda del
-sistema gana a cualquier dropdown propio", ver el comentario en
-`Campo.tsx`- y eso sigue valiendo para el resto. El campo "¿En qué punto
-está?" del alta de leads es la única excepción, y es una excepción de
-un solo campo, no un cambio de regla.
+Ni uno. Los tres selectores de la app -`Select`, `SelectorFecha` y
+`SelectorHora`- se abren con el mismo `Popover`, que además se convierte
+solo en hoja inferior por debajo de 640px.
 
-El motivo no es de gusto: un picker nativo lo dibuja el **sistema
-operativo**, y sigue el modo oscuro del teléfono, no el tema que la
-persona eligió dentro de la app. Un formulario en tema claro podía abrir
-un picker negro que no se parecía a nada más en pantalla, y ningún CSS
-puede entrar ahí a corregirlo -es la única superficie de toda la app que
-de verdad no se puede tematizar.
+El motivo no es estético sino que **no hay alternativa**: el desplegable de
+un `<select>` lo dibuja el sistema operativo, y en iOS ignora
+`color-scheme`. Con la app en tema claro se abría igual un panel negro, y
+al revés. Es la única superficie de toda la app que de verdad no se puede
+tematizar, así que la única salida es no usarla.
 
-Con solo tres opciones y una frase de por qué cada una, se optó por
-consistencia sobre la rueda nativa: un radiogroup (`role="radiogroup"` +
-botones `role="radio"`) con el mismo par canal/pastilla que el
-Segmentado -un `.pozo` como canal, la opción activa como pieza de
-arcilla apoyada dentro (`bg-primary shadow-arcilla-sutil`)- y el punto de
-cada fila con la misma lógica que el interruptor: hueco cuando no tiene
-valor, relleno cuando sí.
+Esto contradice el argumento original del proyecto -"en móvil la rueda del
+sistema gana a cualquier dropdown propio"-, que sigue siendo cierto para la
+ergonomía y se dejó de aplicar solo porque el coste visual resultó ser
+mayor. `SelectorFecha` y `SelectorHora` ya habían llegado antes a la misma
+conclusión por otro camino.
+
+**El `<select>` nativo no desapareció: se escondió.** Debajo del disparador
+sigue viviendo uno real, con `sr-only`, `tabIndex={-1}` y `aria-hidden`. Es
+el que recibe el `ref` y el `name` de `register()`, el que valida
+react-hook-form y el que enviaría un submit nativo. Por eso arreglar los
+~20 selects de la app no obligó a tocar ni una sola llamada: la API
+(`etiqueta`, `hint`, `error`, hijos `<option>`) es idéntica.
+
+Dos detalles que costaron entenderlos:
+
+- **Elegir una opción escribe el valor con el setter del prototipo**, no
+  con `nodo.value = x`. React lleva su propio rastreador del valor de cada
+  control y se salta el evento si el valor coincide con el que él anotó;
+  el `onChange` de `register()` nunca se enteraría.
+- **La sincronización va en un `useEffect` sin lista de dependencias.**
+  react-hook-form escribe el valor directo en el nodo con `setValue` -al
+  elegir un diseño del catálogo, que precarga nivel y zona- y eso no
+  dispara ningún evento escuchable. Lo que sí ocurre es que el formulario
+  se re-renderiza, y ahí es donde el efecto lo alcanza. Solo llama a
+  `setValor` cuando el valor cambió, así que no hay bucle. El linter
+  sugiere `[]`, que rompería justo esto.
+
+#### La excepción dentro de la excepción: el estatus del alta de lead
+
+Ese campo no usa `Select` sino un radiogroup inline (`role="radiogroup"` +
+botones `role="radio"`). Son tres opciones y cada una necesita una frase de
+explicación, y además decide qué otros campos aparecen debajo: verlas las
+tres a la vez, sin abrir nada, vale más que la compacidad de un
+desplegable. Usa el mismo par canal/pastilla que el Segmentado.
 
 Se conecta a react-hook-form sin `register`: como `estatus` ya vive en
-`defaultValues`, `watch('estatus')` y `setValue('estatus', e)` bastan.
-Ni Zod ni la validación se enteran de que el control cambió de forma.
+`defaultValues`, bastan `watch('estatus')` y `setValue('estatus', e)`.
 
 ---
 
