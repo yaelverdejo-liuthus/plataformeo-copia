@@ -22,7 +22,7 @@ import { Badge } from '../components/ui/Badge'
 import { CardAnimada } from '../components/ui/Card'
 import { Segmentado } from '../components/ui/Segmentado'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
-import { BotonCSV } from '../components/BotonCSV'
+import { BotonExportar } from '../components/BotonExportar'
 import { ConfirmarBorrado } from '../components/ConfirmarBorrado'
 import { SubidorImagen } from '../components/SubidorImagen'
 import { EditorTags } from '../components/EditorTags'
@@ -240,7 +240,7 @@ export function Contenido() {
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <BotonCSV
+          <BotonExportar
             nombre="contenido"
             filas={(contenido ?? []).map((c) => ({
               fecha: c.fecha,

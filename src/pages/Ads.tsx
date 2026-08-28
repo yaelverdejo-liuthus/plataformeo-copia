@@ -16,7 +16,7 @@ import { Badge } from '../components/ui/Badge'
 import { CardAnimada } from '../components/ui/Card'
 import { Segmentado } from '../components/ui/Segmentado'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
-import { BotonCSV } from '../components/BotonCSV'
+import { BotonExportar } from '../components/BotonExportar'
 import { ExplicacionCostoConv } from '../components/ExplicacionCostoConv'
 import { PLATAFORMA_ADS, VEREDICTO } from '../lib/etiquetas'
 import {
@@ -156,7 +156,7 @@ export function Ads() {
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <BotonCSV
+          <BotonExportar
             nombre="campanas"
             filas={(campanas ?? []).map((c) => ({
               nombre: c.nombre,

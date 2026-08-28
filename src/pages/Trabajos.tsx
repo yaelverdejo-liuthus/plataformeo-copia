@@ -11,7 +11,7 @@ import { Card, CardAnimada } from '../components/ui/Card'
 import { Segmentado } from '../components/ui/Segmentado'
 import { SkeletonLista, Vacio, ErrorCarga } from '../components/ui/Estados'
 import { FormTrabajo } from '../components/FormTrabajo'
-import { BotonCSV } from '../components/BotonCSV'
+import { BotonExportar } from '../components/BotonExportar'
 import { COLUMNAS_KANBAN, ESTATUS_CERRADOS, TRABAJO_ESTATUS } from '../lib/etiquetas'
 import {
   cuandoTexto,
@@ -148,7 +148,7 @@ export function Trabajos() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <BotonCSV
+          <BotonExportar
             nombre="trabajos"
             filas={(trabajos ?? []).map((t) => ({
               id: t.id,
